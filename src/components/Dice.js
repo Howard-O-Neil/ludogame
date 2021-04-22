@@ -1,7 +1,7 @@
-import React, { useEffect, useRef, useState } from "react";
-import { Canvas, useFrame, useThree } from "@react-three/fiber";
+import React, { useEffect } from "react";
+import { useThree } from "@react-three/fiber";
 import { useGLTF } from "@react-three/drei";
-import { useBox, usePlane } from "@react-three/cannon";
+import { useBox } from "@react-three/cannon";
 
 function Dice({ position, ...props }) {
   const { camera, viewport } = useThree();

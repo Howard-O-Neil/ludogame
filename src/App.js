@@ -7,9 +7,18 @@ import { Physics, useSphere, useBox, usePlane } from "@react-three/cannon";
 import Board from "./components/Board";
 import Piece from "./components/Piece";
 import { Environment, OrbitControls, Sky } from "@react-three/drei";
-import Grass from "./Grass";
-import Box from "./components/Box";
+
 import Dice from "./components/Dice";
+
+const data = [
+  [-5.439477664422223, 1.199988980367679, -5.308972802276404],
+  [-5.393146085870269, 1.1999890702525435, -7.71029413378612],
+  [-7.779093281241222, 1.1999884336587399, -7.6962970855280775],
+  [-7.735512466757786, 1.199988657083725, -5.359430200465674],
+];
+
+const colors = ["#8aacae", "#b4cb5f", "#ca5452", "#d7c944"];
+
 export default function App() {
   return (
     <div className="App">
@@ -39,15 +48,9 @@ export default function App() {
           <Suspense fallback={null}>
             <Board />
           </Suspense>
-          <Piece
-            position={[
-              -5.439477664422223,
-              1.199988980367679,
-              -5.308972802276404,
-            ]}
-            args={[0.08, 0.7, 2, 50]}
-            color="#b4cb5f"
-          />
+          {data.map((pos, i) => (
+            <Piece position={pos} args={[0.08, 0.7, 2, 50]} color={colors[i]} />
+          ))}
         </Physics>
 
         <OrbitControls
