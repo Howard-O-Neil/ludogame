@@ -3,7 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
-    "@react-three/drei": "^4.3.3",
+    "@react-three/cannon": "^1.1.0",
+    "@react-three/drei": "^4.1.8",
+    "@react-three/fiber": "^6.0.16",
     "clean-webpack-plugin": "^3.0.0",
     "colyseus.js": "^0.14.12",
     "css-loader": "^5.2.4",
