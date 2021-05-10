@@ -25,7 +25,7 @@
   },
   "scripts": {
     "build": "webpack",
-    "start": "webpack serve --port 8082"
+    "start": "webpack && webpack --watch"
   },
   "eslintConfig": {
     "extends": [
