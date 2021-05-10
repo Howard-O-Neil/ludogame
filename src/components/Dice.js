@@ -16,14 +16,14 @@ function Dice({ position, ...props }) {
   useEffect(() => {
     document.addEventListener("keydown", (e) => {
       if (e.code === "Space") {
-        api.position.set(
-          camera.position.x,
-          camera.position.y,
-          camera.position.z
-        );
-        api.velocity.set(-camera.position.x, 0, -camera.position.z);
-        api.rotation.set(Math.PI / 4, Math.PI / 4, Math.PI / 4);
-        api.angularVelocity.set(15, 0, 0);
+        // api.position.set(
+        //   camera.position.x,
+        //   camera.position.y,
+        //   camera.position.z
+        // );
+        // api.velocity.set(-camera.position.x, 0, -camera.position.z);
+        // api.rotation.set(Math.PI / 4, Math.PI / 4, Math.PI / 4);
+        // api.angularVelocity.set(15, 0, 0);
       }
     });
   });
