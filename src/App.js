@@ -1,5 +1,5 @@
 import "./style.css";
-import React, { Suspense } from "react";
+import React, { Suspense, useEffect, useRef, useState } from "react";
 
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { Physics, useSphere, useBox, usePlane } from "@react-three/cannon";
@@ -9,17 +9,31 @@ import Piece from "./components/Piece";
 import { Environment, OrbitControls, Sky } from "@react-three/drei";
 
 import Dice from "./components/Dice";
+import Node from "./components/Node";
 
-const data = [
-  [-5.439477664422223, 1.199988980367679, -5.308972802276404],
-  [-5.393146085870269, 1.1999890702525435, -7.71029413378612],
-  [-7.779093281241222, 1.1999884336587399, -7.6962970855280775],
-  [-7.735512466757786, 1.199988657083725, -5.359430200465674],
-];
-
-const colors = ["#8aacae", "#b4cb5f", "#ca5452", "#d7c944"];
+import useStore from "./store";
+import Hud from "./Hud";
 
 export default function App() {
+  //const [nodes, setNodes] = useState([]);
+  const [homes, setHomes] = useState([]);
+
+  const commonRoute = useStore((state) => state.commonRoutes);
+  const finalRoute = useStore((state) => state.finalRoutes);
+  const startNode = useStore((state) => state.startNodes);
+  const state = useStore((state) => state);
+  const pieces = useStore((state) => state.pieces);
+  const diceNumber = useStore((state) => state.diceNumber);
+  const actions = useStore((state) => state.actions);
+
+  useEffect(() => {
+    console.log(state);
+    document.addEventListener("keydown", (e) => {
+      console.log(state);
+    });
+    actions.initPieces();
+  }, []);
+
   return (
     <div className="App">
       <Canvas camera={{ position: [-10, 15, 5], fov: 50 }}>
@@ -37,20 +51,32 @@ export default function App() {
         />
 
         <Sky azimuth={1} inclination={0.6} distance={1000} />
+        {commonRoute.map(
+          (node, i) =>
+            i === 13 && (
+              <Node
+                position={[node[0], node[1], node[2]]}
+                scale={1.5}
+                color="red"
+              />
+            )
+        )}
 
         <Physics
           gravity={[0, -50, 0]}
           iterations={16}
-          defaultContactMaterial={{ restitution: 0.2, friction: 0.5 }}
+          defaultContactMaterial={{
+            restitution: 0.1,
+            friction: 0.5,
+            contactEquationRelaxation: 5,
+            contactEquationStiffness: 1e7,
+          }}
         >
           <Dice position={[0, 5, 0]} args={[1, 1, 1]} />
-
           <Suspense fallback={null}>
             <Board />
           </Suspense>
-          {data.map((pos, i) => (
-            <Piece position={pos} args={[0.08, 0.7, 2, 50]} color={colors[i]} />
-          ))}
+          {pieces.map((p) => p)}
         </Physics>
 
         <OrbitControls
@@ -58,6 +84,7 @@ export default function App() {
         // minPolarAngle={Math.PI / 5}
         />
       </Canvas>
+      <Hud />
     </div>
   );
 }
