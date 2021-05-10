@@ -1,4 +1,4 @@
-// import { useGLTF } from "@react-three/drei";
+import { useGLTF } from "@react-three/drei";
 import * as Colyseus from "colyseus.js";
 import * as THREE from 'three';
 import GLTFLoader from 'three-gltf-loader';
@@ -6,9 +6,8 @@ import GLTFLoader from 'three-gltf-loader';
 export default class Board {
 
   constructor() {
-    console.log('con cac');
-    // const { nodes, materials } = useGLTF("../models/board/scene.gltf");
-    // console.log(nodes);
+    const { nodes, materials } = useGLTF("../models/board/scene.gltf");
+    console.log(nodes);
   }
 }
 
