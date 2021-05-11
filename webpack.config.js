@@ -5,7 +5,7 @@ const { CleanWebpackPlugin } = require("clean-webpack-plugin");
 const appDirectory = fs.realpathSync(process.cwd());
 
 module.exports = {
-  entry: path.resolve(appDirectory, "src/main.js"), //path to the main .js file
+  entry: path.resolve(appDirectory, "src/main.ts"), //path to the main .ts file
   output: {
     filename: "bundleName.js", //name for the js file that is created/compiled in memory
     path: path.resolve(appDirectory, 'public/dist'),
@@ -31,6 +31,11 @@ module.exports = {
       {
         test: /\.css?$/,
         use: "css-loader",
+        exclude: /node_modules/,
+      },
+      {
+        test: /\.ts?$/,
+        use: "ts-loader",
         exclude: /node_modules/,
       },
     ],

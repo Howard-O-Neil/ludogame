@@ -50,7 +50,7 @@ export default function Main() {
 
   scene.add( ambinentLight, spotLight );
 
-  document.getElementById('root').appendChild( renderer.domElement );
+  document.getElementById('root')?.appendChild( renderer.domElement );
 
   // update function
   function update() {
@@ -69,4 +69,5 @@ export default function Main() {
 
 Main();
 
-new Board();
+const board = new Board();
+board.getMesh();
