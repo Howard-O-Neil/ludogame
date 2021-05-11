@@ -1,19 +1,21 @@
 import * as Colyseus from "colyseus.js";
 import * as THREE from "three";
-import GLTFLoader from "three-gltf-loader";
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
 import GameObject from "./GameObject";
 
 export default class Board extends GameObject {
   constructor() {
     super();
+
+    this.position = [0, 0.2, 0];
+    this.scale = [2, 2, 2];
+    this.rotation = [-Math.PI / 2, 0, 0];
   }
 
   loadResource = async () => {
     const loader = new GLTFLoader();
 
-    this.texture = await (new THREE.TextureLoader().loadAsync('../models/board/textures/ludolambert2_baseColor.jpeg'))
-    console.log(this.texture);
-    
+    this.texture = await (new THREE.TextureLoader().loadAsync('../models/board/textures/ludolambert2_baseColor.jpeg'));   
     const map = await loader.loadAsync("../models/board/scene.gltf");
 
     map.scene.traverse((child) => {
@@ -33,6 +35,21 @@ export default class Board extends GameObject {
     const baseMesh = new THREE.Mesh(this.geometry, this.material);
     baseMesh.scale.fromArray(this.scale);
 
-    // const 
+    const planeGeometry = new THREE.PlaneBufferGeometry(12, 12, 1);
+    const planeMaterial = new THREE.MeshStandardMaterial(this.texture);
+
+    const topMesh = new THREE.Mesh(planeGeometry, planeMaterial);
+    topMesh.position.fromArray(this.position);
+    topMesh.scale.fromArray(this.scale);
+    topMesh.rotation.fromArray(this.rotation);
+    topMesh.receiveShadow = true;
+
+    return baseMesh;
+
+    // const res = new THREE.Group()
+    // res.add(baseMesh, topMesh);
+    // res.receiveShadow = true;
+
+    // return res;
   }
 }

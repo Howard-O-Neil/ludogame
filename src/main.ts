@@ -2,6 +2,7 @@
 // import Piece from "./components/Piece";
 // import Dice from "./components/Dice";
 import * as Colyseus from "colyseus.js";
+import {OrbitControls} from "three/examples/jsm/controls/OrbitControls";
 import * as THREE from 'three';
 import Board from "./components/Board";
 
@@ -11,17 +12,17 @@ export let globalState = {
   sayHi: '',
 }
 
-client.joinOrCreate("main_game").then(room => {
-  // client.send("powerup", { kind: "ammo" });
-  console.log('==== client ====')
-  console.log(client);
-  room.onStateChange((state) => {
-    console.log(state)
-  })
-  console.log(room.sessionId, "joined", room.name);
-}).catch(e => {
-  console.log("JOIN ERROR", e);
-});
+// client.joinOrCreate("main_game").then(room => {
+//   // client.send("powerup", { kind: "ammo" });
+//   console.log('==== client ====')
+//   console.log(client);
+//   room.onStateChange((state) => {
+//     console.log(state)
+//   })
+//   console.log(room.sessionId, "joined", room.name);
+// }).catch(e => {
+//   console.log("JOIN ERROR", e);
+// });
 
 const data = [
   [-5.439477664422223, 1.199988980367679, -5.308972802276404],
@@ -32,12 +33,19 @@ const data = [
 
 const colors = ["#8aacae", "#b4cb5f", "#ca5452", "#d7c944"];
 
-export default function Main() {
-  const scene = new THREE.Scene();
-  const camera = new THREE.PerspectiveCamera( 100, window.innerWidth / window.innerHeight, 0.1, 1000 );
+export default async function Main() {
 
+  // setup renderer
   const renderer = new THREE.WebGLRenderer();
   renderer.setSize( window.innerWidth, window.innerHeight );
+
+  document.body.appendChild( renderer.domElement );
+
+  // camera + scene
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 1000 );
+  camera.position.fromArray([0, 0, 0]);
+  // camera.position.fromArray([camVal, 0, 5]);
 
   const ambinentLight = new THREE.AmbientLight(); // soft white light
   ambinentLight.intensity = 0.5;
@@ -49,8 +57,13 @@ export default function Main() {
   // const sky = new THREE.Sky
 
   scene.add( ambinentLight, spotLight );
+  const board = new Board();
+  scene.add( await board.getMesh() );
 
-  document.getElementById('root')?.appendChild( renderer.domElement );
+  const controls = new OrbitControls( camera, renderer.domElement );
+  controls.update();
+  
+  // console.log(gr);
 
   // update function
   function update() {
@@ -60,7 +73,13 @@ export default function Main() {
   // render function
   function render() {
     requestAnimationFrame( render );
-    // console.log('test app');
+    
+    // update code
+
+    controls.update();
+
+    // end update
+    
     renderer.render( scene, camera );
   }
 
@@ -68,6 +87,3 @@ export default function Main() {
 };  
 
 Main();
-
-const board = new Board();
-board.getMesh();
