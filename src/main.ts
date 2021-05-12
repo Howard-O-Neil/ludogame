@@ -58,11 +58,25 @@ export default async function Main() {
 
   scene.add( ambinentLight, spotLight );
   const board = new Board();
-  scene.add( await board.getMesh() );
+
+  const mesh = await board.getMesh();
+
+  document.addEventListener('keydown', (ev) => {
+    mesh.rotation.z += 0.05;
+  })
+  scene.add( mesh );
+
+  console.log('bug hero');
 
   const controls = new OrbitControls( camera, renderer.domElement );
   controls.update();
-  
+  // controls.mouseButtons = {
+  //   LEFT: THREE.MOUSE.ROTATE,
+  //   MIDDLE: THREE.MOUSE.DOLLY,
+  //   RIGHT: THREE.MOUSE.PAN
+  // };
+  // controls.update();
+
   // console.log(gr);
 
   // update function
@@ -72,15 +86,11 @@ export default async function Main() {
 
   // render function
   function render() {
-    requestAnimationFrame( render );
-    
-    // update code
-
-    controls.update();
-
-    // end update
-    
     renderer.render( scene, camera );
+
+    console.log('bug hero');
+    
+    requestAnimationFrame( render );
   }
 
   render();

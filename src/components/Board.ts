@@ -7,9 +7,9 @@ export default class Board extends GameObject {
   constructor() {
     super();
 
-    this.position = [0, 0.2, 0];
+    this.position = [12, 0.2, 0];
     this.scale = [2, 2, 2];
-    this.rotation = [-Math.PI / 2, 0, 0];
+    this.rotation = [-Math.PI / 2, 0, 400];
   }
 
   loadResource = async () => {
@@ -44,12 +44,12 @@ export default class Board extends GameObject {
     topMesh.rotation.fromArray(this.rotation);
     topMesh.receiveShadow = true;
 
-    return baseMesh;
 
-    // const res = new THREE.Group()
-    // res.add(baseMesh, topMesh);
-    // res.receiveShadow = true;
+    const res = new THREE.Group()
+    res.receiveShadow = true;
+    res.add(baseMesh);
+    res.add(topMesh);
 
-    // return res;
+    return res;
   }
 }
