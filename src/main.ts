@@ -2,15 +2,17 @@
 // import Piece from "./components/Piece";
 // import Dice from "./components/Dice";
 import * as Colyseus from "colyseus.js";
-import {OrbitControls} from "three/examples/jsm/controls/OrbitControls";
-import * as THREE from 'three';
+import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
+import { Sky } from "three/examples/jsm/objects/Sky";
+import * as THREE from "three";
 import Board from "./components/Board";
+import * as dat from "dat.gui";
 
-let client = new Colyseus.Client('ws://localhost:2567');
+let client = new Colyseus.Client("ws://localhost:2567");
 
 export let globalState = {
-  sayHi: '',
-}
+  sayHi: "",
+};
 
 // client.joinOrCreate("main_game").then(room => {
 //   // client.send("powerup", { kind: "ammo" });
@@ -33,63 +35,133 @@ const data = [
 
 const colors = ["#8aacae", "#b4cb5f", "#ca5452", "#d7c944"];
 
-export default async function Main() {
+export default class MainGame {
+  sky: Sky;
+  sun: THREE.Vector3;
+  scene: THREE.Scene;
+  camera: THREE.PerspectiveCamera;
+  renderer: THREE.WebGLRenderer;
+  controls: OrbitControls;
 
-  // setup renderer
-  const renderer = new THREE.WebGLRenderer();
-  renderer.setSize( window.innerWidth, window.innerHeight );
-
-  document.body.appendChild( renderer.domElement );
-
-  // camera + scene
-  const scene = new THREE.Scene();
-  const camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 1000 );
-  camera.position.fromArray([0, 0,15]);
-
-  const ambinentLight = new THREE.AmbientLight(); // soft white light
-  ambinentLight.intensity = 0.5;
-
-  const spotLight = new THREE.PointLight();
-  spotLight.intensity = 1;
-  spotLight.position.set( 10, -25, -10 );
-
-  // const sky = new THREE.Sky
-
-  scene.add( ambinentLight, spotLight );
-  const board = new Board();
-
-  const mesh = await board.getMesh();
-  scene.add( mesh );
-
-  // controls.mouseButtons = {
-  //   LEFT: THREE.MOUSE.ROTATE,
-  //   MIDDLE: THREE.MOUSE.DOLLY,
-  //   RIGHT: THREE.MOUSE.PAN
-  // };
-  // controls.update();
-
-  // console.log(gr);
-
-  // update function
-  function update() {
-
+  getEffectController = () => {
+    return {
+      turbidity: 10,
+      rayleigh: 3,
+      mieCoefficient: 0.005,
+      mieDirectionalG: 0.7,
+      elevation: 2,
+      azimuth: 180,
+      exposure: this.renderer.toneMappingExposure,
+    }
   }
 
-  // render function
+  guiChanged = () => {
+    const effectController = this.getEffectController();
 
-  // setup orbit controls
-  const controls = new OrbitControls( camera, renderer.domElement );
-  controls.update();
+    const uniforms = this.sky.material.uniforms;
+    uniforms["turbidity"].value = effectController.turbidity;
+    uniforms["rayleigh"].value = effectController.rayleigh;
+    uniforms["mieCoefficient"].value = effectController.mieCoefficient;
+    uniforms["mieDirectionalG"].value = effectController.mieDirectionalG;
 
-  function render() {
-    renderer.render( scene, camera );
+    const phi = THREE.MathUtils.degToRad(90 - effectController.elevation);
+    const theta = THREE.MathUtils.degToRad(effectController.azimuth);
 
-    controls.update();
-    
-    requestAnimationFrame( render );
+    this.sun.setFromSphericalCoords(1, phi, theta);
+
+    uniforms["sunPosition"].value.copy(this.sun);
+
+    this.renderer.toneMappingExposure = effectController.exposure;
+    this.renderer.render(this.scene, this.camera);
   }
 
-  render();
-};  
+  initSky = () => {
+    // Add Sky
+    this.sky = new Sky();
+    this.sky.scale.setScalar(450000);
+    this.scene.add(this.sky);
 
-Main();
+    this.sun = new THREE.Vector3();
+
+    /// GUI
+    const effectController = this.getEffectController();
+    const gui = new dat.GUI();
+
+    gui.add(effectController, "turbidity", 0.0, 20.0, 0.1).onChange(this.guiChanged);
+    gui.add(effectController, "rayleigh", 0.0, 4, 0.001).onChange(this.guiChanged);
+    gui
+      .add(effectController, "mieCoefficient", 0.0, 0.1, 0.001)
+      .onChange(this.guiChanged);
+    gui
+      .add(effectController, "mieDirectionalG", 0.0, 1, 0.001)
+      .onChange(this.guiChanged);
+    gui.add(effectController, "elevation", 0, 90, 0.1).onChange(this.guiChanged);
+    gui.add(effectController, "azimuth", -180, 180, 0.1).onChange(this.guiChanged);
+    gui.add(effectController, "exposure", 0, 1, 0.0001).onChange(this.guiChanged);
+
+    this.guiChanged();
+  };
+
+  public initGameplay = async () => {
+    // setup renderer
+    this.renderer = new THREE.WebGLRenderer();
+    this.renderer.setSize(window.innerWidth, window.innerHeight);
+
+    document.body.appendChild(this.renderer.domElement);
+
+    // camera + scene
+    this.scene = new THREE.Scene();
+    this.camera = new THREE.PerspectiveCamera(
+      75,
+      window.innerWidth / window.innerHeight,
+      0.1,
+      1000
+    );
+    this.camera.position.fromArray([-11.5, 14, 15.5]);
+
+    const ambinentLight = new THREE.AmbientLight(); // soft white light
+    ambinentLight.intensity = 0.5;
+
+    const spotLight = new THREE.PointLight();
+    spotLight.intensity = 1;
+    spotLight.position.set(10, -25, -10);
+
+    this.scene.add(ambinentLight, spotLight);
+
+    this.initSky();
+
+    // init game objects
+    const board = new Board();
+
+    const mesh = await board.getMesh();
+    this.scene.add(mesh);
+
+    // render function
+
+    // tool for inspect information
+    document.addEventListener("keydown", (ev) => {
+      if (ev.shiftKey && ev.key === "c") {
+        console.log(`===== camera position =====`);
+        console.log(this.camera.position);
+      }
+    });
+
+    // setup orbit controls
+    this.controls = new OrbitControls(this.camera, this.renderer.domElement);
+    this.controls.update();
+
+    this.render();
+  };
+
+  render = () => {
+    this.renderer.render(this.scene, this.camera);
+
+    this.controls.update();
+
+    requestAnimationFrame(this.render);
+  }
+}
+
+
+const game = new MainGame();
+game.initGameplay();

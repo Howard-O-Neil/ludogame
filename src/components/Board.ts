@@ -4,12 +4,16 @@ import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
 import GameObject from "./GameObject";
 
 export default class Board extends GameObject {
+  texturePosition: number[];
+  textureScale: number[];
+  textureRotation: number[];
+
   constructor() {
     super();
 
-    this.position = [12, 0.2, 0];
-    this.scale = [2, 2, 2];
-    this.rotation = [-Math.PI / 2, 0, 400];
+    this.texturePosition = [0, 0.2, 0];
+    this.textureScale = [2, 2, 2];
+    this.textureRotation = [-Math.PI / 2, 0, 0];
   }
 
   loadResource = async () => {
@@ -22,8 +26,6 @@ export default class Board extends GameObject {
       if (child.name === "ludoludo4_ludolambert3_0") {
         this.geometry = child['geometry'];
         this.material = child['material'];
-
-        // console.log("done parsing");
         return;
       }
     });
@@ -33,9 +35,7 @@ export default class Board extends GameObject {
     await this.loadResource();
   
     const baseMesh = new THREE.Mesh(this.geometry, this.material);
-    baseMesh.scale.fromArray(this.scale);
-
-    console.log(this.texture);
+    baseMesh.scale.fromArray(this.textureScale);
 
     const planeGeometry = new THREE.PlaneGeometry(12, 12, 1);
     const planeMaterial = new THREE.MeshBasicMaterial({
@@ -43,9 +43,9 @@ export default class Board extends GameObject {
     });
 
     const topMesh = new THREE.Mesh(planeGeometry, planeMaterial);
-    topMesh.position.fromArray(this.position);
-    topMesh.scale.fromArray(this.scale);
-    topMesh.rotation.fromArray(this.rotation);
+    topMesh.scale.fromArray(this.textureScale);
+    topMesh.rotation.fromArray(this.textureRotation);
+    topMesh.position.fromArray(this.texturePosition);
     topMesh.receiveShadow = true;
 
 

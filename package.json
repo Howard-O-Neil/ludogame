@@ -3,9 +3,11 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@types/dat.gui": "^0.7.6",
     "clean-webpack-plugin": "^3.0.0",
     "colyseus.js": "^0.14.12",
     "css-loader": "^5.2.4",
+    "dat.gui": "^0.7.7",
     "html-webpack-plugin": "^5.3.1",
     "nanoid": "^3.1.22",
     "react": "^17.0.2",
