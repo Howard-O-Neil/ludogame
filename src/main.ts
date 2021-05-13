@@ -37,68 +37,78 @@ const colors = ["#8aacae", "#b4cb5f", "#ca5452", "#d7c944"];
 
 export default class MainGame {
   sky: Sky;
-  sun: THREE.Vector3;
+  sunPosition: THREE.Vector3;
   scene: THREE.Scene;
   camera: THREE.PerspectiveCamera;
   renderer: THREE.WebGLRenderer;
   controls: OrbitControls;
+  gridHelper: THREE.GridHelper;
 
-  getEffectController = () => {
-    return {
+  effectController: {
+    turbidity: number,
+    rayleigh: number,
+    mieCoefficient: number,
+    mieDirectionalG: number,
+    elevation: number,
+    azimuth: number,
+    exposure: number,
+  };
+
+  constructor() {
+    this.effectController = {
       turbidity: 10,
       rayleigh: 3,
       mieCoefficient: 0.005,
       mieDirectionalG: 0.7,
       elevation: 2,
       azimuth: 180,
-      exposure: this.renderer.toneMappingExposure,
+      exposure: null,
     }
   }
 
   guiChanged = () => {
-    const effectController = this.getEffectController();
-
     const uniforms = this.sky.material.uniforms;
-    uniforms["turbidity"].value = effectController.turbidity;
-    uniforms["rayleigh"].value = effectController.rayleigh;
-    uniforms["mieCoefficient"].value = effectController.mieCoefficient;
-    uniforms["mieDirectionalG"].value = effectController.mieDirectionalG;
+    uniforms["turbidity"].value = this.effectController.turbidity;
+    uniforms["rayleigh"].value = this.effectController.rayleigh;
+    uniforms["mieCoefficient"].value = this.effectController.mieCoefficient;
+    uniforms["mieDirectionalG"].value = this.effectController.mieDirectionalG;
 
-    const phi = THREE.MathUtils.degToRad(90 - effectController.elevation);
-    const theta = THREE.MathUtils.degToRad(effectController.azimuth);
+    const phi = THREE.MathUtils.degToRad(90 - this.effectController.elevation);
+    const theta = THREE.MathUtils.degToRad(this.effectController.azimuth);
 
-    this.sun.setFromSphericalCoords(1, phi, theta);
+    this.sunPosition.setFromSphericalCoords(1, phi, theta);
 
-    uniforms["sunPosition"].value.copy(this.sun);
+    uniforms["sunPosition"].value.copy(this.sunPosition);
 
-    this.renderer.toneMappingExposure = effectController.exposure;
+    this.sky.material.uniforms = {...uniforms};
+    this.renderer.toneMappingExposure = this.effectController.exposure;
     this.renderer.render(this.scene, this.camera);
   }
 
   initSky = () => {
     // Add Sky
+    this.effectController.exposure = this.renderer.toneMappingExposure;
     this.sky = new Sky();
     this.sky.scale.setScalar(450000);
-    this.scene.add(this.sky);
 
-    this.sun = new THREE.Vector3();
+    this.sunPosition = new THREE.Vector3();
 
     /// GUI
-    const effectController = this.getEffectController();
     const gui = new dat.GUI();
 
-    gui.add(effectController, "turbidity", 0.0, 20.0, 0.1).onChange(this.guiChanged);
-    gui.add(effectController, "rayleigh", 0.0, 4, 0.001).onChange(this.guiChanged);
+    gui.add(this.effectController, "turbidity", 0.0, 20.0, 0.1).onChange(() => this.guiChanged());
+    gui.add(this.effectController, "rayleigh", 0.0, 4, 0.001).onChange(() => this.guiChanged());
     gui
-      .add(effectController, "mieCoefficient", 0.0, 0.1, 0.001)
-      .onChange(this.guiChanged);
+      .add(this.effectController, "mieCoefficient", 0.0, 0.1, 0.001)
+      .onChange(() => this.guiChanged());
     gui
-      .add(effectController, "mieDirectionalG", 0.0, 1, 0.001)
-      .onChange(this.guiChanged);
-    gui.add(effectController, "elevation", 0, 90, 0.1).onChange(this.guiChanged);
-    gui.add(effectController, "azimuth", -180, 180, 0.1).onChange(this.guiChanged);
-    gui.add(effectController, "exposure", 0, 1, 0.0001).onChange(this.guiChanged);
+      .add(this.effectController, "mieDirectionalG", 0.0, 1, 0.001)
+      .onChange(() => this.guiChanged());
+    gui.add(this.effectController, "elevation", 0, 90, 0.1).onChange(() => this.guiChanged());
+    gui.add(this.effectController, "azimuth", -180, 180, 0.1).onChange(() => this.guiChanged());
+    gui.add(this.effectController, "exposure", 0, 1, 0.0001).onChange(() => this.guiChanged());
 
+    this.scene.add(this.sky);
     this.guiChanged();
   };
 
@@ -117,6 +127,12 @@ export default class MainGame {
       0.1,
       1000
     );
+    window.onresize = (ev) => {
+      this.renderer.setSize(window.innerWidth, window.innerHeight);
+      this.camera.aspect = window.innerWidth / window.innerHeight;
+      this.camera.updateProjectionMatrix();
+    };
+
     this.camera.position.fromArray([-11.5, 14, 15.5]);
 
     const ambinentLight = new THREE.AmbientLight(); // soft white light
@@ -129,6 +145,9 @@ export default class MainGame {
     this.scene.add(ambinentLight, spotLight);
 
     this.initSky();
+
+    this.gridHelper = new THREE.GridHelper(200, 2, 0xffffff, 0xffffff);
+    this.scene.add(this.gridHelper);
 
     // init game objects
     const board = new Board();
