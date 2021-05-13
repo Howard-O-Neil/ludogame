@@ -7,6 +7,8 @@ import { Sky } from "three/examples/jsm/objects/Sky";
 import * as THREE from "three";
 import Board from "./components/Board";
 import * as dat from "dat.gui";
+import GameObject from "./components/GameObject";
+import Piece from "./components/Piece";
 
 let client = new Colyseus.Client("ws://localhost:2567");
 
@@ -25,6 +27,13 @@ export let globalState = {
 // }).catch(e => {
 //   console.log("JOIN ERROR", e);
 // });
+
+export interface CyclinderBasicParam {
+  radiusTop: number,
+  radiusBottom: number,
+  radialSegments: number,
+  heightSegments: number,
+}
 
 const data = [
   [-5.439477664422223, 1.199988980367679, -5.308972802276404],
@@ -150,10 +159,25 @@ export default class MainGame {
     this.scene.add(this.gridHelper);
 
     // init game objects
-    const board = new Board();
+    const objList: GameObject[] = [];
+    objList.push(new Board());
 
-    const mesh = await board.getMesh();
-    this.scene.add(mesh);
+    for (let i = 0; i < data.length; i++) {
+      objList.push(new Piece(
+        colors[i],
+        {
+          radiusTop: 0.08,
+          radiusBottom: 0.7,
+          radialSegments: 2,
+          heightSegments: 50
+        },
+        data[i]));
+    }
+
+    for (const obj of objList) {
+      const mesh = await obj.getMesh();
+      this.scene.add(mesh);
+    }
 
     // render function
 

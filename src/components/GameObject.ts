@@ -11,4 +11,6 @@ export default class GameObject {
     this.rotation = [0, 0, 0];
     this.position = [0, 0, 0];
   }
+
+  getMesh;
 }
