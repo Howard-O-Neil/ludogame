@@ -44,8 +44,7 @@ export default async function Main() {
   // camera + scene
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 1000 );
-  camera.position.fromArray([0, 0, 0]);
-  // camera.position.fromArray([camVal, 0, 5]);
+  camera.position.fromArray([0, 0,15]);
 
   const ambinentLight = new THREE.AmbientLight(); // soft white light
   ambinentLight.intensity = 0.5;
@@ -60,16 +59,8 @@ export default async function Main() {
   const board = new Board();
 
   const mesh = await board.getMesh();
-
-  document.addEventListener('keydown', (ev) => {
-    mesh.rotation.z += 0.05;
-  })
   scene.add( mesh );
 
-  console.log('bug hero');
-
-  const controls = new OrbitControls( camera, renderer.domElement );
-  controls.update();
   // controls.mouseButtons = {
   //   LEFT: THREE.MOUSE.ROTATE,
   //   MIDDLE: THREE.MOUSE.DOLLY,
@@ -85,10 +76,15 @@ export default async function Main() {
   }
 
   // render function
+
+  // setup orbit controls
+  const controls = new OrbitControls( camera, renderer.domElement );
+  controls.update();
+
   function render() {
     renderer.render( scene, camera );
 
-    console.log('bug hero');
+    controls.update();
     
     requestAnimationFrame( render );
   }

@@ -35,8 +35,12 @@ export default class Board extends GameObject {
     const baseMesh = new THREE.Mesh(this.geometry, this.material);
     baseMesh.scale.fromArray(this.scale);
 
-    const planeGeometry = new THREE.PlaneBufferGeometry(12, 12, 1);
-    const planeMaterial = new THREE.MeshStandardMaterial(this.texture);
+    console.log(this.texture);
+
+    const planeGeometry = new THREE.PlaneGeometry(12, 12, 1);
+    const planeMaterial = new THREE.MeshBasicMaterial({
+      map: this.texture
+    });
 
     const topMesh = new THREE.Mesh(planeGeometry, planeMaterial);
     topMesh.position.fromArray(this.position);
