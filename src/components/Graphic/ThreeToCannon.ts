@@ -1,7 +1,7 @@
 import { Box, Quaternion as CQuaternion, ConvexPolyhedron, Cylinder, Shape, Sphere, Trimesh, Vec3 } from 'cannon-es';
 import { Box3, BufferGeometry, CylinderGeometry, MathUtils, Mesh, Object3D, SphereGeometry, Vector3 } from 'three';
 import { ConvexHull } from '../lib/ConvexHull.js';
-import { getComponent, getGeometry, getVertices } from './utils.js';
+import { getComponent, getGeometry, getVertices } from './ThreeToCannonHelper';
 
 const PI_2 = Math.PI / 2;
 
