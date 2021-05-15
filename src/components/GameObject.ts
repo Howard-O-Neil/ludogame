@@ -15,7 +15,7 @@ export default class GameObject {
   mass: number;
   rigidBody: CANNON.Body;
   // velocity: CANNON.Vec3;
-  mesh: THREE.Mesh[];
+  // mesh: THREE.Mesh[];
   mainModel: THREE.Object3D;
   
   constructor() {
@@ -24,7 +24,7 @@ export default class GameObject {
     this.rotation = new CANNON.Vec3();
     this.position = new CANNON.Vec3();
 
-    this.mesh = [];
+    // this.mesh = [];
   }
 
   getMesh; // abstract function

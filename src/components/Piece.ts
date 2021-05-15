@@ -43,16 +43,12 @@ export default class Piece extends GameObject {
     topMesh.receiveShadow = true;
     topMesh.castShadow = true;
 
-    this.mesh.push(baseMesh);
-    this.mesh.push(topMesh);
-    
     this.mainModel = new THREE.Group();
     this.mainModel.position.fromArray(Object.values(this.position));
     this.mainModel.receiveShadow = true;
 
-    for (const mesh of this.mesh) {
-      this.mainModel.add(mesh);
-    }
+    this.mainModel.add(baseMesh);
+    this.mainModel.add(topMesh);
 
     this.rigidBody = createRigidBodyForGroup(<THREE.Group>this.mainModel, {
       mass: this.mass,

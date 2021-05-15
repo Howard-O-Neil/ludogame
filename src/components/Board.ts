@@ -46,15 +46,11 @@ export default class Board extends GameObject {
     topMesh.position.fromArray([0, 0.2, 0]);
     topMesh.receiveShadow = true;
 
-    this.mesh.push(baseMesh);
-    this.mesh.push(topMesh);
-
     this.mainModel = new THREE.Group();
     this.mainModel.receiveShadow = true;
 
-    for (const mesh of this.mesh) {
-      this.mainModel.add(mesh);
-    }
+    this.mainModel.add(baseMesh);
+    this.mainModel.add(topMesh);
 
     this.rigidBody = createRigidBodyForGroup(<THREE.Group>this.mainModel, {
       mass: this.mass,
