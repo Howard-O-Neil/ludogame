@@ -43,25 +43,20 @@ export default class Dice extends GameObject {
   initObject = async () =>  {
     await this.loadResource();
 
-    this.geometry = new THREE.BoxGeometry(2, 2, 2, 1, 1, 1);
-    this.material = new THREE.MeshPhysicalMaterial({
-      color: "red",
-      clearcoat: 1,
-      clearcoatRoughness: 0
-    });
+    // this.geometry = new THREE.BoxGeometry(2, 2, 2, 1, 1, 1);
+    // this.material = new THREE.MeshPhysicalMaterial({
+    //   color: "red",
+    //   clearcoat: 1,
+    //   clearcoatRoughness: 0
+    // });
     const baseMesh = new THREE.Mesh(this.geometry, this.material);
     baseMesh.receiveShadow = true;
-    baseMesh.scale.fromArray(Object.values(this.scale));
-
-    this.geometry.scale(this.scale.x, this.scale.y, this.scale.z);
 
     const mesh = new THREE.Mesh(this.geometry, this.material);
     this.mainModel = new THREE.Group();
     this.mainModel.add(mesh);
 
-    // this.mainModel.scale.copy(convertToThreeVec3(this.scale));
-
-    console.log("========= dice =========")
+    this.applyScale(...[2, 2, 2]);
 
     this.rigidBody = createRigidBodyForGroup(<THREE.Group>this.mainModel, {
       mass: this.mass,

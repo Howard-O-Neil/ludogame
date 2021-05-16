@@ -33,15 +33,15 @@ export default class Board extends GameObject {
     await this.loadResource();
   
     const baseMesh = new THREE.Mesh(this.geometry, this.material);
-    baseMesh.scale.fromArray(Object.values(this.scale));
-
-    const planeGeometry = new THREE.PlaneGeometry(12, 12, 1);
+    
+    let planeGeometry = new THREE.PlaneGeometry(12, 12, 1);
+    // planeGeometry = <THREE.PlaneGeometry>planeGeometry.scale(2, 2, 2);
     const planeMaterial = new THREE.MeshBasicMaterial({
       map: this.texture
     });
 
-    const topMesh = new THREE.Mesh(planeGeometry, planeMaterial);
-    topMesh.scale.fromArray(Object.values(this.scale));
+    let topMesh = new THREE.Mesh(planeGeometry, planeMaterial);
+    
     topMesh.rotation.fromArray([-Math.PI / 2, 0, 0]);
     topMesh.position.fromArray([0, 0.2, 0]);
     topMesh.receiveShadow = true;
@@ -52,7 +52,8 @@ export default class Board extends GameObject {
     this.mainModel.add(baseMesh);
     this.mainModel.add(topMesh);
 
-    console.log("========= board =========")
+    this.applyScale(...[2, 2, 2]);
+
     this.rigidBody = createRigidBodyForGroup(<THREE.Group>this.mainModel, {
       mass: this.mass,
       position: this.position,

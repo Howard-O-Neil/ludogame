@@ -17,7 +17,7 @@ export default class GameObject {
   rigidBody: CANNON.Body;
   // velocity: CANNON.Vec3;
   // mesh: THREE.Mesh[];
-  mainModel: THREE.Object3D;
+  mainModel: THREE.Group;
   
   constructor() {
     this.size = new CANNON.Vec3();
@@ -61,5 +61,12 @@ export default class GameObject {
 
   setPosition = (position: CANNON.Vec3) => {
     this.rigidBody.position = position;
+  }
+
+  applyScale = (x?: number, y?: number, z?: number) => {
+    for (const child of this.mainModel.children) {
+      const mesh = <THREE.Mesh>child;
+      mesh.geometry.scale(x, y, z);
+    }
   }
 }

@@ -99,14 +99,11 @@ function createBoundingBoxShape (object: Object3D): ShapeResult | null {
 	const size = (object as Mesh).geometry.boundingBox.getSize(new Vector3());
 	// size.y /= 2;
 
-	console.log("========= object start =========");
-	console.log(size);
-	console.log((object as Mesh).geometry.boundingBox.getSize(new Vector3()))
-
 	const shape = new Box(new Vec3(
 		...Object.values(size)
 	).scale(0.5));
 
+	// shape.to
 	return {
 		shape,
 		offset: null
@@ -185,8 +182,6 @@ function createBoundingCylinderShape (object: Object3D, options: ShapeOptions): 
 	const majorAxis = options.cylinderAxis || 'y';
 	const minorAxes = axes.splice(axes.indexOf(majorAxis), 1) && axes;
 	const box = new Box3().setFromObject(object);
-
-	// console.log(object);
 
 	if (!isFinite(box.min.lengthSq())) return null;
 

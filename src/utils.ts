@@ -66,9 +66,9 @@ export const createRigidBodyForGroup = (
     (<THREE.Mesh>item).geometry.computeBoundingSphere();
 
     const shape = createShapeForMesh(<THREE.Mesh>item);
-
+    
     const offset = new CANNON.Vec3(...Object.values(
-      item.position));
+      (<THREE.Mesh>item).geometry.boundingSphere.center));
 
     const orientation = new CANNON.Quaternion(
       ...Object.values(item.quaternion));
@@ -92,9 +92,14 @@ export const createRigidBodyForMesh = (
   // rigidBody.quaternion.set() = model.quaternion;
 
   const shape = createShapeForMesh(<THREE.Mesh>model);
-    rigidBody.addShape(shape, new CANNON.Vec3(...Object.values(
-      model.geometry.boundingBox.getCenter(new THREE.Vector3())
-  )));
+
+  const offset = new CANNON.Vec3(...Object.values(
+    model.position));
+
+  const orientation = new CANNON.Quaternion(
+    ...Object.values(model.quaternion));
+
+  rigidBody.addShape(shape, offset, orientation);
 
   return rigidBody;
 };
