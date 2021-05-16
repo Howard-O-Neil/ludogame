@@ -1,4 +1,4 @@
-import { convertToCannonVec3, createRigidBodyForMesh, createRigidBodyForGroup, convertToThreeVec3, convertToCannonQuaternion } from './../utils';
+import { convertToCannonVec3, createRigidBodyForGroup, convertToThreeVec3, convertToCannonQuaternion } from './../utils';
 import * as Colyseus from "colyseus.js";
 import * as THREE from "three";
 import * as CANNON from "cannon-es";
@@ -19,7 +19,7 @@ export default class Dice extends GameObject {
   constructor(position, scale, camera, world) {
     super();
 
-    this.mass = 10;
+    this.mass = 15;
     this.scale = new CANNON.Vec3(...scale);
     this.position = new CANNON.Vec3(...position);
     this.camera = camera;
@@ -49,26 +49,38 @@ export default class Dice extends GameObject {
     listMesh.push(new THREE.Mesh(this.geometry[this.childNode[0]], this.material[this.childNode[0]]));
     listMesh[0].receiveShadow = true;
     
-    const mesh = new THREE.CylinderGeometry();
     this.addMesh(...listMesh);
     this.initScale(...[2, 2, 2]);
     this.initRigidBody();
   }
 
-  keyboardHandle = (ev: KeyboardEvent) => {
-    if (ev.key == 'r') {
-      // 0this.setPosition(convertToCannonVec3(this.camera.position));
-      this.launch(new CANNON.Vec3(0, 50, 0));
-    } else if (ev.key == 'x') {
-      this.applyScale(...[2, 2, 2]);
+  keyboardHandle = (table) => {
+    this.rigidBody.wakeUp(); // very important
+
+    let keycode = require('keycode');
+    if (table[keycode('space')]) {
+      this.setPosition(convertToCannonVec3(this.camera.position));
+      this.setRotation(new CANNON.Vec3(-Math.PI / 4, 0, Math.PI / 4));
+      this.setAngularVelocity(new CANNON.Vec3(10, 10, 10));
+      this.launch(new CANNON.Vec3(0, 10, -22));
+    } else if (table[keycode('q')]) {
+      console.log('cc');
+      this.launch(new CANNON.Vec3(0, 10, -20));
     }
   }
 
   update = () => {
     // update rigidBody upon value from object
 
+    // console.log("the fuck")
+    // console.log(this.mainModel.position);
+    // console.log(this.rigidBody.position);
+
+
     this.mainModel.position.fromArray(Object.values(this.rigidBody.position));
     this.mainModel.quaternion.fromArray(Object.values(this.rigidBody.quaternion));
+
+    // console.log(this.rigidBody.velocity);
   }
 
   getMesh = async () => {

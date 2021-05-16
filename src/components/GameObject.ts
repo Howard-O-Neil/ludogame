@@ -1,3 +1,4 @@
+import { type } from '@colyseus/schema';
 import { BufferGeometryUtils } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { convertToCannonVec3, createRigidBodyForGroup } from './../utils';
 import * as CANNON from "cannon-es";
@@ -21,7 +22,7 @@ export default class GameObject {
   
   constructor() {
     this.size = new CANNON.Vec3();
-    this.scale = new CANNON.Vec3();
+    this.scale = new CANNON.Vec3(1, 1, 1);
     this.rotation = new CANNON.Vec3();
     this.position = new CANNON.Vec3();
 
@@ -64,11 +65,37 @@ export default class GameObject {
   }
 
   launch = (velocity: CANNON.Vec3) => {
-    this.rigidBody.velocity = velocity;
+    this.rigidBody.velocity.set(velocity.x, velocity.y, velocity.z);
   }
 
   setPosition = (position: CANNON.Vec3) => {
-    this.rigidBody.position = position;
+    this.rigidBody.position.set(position.x, position.y, position.z);
+  }
+
+  setAngularVelocity = (velocity: CANNON.Vec3) => {
+    this.rigidBody.angularVelocity.set(velocity.x, velocity.y, velocity.z);
+  }
+
+  setRotation = (rotation: CANNON.Vec3) => {
+    let quatX = new CANNON.Quaternion();
+    let quatY = new CANNON.Quaternion();
+    let quatZ = new CANNON.Quaternion();
+
+    quatX.setFromAxisAngle(new CANNON.Vec3(1,0,0), rotation.x);
+    quatY.setFromAxisAngle(new CANNON.Vec3(0,1,0), rotation.y);
+    quatZ.setFromAxisAngle(new CANNON.Vec3(0,0,1), rotation.z);
+
+    let quaternion = quatX.mult(quatY).mult(quatZ);
+    quaternion.normalize();
+
+    quaternion.vmult(new CANNON.Vec3(10, 10, 10));
+
+    this.rigidBody.quaternion.set(
+      quaternion.x,
+      quaternion.y,
+      quaternion.z,
+      quaternion.w
+    );
   }
 
   initScale = (x?: number, y?: number, z?: number) => {
@@ -81,33 +108,47 @@ export default class GameObject {
   initRigidBody = () => {
     this.rigidBody = createRigidBodyForGroup(<THREE.Group>this.mainModel, {
       mass: this.mass,
-      position: this.position,
+      position: new CANNON.Vec3(this.position.x, this.position.y *  0.5, this.position.z),
     });
     this.world.addBody(this.rigidBody);
   }
 
   resetRigidBody = () => {
     const oldRigid = this.rigidBody;
-    this.world.removeBody(this.rigidBody);
     
     this.rigidBody = createRigidBodyForGroup(<THREE.Group>this.mainModel, {
       position: oldRigid.position,
       velocity: oldRigid.velocity,
+      quaternion: oldRigid.quaternion,
       mass: oldRigid.mass,
     });
+    this.world.removeBody(oldRigid);
     this.world.addBody(this.rigidBody);
   }
 
   addMesh = (...meshes: THREE.Mesh[]) => {
     for (const mesh of meshes) {
+      mesh.geometry.center(); // very important
       this.mainModel.add(mesh);
     }
   }
 
-  applyScale = (x?: number, y?: number, z?: number) => {
+  applyScale = (num: number) => {
+    this.scale.x *= num;
+    this.scale.y *= num;
+    this.scale.z *= num;
+
     for (const child of this.mainModel.children) {
       const mesh = <THREE.Mesh>child;
-      mesh.geometry.scale(x, y, z);
+      // console.log(mesh.geometn.z ry.type);
+      mesh.position.set(
+        (mesh.position.x * num),
+        (mesh.position.y * num),
+        (mesh.position.z * num),
+      );
+      
+
+      mesh.geometry.scale(num, num, num);
     }
     this.resetRigidBody();
   }

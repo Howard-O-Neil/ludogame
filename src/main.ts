@@ -11,6 +11,7 @@ import * as dat from "dat.gui";
 import GameObject from "./components/GameObject";
 import Piece from "./components/Piece";
 import Dice from "./components/Dice";
+import $ from "jquery";
 import { CannonDebugRenderer, createCannonDebugger } from "./components/CannonDebug";
 
 let client = new Colyseus.Client("ws://localhost:2567");
@@ -42,15 +43,15 @@ export interface CyclinderBasicParam {
 }
 
 const data = [
-  [-5.439477664422223, 2.199988980367679, -5.308972802276404],
-  [-5.393146085870269, 2.1999890702525435, -7.71029413378612],
-  [-7.779093281241222, 2.1999884336587399, -7.6962970855280775],
-  [-7.735512466757786, 2.199988657083725, -5.359430200465674],
+  [-5.439477664422223, 20.199988980367679, -5.308972802276404],
+  [-5.393146085870269, 20.1999890702525435, -7.71029413378612],
+  [-7.779093281241222, 20.1999884336587399, -7.6962970855280775],
+  [-7.735512466757786, 20.199988657083725, -5.359430200465674],
 ];
 
 const colors = ["#8aacae", "#b4cb5f", "#ca5452", "#d7c944"];
 
-const FPS = 1 / 60;
+const FPS = 1 / 80;
 
 export default class MainGame {
 
@@ -66,6 +67,7 @@ export default class MainGame {
 
   cannonDebugger: CannonDebugRenderer;
 
+  keyCodes: Array<boolean>;
 
   // physics
 
@@ -95,6 +97,13 @@ export default class MainGame {
       azimuth: 180,
       exposure: null,
     }
+    this.keyCodes = new Array(255);
+    this.resetKeycode();
+  }
+
+  resetKeycode = () => {
+    for (let i = 0; i < this.keyCodes.length; i++)
+      this.keyCodes[i] = false;    
   }
 
   guiChanged = () => {
@@ -187,6 +196,10 @@ export default class MainGame {
     this.initWorld()
 
     this.gameObjectList = [];
+
+    this.gameObjectList.push(new Board(this.world));
+    this.gameObjectList.push(new Dice([0, 10, 0], [5, 5, 5], this.camera, this.world));
+
     for (let i = 0; i < data.length; i++) {
       this.gameObjectList.push(new Piece(
         colors[i],
@@ -198,24 +211,24 @@ export default class MainGame {
         },
         data[i], this.world));
     }
-
-    this.gameObjectList.push(new Board(this.world));
-    this.gameObjectList.push(new Dice([0, 10, 0], [5, 5, 5], this.camera, this.world));
     
     //cannonDebugRenderer = new THREE.CannonDebugRenderer(scene, world);
     this.cannonDebugger = createCannonDebugger(this.scene, this.world);
 
     for (const obj of this.gameObjectList) {
-      const mesh = await obj.getMesh();
-      this.scene.add(mesh);
+      if (obj.getMesh) {
+        const mesh = await obj.getMesh();
+        this.scene.add(mesh);  
+      }
     }
 
     // render function
 
     // keyboard
-    document.addEventListener("keydown", (ev) => {
-      this.keyboardHandle(ev);
-    });
+    $(document).on('keypress', ev => {
+      let keycode = require('keycode');
+      this.keyCodes[keycode(ev.key)] = true;
+    })
 
     // setup orbit controls
     this.controls = new OrbitControls(this.camera, this.renderer.domElement);
@@ -224,11 +237,13 @@ export default class MainGame {
     this.render();
   };
 
-  keyboardHandle = (ev: KeyboardEvent) => {
+  keyboardHandle = () => {
+    // console.log(ev);
     for (const gameObj of this.gameObjectList) {
       if (gameObj.keyboardHandle)
-        gameObj.keyboardHandle(ev);
+        gameObj.keyboardHandle(this.keyCodes);
     }
+    this.resetKeycode();
   }
 
   updatePhysics = () => {
@@ -245,6 +260,8 @@ export default class MainGame {
     this.cannonDebugger.update();
 
     this.controls.update();
+    
+    this.keyboardHandle();
     this.updatePhysics();
 
     requestAnimationFrame(this.render);

@@ -4,19 +4,12 @@ import * as THREE from "three";
 import * as CANNON from "cannon-es";
 import { cyclinderRadicalSegment } from "../constant";
 
-let flag = true;
-
 export class CannonDebugRenderer {
   options;
   scene: THREE.Scene;
   world: CANNON.World;
   _meshes: THREE.Mesh[];
   _material: THREE.MeshBasicMaterial;
-
-  _sphereGeometry: THREE.SphereGeometry;
-  _boxGeometry: THREE.BoxGeometry;
-  _planeGeometry: THREE.PlaneGeometry;
-  _cylinderGeometry: THREE.CylinderGeometry;
 
   tmpVec0 = new CANNON.Vec3();
   tmpVec1 = new CANNON.Vec3();
@@ -35,10 +28,6 @@ export class CannonDebugRenderer {
       color: 0x00ff00,
       wireframe: true
     });
-    this._sphereGeometry = new THREE.SphereGeometry(1);
-    this._boxGeometry = new THREE.BoxGeometry(1, 1, 1);
-    this._planeGeometry = new THREE.PlaneGeometry(10, 10, 10, 10);
-    this._cylinderGeometry = new THREE.CylinderGeometry(1, 1, 10, 10);
   }
 
   update = () => {
@@ -94,7 +83,7 @@ export class CannonDebugRenderer {
       }
       mesh = this._meshes[index] = this._resetMesh(shape);
     }
-    // this._scaleMesh(mesh, shape);
+    this._scaleMesh(mesh, shape);
   }
 
   _typeMatch = (mesh: THREE.Mesh, shape: CANNON.Shape) => {
@@ -110,34 +99,68 @@ export class CannonDebugRenderer {
     );
   }
 
+  _scaleMesh = (mesh: THREE.Mesh, shape) => {
+    switch(shape.type){
+    case CANNON.Shape.types.SPHERE:
+      const sphereRadius = (<CANNON.Sphere>shape).radius;
+      mesh.scale.set(sphereRadius, sphereRadius, sphereRadius);
+      break;
+
+    case CANNON.Shape.types.BOX:
+      const boxHalfExtend = (<CANNON.Box>shape).halfExtents;
+        
+      mesh.scale.fromArray(Object.values(boxHalfExtend));
+      mesh.scale.multiplyScalar(2);
+      break;
+
+    case CANNON.Shape.types.CYLINDER:
+      // console.log(shape.halfExtents)
+      const heightRatio = (<CANNON.Cylinder>shape).height / mesh.geometry['parameters'].height;
+      const radiusRatio = (<CANNON.Cylinder>shape).radiusBottom / mesh.geometry['parameters'].radiusBottom;
+      // console.log(ratio);
+      mesh.geometry.scale(radiusRatio, heightRatio, radiusRatio);
+      mesh.geometry['parameters'].height = (<CANNON.Cylinder>shape).height;
+      mesh.geometry['parameters'].radiusTop = (<CANNON.Cylinder>shape).radiusTop;
+      mesh.geometry['parameters'].radiusBottom = (<CANNON.Cylinder>shape).radiusBottom;
+      // mesh.scale.multiplyScalar(ratio);
+
+      break;
+
+
+    // case CANNON.Shape.types.CONVEXPOLYHEDRON:
+    //   mesh.scale.set(1,1,1);
+    //   break;
+
+    // case CANNON.Shape.types.TRIMESH:
+    //   mesh.scale.copy(shape.scale);
+    //   break;
+
+    // case CANNON.Shape.types.HEIGHTFIELD:
+    //   mesh.scale.set(1,1,1);
+    //   break;
+
+    }
+}
+
   // work on scale operation + special props
   _resetMesh = (shape: CANNON.Shape) => {
     let mesh: THREE.Mesh;
     let material = this._material;
 
-    if (flag) {
-      console.log(shape);
-      flag = false;
-    }
     switch (shape.type) {
       case CANNON.Shape.types.SPHERE:
         mesh = new THREE.Mesh(new THREE.SphereGeometry(), material);
-
-        const sphereRadius = (<CANNON.Sphere>shape).radius;
-        mesh.scale.set(sphereRadius, sphereRadius, sphereRadius);
         break;
 
       case CANNON.Shape.types.BOX:
-        console.log(shape);
         mesh = new THREE.Mesh(new THREE.BoxGeometry(), material);
-        const boxHalfExtend = (<CANNON.Box>shape).halfExtents;
-
-        mesh.scale.fromArray(Object.values(boxHalfExtend));
-        mesh.scale.multiplyScalar(2);
         break;
       
       case CANNON.Shape.types.CYLINDER:
+        // console.log((<CANNON.Cylinder>shape).radiusTop);
+        // console.log((<CANNON.Cylinder>shape).radiusBottom);
 
+        // console.log((<CANNON.Cylinder>shape).height);
         mesh = new THREE.Mesh(new THREE.CylinderGeometry(
           (<CANNON.Cylinder>shape).radiusTop,
           (<CANNON.Cylinder>shape).radiusBottom,
