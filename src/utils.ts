@@ -20,11 +20,15 @@ export const convertToThreeVec3 = (coor: CANNON.Vec3): THREE.Vector3 => {
   return new THREE.Vector3(...Object.values(coor));
 };
 
-export const convertToCannonQuaternion = (coor: THREE.Quaternion): CANNON.Quaternion => {
+export const convertToCannonQuaternion = (
+  coor: THREE.Quaternion
+): CANNON.Quaternion => {
   return new CANNON.Quaternion(...Object.values(coor));
 };
 
-export const convertToThreeQuaternion = (coor: CANNON.Quaternion): THREE.Quaternion => {
+export const convertToThreeQuaternion = (
+  coor: CANNON.Quaternion
+): THREE.Quaternion => {
   return new THREE.Quaternion(...Object.values(coor));
 };
 
@@ -58,76 +62,52 @@ export const createRigidBodyForGroup = (
   // compute size + center
   // only 1 rigidbody
 
-  const rigidBody = new CANNON.Body(bodyOption);
+  const rigidBody = new CANNON.Body({...bodyOption});
 
   let i = 0,
     arr = model.children.filter((x) => x.type === "Mesh");
   for (const item of arr) {
-    (<THREE.Mesh>item).geometry.computeBoundingSphere();
-
     const shape = createShapeForMesh(<THREE.Mesh>item);
 
-    if (1 == 1) {
-      console.log("============ pos vs center ============");
-      console.log((<THREE.Mesh>item).position);
-      console.log((<THREE.Mesh>item).geometry.boundingSphere.center);
-    }
-    
     const offset = new CANNON.Vec3(...Object.values(
-      (<THREE.Mesh>item).geometry.boundingSphere.center));
+      item.position));
 
     const orientation = new CANNON.Quaternion(
-      ...Object.values(item.quaternion));
+      ...Object.values(item.quaternion)
+    );
 
     rigidBody.addShape(shape, offset, orientation);
   }
   return rigidBody;
 };
 
-export const createRigidBodyForMesh = (
-  model: THREE.Mesh,
-  bodyOption: CANNON.BodyOptions,
-  option?: AlterNativeOptions
-) => {
-  // compute size + center
-  // only 1 rigidbody
-
-  model.geometry.computeBoundingSphere();
-
-  const rigidBody = new CANNON.Body(bodyOption);
-  // rigidBody.quaternion.set() = model.quaternion;
-
-  const shape = createShapeForMesh(<THREE.Mesh>model);
-
-  const offset = new CANNON.Vec3(...Object.values(
-    model.position));
-
-  const orientation = new CANNON.Quaternion(
-    ...Object.values(model.quaternion));
-
-  rigidBody.addShape(shape, offset, orientation);
-
-  return rigidBody;
-};
-
 export const createShapeForMesh = (model: THREE.Mesh): CANNON.Shape => {
   model.geometry.computeBoundingSphere();
-  model.geometry.computeBoundingBox();  
+  model.geometry.computeBoundingBox();
+
+  let res: CANNON.Shape = null;
 
   switch (model.geometry.type) {
     case "BufferGeometry":
-      return threeToCannon(model, { type: ShapeType.BOX }).shape;
-    case "BoxGeometry": 
-      return threeToCannon(model, { type: ShapeType.BOX }).shape;
+      res = threeToCannon(model, { type: ShapeType.BOX }).shape;
+      break;
+    case "BoxGeometry":
+      res = threeToCannon(model, { type: ShapeType.BOX }).shape;
+      break;
     case "ConvexPolyhedronGeometry":
-      return threeToCannon(model, { type: ShapeType.HULL }).shape;
+      res = threeToCannon(model, { type: ShapeType.HULL }).shape;
+      break;
     case "CylinderGeometry":
-      return threeToCannon(model, { type: ShapeType.CYLINDER }).shape;
+      res = threeToCannon(model, { type: ShapeType.CYLINDER }).shape;
+      break;
     case "PlaneGeometry":
-      return threeToCannon(model, { type: ShapeType.BOX }).shape;
+      res = threeToCannon(model, { type: ShapeType.BOX }).shape;
+      break;
     case "SphereGeometry":
-      return threeToCannon(model, { type: ShapeType.SPHERE }).shape;
+      res = threeToCannon(model, { type: ShapeType.SPHERE }).shape;
+      break;
     default:
-      return threeToCannon(model, { type: ShapeType.MESH }).shape;
+      res = threeToCannon(model, { type: ShapeType.MESH }).shape;
   }
+  return res;
 };

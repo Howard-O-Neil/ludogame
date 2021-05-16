@@ -30,7 +30,7 @@
     "start": "webpack && webpack --watch"
   },
   "_moduleAliases": {
-    "@graphic" : "public/models"
+    "@graphic": "public/models"
   },
   "eslintConfig": {
     "extends": [

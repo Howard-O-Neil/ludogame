@@ -33,17 +33,17 @@ export default class Piece extends GameObject {
       clearcoatRoughness: 0
     });
 
-    // listMesh.push(new THREE.Mesh(baseGeometry, baseMaterial));
-    // listMesh[0].position.add(new THREE.Vector3(0, 1, 0)); // sphere on top
-    // listMesh[0].receiveShadow = true;
-    // listMesh[0].castShadow = true;
+    listMesh.push(new THREE.Mesh(baseGeometry, baseMaterial));
+    listMesh[0].position.add(new THREE.Vector3(0, 1, 0)); // sphere on top
+    listMesh[0].receiveShadow = true;
+    listMesh[0].castShadow = true;
 
     const topGeometry = new THREE.CylinderBufferGeometry(
       ...Object.values(this.args)
     );
     listMesh.push(new THREE.Mesh(topGeometry, baseMaterial));
-    listMesh[0].receiveShadow = true;
-    listMesh[0].castShadow = true;
+    listMesh[1].receiveShadow = true;
+    listMesh[1].castShadow = true;
 
     this.addMesh(...listMesh);
     this.initRigidBody();
@@ -51,7 +51,12 @@ export default class Piece extends GameObject {
 
   keyboardHandle = (ev: KeyboardEvent) => {
     if (ev.key === 'j') {
-      this.launch(new CANNON.Vec3(10, 20, 20));
+      this.launch(new CANNON.Vec3(20, 30, 0));
+    } else if (ev.key === 'w') {
+      this.applyScale(2);
+    }
+    else if (ev.key === 'q') {
+      this.applyScale(0.5);
     }
   }
 

@@ -187,7 +187,7 @@ export default class MainGame {
     this.initWorld()
 
     this.gameObjectList = [];
-    for (let i = 0; i < data.length; i++) {
+    for (let i = 0; i < 1; i++) {
       this.gameObjectList.push(new Piece(
         colors[i],
         {

@@ -1,3 +1,4 @@
+import { type } from '@colyseus/schema';
 import { BufferGeometryUtils } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { convertToCannonVec3, createRigidBodyForGroup } from './../utils';
 import * as CANNON from "cannon-es";
@@ -21,7 +22,7 @@ export default class GameObject {
   
   constructor() {
     this.size = new CANNON.Vec3();
-    this.scale = new CANNON.Vec3();
+    this.scale = new CANNON.Vec3(1, 1, 1);
     this.rotation = new CANNON.Vec3();
     this.position = new CANNON.Vec3();
 
@@ -81,33 +82,67 @@ export default class GameObject {
   initRigidBody = () => {
     this.rigidBody = createRigidBodyForGroup(<THREE.Group>this.mainModel, {
       mass: this.mass,
-      position: this.position,
+      position: new CANNON.Vec3(this.position.x, this.position.y *  0.5, this.position.z),
     });
     this.world.addBody(this.rigidBody);
   }
 
   resetRigidBody = () => {
     const oldRigid = this.rigidBody;
-    this.world.removeBody(this.rigidBody);
     
     this.rigidBody = createRigidBodyForGroup(<THREE.Group>this.mainModel, {
       position: oldRigid.position,
       velocity: oldRigid.velocity,
       mass: oldRigid.mass,
     });
+    this.world.removeBody(oldRigid);
     this.world.addBody(this.rigidBody);
+
+    let i = 0;
+    for (const shape of this.rigidBody.shapes) {
+      const child = <THREE.Mesh>this.mainModel.children[i++];
+      // console.log(child.geometry.type);
+      if (child.geometry.type === 'SphereGeometry') {
+        shape.body.position.set(
+          child.position.x, child.position.y, child.position.z
+        );
+        const center = child.geometry.boundingSphere.center;
+        console.log(child.position);
+      }
+      
+
+      // console.log(center);
+
+      // console.log(shape.body.position.set(
+      //   child.position.x, child.position.y, child.position.z
+      // ));
+    }
+
   }
 
   addMesh = (...meshes: THREE.Mesh[]) => {
     for (const mesh of meshes) {
+      mesh.geometry.center(); // very important
       this.mainModel.add(mesh);
     }
   }
 
-  applyScale = (x?: number, y?: number, z?: number) => {
+  applyScale = (num: number) => {
+    this.scale.x *= num;
+    this.scale.y *= num;
+    this.scale.z *= num;
+
     for (const child of this.mainModel.children) {
       const mesh = <THREE.Mesh>child;
-      mesh.geometry.scale(x, y, z);
+      // console.log(mesh.geometn.z ry.type);
+      mesh.position.set(
+        (mesh.position.x * num),
+        (mesh.position.y * num),
+        (mesh.position.z * num),
+      );
+      
+
+      mesh.geometry.scale(num, num, num);
     }
     this.resetRigidBody();
   }

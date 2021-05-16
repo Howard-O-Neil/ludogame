@@ -1,7 +1,6 @@
 import { Box, Quaternion as CQuaternion, ConvexPolyhedron, Cylinder, Shape, Sphere, Trimesh, Vec3 } from 'cannon-es';
 import { Box3, BufferGeometry, CylinderGeometry, MathUtils, Mesh, Object3D, SphereGeometry, Vector3 } from 'three';
-import { cyclinderRadicalSegment } from '../../constant';
-import { ConvexHull } from './ConvexHull.js';
+import { cyclinderRadicalSegment } from '../../constant';import { ConvexHull } from './ConvexHull.js';
 import { getComponent, getGeometry, getVertices } from './Helper';
 
 const PI_2 = Math.PI / 2;
@@ -17,6 +16,7 @@ export enum ShapeType {
 export interface ShapeOptions {
 	type?: ShapeType,
 	cylinderAxis?: 'x' | 'y' | 'z',
+	cylinderScale?: number,
 	sphereRadius?: number,
 }
 
@@ -80,6 +80,9 @@ function createBoundingBoxShape (object: Object3D): ShapeResult | null {
 	const shape = new Box(new Vec3(
 		...Object.values(size)
 	).scale(0.5));
+
+	const mesh = <THREE.Mesh>object;
+	mesh.geometry.boundingSphere.center;
 
 	// shape.to
 	return {
@@ -163,13 +166,29 @@ function createBoundingCylinderShape (object: Object3D, options: ShapeOptions): 
 
 	if (!isFinite(box.min.lengthSq())) return null;
 
-	// Create shape.
+	// Compute cylinder dimensions.
+	const height = box.max[majorAxis] - box.min[majorAxis];
 
+	// const maxRadius = 0.5 * Math.max(
+	// 	getComponent(box.max, minorAxes[0]) - getComponent(box.min, minorAxes[0]),
+	// 	getComponent(box.max, minorAxes[1]) - getComponent(box.min, minorAxes[1]),
+	// );
+	// const radiusTop = object['geometry'].parameters.radiusTop;
+	// const radiusBottom = object['geometry'].parameters.radiusBottom;
+
+	const heightRatio = height / object['geometry'].parameters.height;
+
+	// Create shape.
 	const shape = new Cylinder(
-		object['geometry'].parameters.radiusTop, 
-		object['geometry'].parameters.radiusBottom, 
-		object['geometry'].parameters.height,
+		object['geometry'].parameters.radiusTop * heightRatio, 
+		object['geometry'].parameters.radiusBottom * heightRatio, 
+		object['geometry'].parameters.height * heightRatio, 
 		cyclinderRadicalSegment);
+
+		
+	object['geometry'].parameters.radiusTop *= heightRatio;
+	object['geometry'].parameters.radiusBottom *= heightRatio;
+	object['geometry'].parameters.height *= heightRatio;
 
 	const eulerX = majorAxis === 'y' ? PI_2 : 0;
 	const eulerY = majorAxis === 'z' ? PI_2 : 0;
@@ -182,30 +201,11 @@ function createBoundingCylinderShape (object: Object3D, options: ShapeOptions): 
 	};
 }
 
-function createPlaneShape (geometry: BufferGeometry): ShapeResult | null {
-	geometry.computeBoundingBox();
-	const box = geometry.boundingBox!;
-	const shape = new Box(new Vec3(
-		(box.max.x - box.min.x) / 2 || 0.1,
-		(box.max.y - box.min.y) / 2 || 0.1,
-		(box.max.z - box.min.z) / 2 || 0.1
-	));
-	return {shape};
-}
-
-function createSphereShape (geometry: SphereGeometry): ShapeResult | null {
-	const shape = new Sphere(geometry.parameters.radius);
-	return {shape};
-}
-
 function createBoundingSphereShape (object: Object3D, options: ShapeOptions): ShapeResult | null {
 	if (options.sphereRadius) {
 		return {shape: new Sphere(options.sphereRadius)};
 	}
-	const geometry = getGeometry(object);
-	if (!geometry) return null;
-	geometry.computeBoundingSphere();
-	return {shape: new Sphere(geometry.boundingSphere!.radius)};
+	return {shape: new Sphere(object['geometry'].boundingSphere.radius)};
 }
 
 function createTrimeshShape (geometry: BufferGeometry): ShapeResult | null {
