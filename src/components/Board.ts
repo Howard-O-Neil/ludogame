@@ -5,7 +5,6 @@ import * as CANNON from "cannon-es";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
 import GameObject from "./GameObject";
 import { convertToCannonVec3, createShapeForMesh } from "../utils";
-
 export default class Board extends GameObject {
   constructor(world) {
     super();
@@ -14,16 +13,19 @@ export default class Board extends GameObject {
     this.mass = 0;
   }
 
+  childNode = ['ludoludo4_ludolambert3_0'];
+  txtNode = ['mainTxt'];
+
   loadResource = async () => {
     const loader = new GLTFLoader();
 
-    this.texture = await (new THREE.TextureLoader().loadAsync('../models/board/textures/ludolambert2_baseColor.jpeg'));   
+    this.texture[this.txtNode[0]] = await (new THREE.TextureLoader().loadAsync('../models/board/textures/ludolambert2_baseColor.jpeg'));   
     const map = await loader.loadAsync("../models/board/scene.gltf");
-
+ 
     map.scene.traverse((child) => {
-      if (child.name === "ludoludo4_ludolambert3_0") {
-        this.geometry = child['geometry'];
-        this.material = child['material'];
+      if (child.name === this.childNode[0]) {
+        this.geometry[this.childNode[0]] = child['geometry'];
+        this.material[this.childNode[0]] = child['material'];
         return;
       }
     });
@@ -31,34 +33,27 @@ export default class Board extends GameObject {
 
   initObject = async () => {
     await this.loadResource();
+
+    const listMesh = [];
   
-    const baseMesh = new THREE.Mesh(this.geometry, this.material);
+    listMesh.push(new THREE.Mesh(
+      this.geometry[this.childNode[0]],
+      this.material[this.childNode[0]]));
     
     let planeGeometry = new THREE.PlaneGeometry(12, 12, 1);
-    // planeGeometry = <THREE.PlaneGeometry>planeGeometry.scale(2, 2, 2);
     const planeMaterial = new THREE.MeshBasicMaterial({
-      map: this.texture
+      map: this.texture[this.txtNode[0]]
     });
 
-    let topMesh = new THREE.Mesh(planeGeometry, planeMaterial);
+    listMesh.push(new THREE.Mesh(planeGeometry, planeMaterial));
     
-    topMesh.rotation.fromArray([-Math.PI / 2, 0, 0]);
-    topMesh.position.fromArray([0, 0.2, 0]);
-    topMesh.receiveShadow = true;
+    listMesh[1].rotation.fromArray([-Math.PI / 2, 0, 0]);
+    listMesh[1].position.fromArray([0, 0.2, 0]);
+    listMesh[1].receiveShadow = true;
 
-    this.mainModel = new THREE.Group();
-    this.mainModel.receiveShadow = true;
-
-    this.mainModel.add(baseMesh);
-    this.mainModel.add(topMesh);
-
+    this.addMesh(...listMesh);
     this.initScale(...[2, 2, 2]);
-
-    this.rigidBody = createRigidBodyForGroup(<THREE.Group>this.mainModel, {
-      mass: this.mass,
-      position: this.position,
-    });
-    this.world.addBody(this.rigidBody);
+    this.initRigidBody();
   }
 
   update = () => {

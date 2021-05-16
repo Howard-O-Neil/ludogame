@@ -11,7 +11,7 @@ import * as dat from "dat.gui";
 import GameObject from "./components/GameObject";
 import Piece from "./components/Piece";
 import Dice from "./components/Dice";
-import { createCannonDebugger } from "./components/CannonDebug";
+import { CannonDebugRenderer, createCannonDebugger } from "./components/CannonDebug";
 
 let client = new Colyseus.Client("ws://localhost:2567");
 
@@ -64,7 +64,7 @@ export default class MainGame {
   controls: OrbitControls;
   gridHelper: THREE.GridHelper;
 
-  cannonDebugger: any;
+  cannonDebugger: CannonDebugRenderer;
 
 
   // physics
@@ -187,12 +187,6 @@ export default class MainGame {
     this.initWorld()
 
     this.gameObjectList = [];
-    this.gameObjectList.push(new Board(this.world));
-    this.gameObjectList.push(new Dice([0, 10, 0], [5, 5, 5], this.camera, this.world));
-
-    //cannonDebugRenderer = new THREE.CannonDebugRenderer(scene, world);
-    this.cannonDebugger = createCannonDebugger(this.scene, this.world);
-
     for (let i = 0; i < data.length; i++) {
       this.gameObjectList.push(new Piece(
         colors[i],
@@ -205,6 +199,12 @@ export default class MainGame {
         data[i], this.world));
     }
 
+    this.gameObjectList.push(new Board(this.world));
+    this.gameObjectList.push(new Dice([0, 10, 0], [5, 5, 5], this.camera, this.world));
+    
+    //cannonDebugRenderer = new THREE.CannonDebugRenderer(scene, world);
+    this.cannonDebugger = createCannonDebugger(this.scene, this.world);
+
     for (const obj of this.gameObjectList) {
       const mesh = await obj.getMesh();
       this.scene.add(mesh);
@@ -212,12 +212,9 @@ export default class MainGame {
 
     // render function
 
-    // tool for inspect information
+    // keyboard
     document.addEventListener("keydown", (ev) => {
-      if (ev.shiftKey && ev.key === "c") {
-        console.log(`===== camera position =====`);
-        console.log(this.camera.position);
-      }
+      this.keyboardHandle(ev);
     });
 
     // setup orbit controls
@@ -226,6 +223,13 @@ export default class MainGame {
 
     this.render();
   };
+
+  keyboardHandle = (ev: KeyboardEvent) => {
+    for (const gameObj of this.gameObjectList) {
+      if (gameObj.keyboardHandle)
+        gameObj.keyboardHandle(ev);
+    }
+  }
 
   updatePhysics = () => {
     for (const gameObj of this.gameObjectList) {
@@ -239,7 +243,7 @@ export default class MainGame {
     this.renderer.render(this.scene, this.camera);
 
     this.cannonDebugger.update();
-    
+
     this.controls.update();
     this.updatePhysics();
 

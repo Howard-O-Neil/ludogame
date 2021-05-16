@@ -4,9 +4,9 @@ import * as CANNON from "cannon-es";
 import * as THREE from "three";
 
 export default class GameObject {
-  geometry: THREE.BufferGeometry;
-  material: any;
-  texture: any;
+  geometry: Map<string, THREE.BufferGeometry>;
+  material: Map<string, THREE.Material>;
+  texture: Map<string, THREE.Texture>;
   scale: CANNON.Vec3;
   rotation: CANNON.Vec3;
   position: CANNON.Vec3;
@@ -25,12 +25,20 @@ export default class GameObject {
     this.rotation = new CANNON.Vec3();
     this.position = new CANNON.Vec3();
 
+    this.geometry = new Map();
+    this.material = new Map();
+    this.texture = new Map();
+
+    this.mainModel = new THREE.Group();
+    this.mainModel.receiveShadow = true;
+
     // this.mesh = [];
   }
 
   getMesh; // abstract function
   update; // abstract function
   initObject; // abstract function
+  keyboardHandle; // abstract function
 
   getBoxSize = (model: THREE.Mesh): CANNON.Vec3 => {
     const box = new THREE.Box3().setFromObject(model);
@@ -70,6 +78,14 @@ export default class GameObject {
     }
   }
 
+  initRigidBody = () => {
+    this.rigidBody = createRigidBodyForGroup(<THREE.Group>this.mainModel, {
+      mass: this.mass,
+      position: this.position,
+    });
+    this.world.addBody(this.rigidBody);
+  }
+
   resetRigidBody = () => {
     const oldRigid = this.rigidBody;
     this.world.removeBody(this.rigidBody);
@@ -80,6 +96,12 @@ export default class GameObject {
       mass: oldRigid.mass,
     });
     this.world.addBody(this.rigidBody);
+  }
+
+  addMesh = (...meshes: THREE.Mesh[]) => {
+    for (const mesh of meshes) {
+      this.mainModel.add(mesh);
+    }
   }
 
   applyScale = (x?: number, y?: number, z?: number) => {

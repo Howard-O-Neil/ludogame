@@ -13,6 +13,9 @@ export default class Dice extends GameObject {
   readonly camera: THREE.Camera;
   world: CANNON.World;
 
+  childNode = ['ludoludo_ludoblinn6_0'];
+  txtNode = ['mainTxt'];
+
   constructor(position, scale, camera, world) {
     super();
 
@@ -30,45 +33,26 @@ export default class Dice extends GameObject {
     const map = await loader.loadAsync("../models/board/scene.gltf");
 
     map.scene.traverse((child) => {
-      if (child.name === "ludoludo_ludoblinn6_0") {
-        this.geometry = child['geometry'];
-        this.material = child['material'];
+      if (child.name === this.childNode[0]) {
+        this.geometry[this.childNode[0]] = child['geometry'];
+        this.material[this.childNode[0]] = child['material'];
         return;
       }
-    });
-    
-    this.geometry.computeBoundingBox();    
+    });    
   }
 
   initObject = async () =>  {
     await this.loadResource();
 
-    // this.geometry = new THREE.BoxGeometry(2, 2, 2, 1, 1, 1);
-    // this.material = new THREE.MeshPhysicalMaterial({
-    //   color: "red",
-    //   clearcoat: 1,
-    //   clearcoatRoughness: 0
-    // });
-    const baseMesh = new THREE.Mesh(this.geometry, this.material);
-    baseMesh.receiveShadow = true;
+    const listMesh: THREE.Mesh[] = [];
 
-    const mesh = new THREE.Mesh(this.geometry, this.material);
-    this.mainModel = new THREE.Group();
-    this.mainModel.add(mesh);
-
+    listMesh.push(new THREE.Mesh(this.geometry[this.childNode[0]], this.material[this.childNode[0]]));
+    listMesh[0].receiveShadow = true;
+    
+    const mesh = new THREE.CylinderGeometry();
+    this.addMesh(...listMesh);
     this.initScale(...[2, 2, 2]);
-
-    this.rigidBody = createRigidBodyForGroup(<THREE.Group>this.mainModel, {
-      mass: this.mass,
-      position: this.position,
-    });
-
-    // console.log(this.rigidBody.shapes.)
-    this.world.addBody(this.rigidBody);
-
-    document.addEventListener('keydown', ev => {
-      this.keyboardHandle(ev);
-    })
+    this.initRigidBody();
   }
 
   keyboardHandle = (ev: KeyboardEvent) => {
@@ -86,7 +70,6 @@ export default class Dice extends GameObject {
     this.mainModel.position.fromArray(Object.values(this.rigidBody.position));
     this.mainModel.quaternion.fromArray(Object.values(this.rigidBody.quaternion));
   }
-
 
   getMesh = async () => {
     await this.initObject();

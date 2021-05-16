@@ -18,47 +18,35 @@ export default class Piece extends GameObject {
 
     this.world = world;
     this.args = args;
-    // this.velocity = new CANNON.Vec3(0, 0, 0);
     this.position = new CANNON.Vec3(...position);
     this.color = color;
     this.mass = 5;
   }
 
   initObject = async () => {
+    const listMesh: THREE.Mesh[] = [];
+    
     const baseGeometry = new THREE.SphereBufferGeometry(0.5, 32, 32);
     const baseMaterial = new THREE.MeshPhysicalMaterial({
       color: this.active ? "purple" : this.color,
       clearcoat: 1,
       clearcoatRoughness: 0
     });
-    const baseMesh = new THREE.Mesh(baseGeometry, baseMaterial);
-    baseMesh.position.fromArray([0, 1, 0]); // sphere on top
-    baseMesh.receiveShadow = true;
-    baseMesh.castShadow = true;
+
+    // listMesh.push(new THREE.Mesh(baseGeometry, baseMaterial));
+    // listMesh[0].position.add(new THREE.Vector3(0, 1, 0)); // sphere on top
+    // listMesh[0].receiveShadow = true;
+    // listMesh[0].castShadow = true;
 
     const topGeometry = new THREE.CylinderBufferGeometry(
       ...Object.values(this.args)
     );
-    const topMesh = new THREE.Mesh(topGeometry, baseMaterial);
-    topMesh.receiveShadow = true;
-    topMesh.castShadow = true;
+    listMesh.push(new THREE.Mesh(topGeometry, baseMaterial));
+    listMesh[0].receiveShadow = true;
+    listMesh[0].castShadow = true;
 
-    this.mainModel = new THREE.Group();
-    this.mainModel.position.fromArray(Object.values(this.position));
-    this.mainModel.receiveShadow = true;
-
-    this.mainModel.add(baseMesh);
-    this.mainModel.add(topMesh);
-
-    this.rigidBody = createRigidBodyForGroup(<THREE.Group>this.mainModel, {
-      mass: this.mass,
-      position: this.position,
-    });
-    this.world.addBody(this.rigidBody);
-
-    document.addEventListener('keydown', ev => {
-      this.keyboardHandle(ev);
-    })
+    this.addMesh(...listMesh);
+    this.initRigidBody();
   }
 
   keyboardHandle = (ev: KeyboardEvent) => {

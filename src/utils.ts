@@ -66,6 +66,12 @@ export const createRigidBodyForGroup = (
     (<THREE.Mesh>item).geometry.computeBoundingSphere();
 
     const shape = createShapeForMesh(<THREE.Mesh>item);
+
+    if (1 == 1) {
+      console.log("============ pos vs center ============");
+      console.log((<THREE.Mesh>item).position);
+      console.log((<THREE.Mesh>item).geometry.boundingSphere.center);
+    }
     
     const offset = new CANNON.Vec3(...Object.values(
       (<THREE.Mesh>item).geometry.boundingSphere.center));

@@ -1,5 +1,6 @@
 import { Box, Quaternion as CQuaternion, ConvexPolyhedron, Cylinder, Shape, Sphere, Trimesh, Vec3 } from 'cannon-es';
 import { Box3, BufferGeometry, CylinderGeometry, MathUtils, Mesh, Object3D, SphereGeometry, Vector3 } from 'three';
+import { cyclinderRadicalSegment } from '../../constant';
 import { ConvexHull } from './ConvexHull.js';
 import { getComponent, getGeometry, getVertices } from './Helper';
 
@@ -162,15 +163,13 @@ function createBoundingCylinderShape (object: Object3D, options: ShapeOptions): 
 
 	if (!isFinite(box.min.lengthSq())) return null;
 
-	const radicalSegment = 10; // performance consideration
-
 	// Create shape.
 
 	const shape = new Cylinder(
 		object['geometry'].parameters.radiusTop, 
 		object['geometry'].parameters.radiusBottom, 
 		object['geometry'].parameters.height,
-		radicalSegment);
+		cyclinderRadicalSegment);
 
 	const eulerX = majorAxis === 'y' ? PI_2 : 0;
 	const eulerY = majorAxis === 'z' ? PI_2 : 0;
