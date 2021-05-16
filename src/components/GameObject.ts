@@ -65,11 +65,33 @@ export default class GameObject {
   }
 
   launch = (velocity: CANNON.Vec3) => {
-    this.rigidBody.velocity = velocity;
+    this.rigidBody.velocity.set(velocity.x, velocity.y, velocity.z);
   }
 
   setPosition = (position: CANNON.Vec3) => {
-    this.rigidBody.position = position;
+    this.rigidBody.position.set(position.x, position.y, position.z);
+  }
+
+  setRotation = (rotation: CANNON.Vec3) => {
+    let quatX = new CANNON.Quaternion();
+    let quatY = new CANNON.Quaternion();
+    let quatZ = new CANNON.Quaternion();
+
+    quatX.setFromAxisAngle(new CANNON.Vec3(1,0,0), rotation.x);
+    quatY.setFromAxisAngle(new CANNON.Vec3(0,1,0), rotation.y);
+    quatZ.setFromAxisAngle(new CANNON.Vec3(0,0,1), rotation.z);
+
+    let quaternion = quatX.mult(quatY).mult(quatZ);
+    quaternion.normalize();
+
+    quaternion.vmult(new CANNON.Vec3(100, 100, 100));
+
+    this.rigidBody.quaternion.set(
+      quaternion.x,
+      quaternion.y,
+      quaternion.z,
+      quaternion.w
+    );
   }
 
   initScale = (x?: number, y?: number, z?: number) => {
@@ -93,31 +115,11 @@ export default class GameObject {
     this.rigidBody = createRigidBodyForGroup(<THREE.Group>this.mainModel, {
       position: oldRigid.position,
       velocity: oldRigid.velocity,
+      quaternion: oldRigid.quaternion,
       mass: oldRigid.mass,
     });
     this.world.removeBody(oldRigid);
     this.world.addBody(this.rigidBody);
-
-    let i = 0;
-    for (const shape of this.rigidBody.shapes) {
-      const child = <THREE.Mesh>this.mainModel.children[i++];
-      // console.log(child.geometry.type);
-      if (child.geometry.type === 'SphereGeometry') {
-        shape.body.position.set(
-          child.position.x, child.position.y, child.position.z
-        );
-        const center = child.geometry.boundingSphere.center;
-        console.log(child.position);
-      }
-      
-
-      // console.log(center);
-
-      // console.log(shape.body.position.set(
-      //   child.position.x, child.position.y, child.position.z
-      // ));
-    }
-
   }
 
   addMesh = (...meshes: THREE.Mesh[]) => {

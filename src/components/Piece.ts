@@ -49,15 +49,17 @@ export default class Piece extends GameObject {
     this.initRigidBody();
   }
 
-  keyboardHandle = (ev: KeyboardEvent) => {
-    if (ev.key === 'j') {
+  keyboardHandle = (table) => {
+    let keycode = require('keycode');
+    if (table[keycode('e')]) {
       this.launch(new CANNON.Vec3(20, 30, 0));
-    } else if (ev.key === 'w') {
-      this.applyScale(2);
     }
-    else if (ev.key === 'q') {
-      this.applyScale(0.5);
-    }
+    // } else if (ev.key === 'w') {
+    //   this.applyScale(2);
+    // }
+    // else if (ev.key === 'q') {
+    //   this.applyScale(0.5);
+    // }
   }
 
   update = () => {

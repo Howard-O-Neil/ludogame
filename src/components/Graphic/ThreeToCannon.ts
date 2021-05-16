@@ -159,45 +159,35 @@ function createCylinderShape (geometry: CylinderGeometry): ShapeResult | null {
 }
 
 function createBoundingCylinderShape (object: Object3D, options: ShapeOptions): ShapeResult | null {
-	const axes = ['x', 'y', 'z'];
-	const majorAxis = options.cylinderAxis || 'y';
-	const minorAxes = axes.splice(axes.indexOf(majorAxis), 1) && axes;
-	const box = new Box3().setFromObject(object);
-
-	if (!isFinite(box.min.lengthSq())) return null;
-
 	// Compute cylinder dimensions.
-	const height = box.max[majorAxis] - box.min[majorAxis];
 
-	// const maxRadius = 0.5 * Math.max(
-	// 	getComponent(box.max, minorAxes[0]) - getComponent(box.min, minorAxes[0]),
-	// 	getComponent(box.max, minorAxes[1]) - getComponent(box.min, minorAxes[1]),
-	// );
-	// const radiusTop = object['geometry'].parameters.radiusTop;
-	// const radiusBottom = object['geometry'].parameters.radiusBottom;
+	const mesh = <THREE.Mesh>object;
+
+	mesh.geometry.computeBoundingBox();
+	const size = mesh.geometry.boundingBox.getSize(new Vector3());
+	const height = size.y;
+
+	const radiusTop = object['geometry']?.parameters?.radiusTop;
+	const radiusBottom = object['geometry']?.parameters?.radiusBottom;
+	
+	const radiusRatio = (size.x * 0.5) / Math.max(radiusTop, radiusBottom);
 
 	const heightRatio = height / object['geometry'].parameters.height;
 
 	// Create shape.
 	const shape = new Cylinder(
-		object['geometry'].parameters.radiusTop * heightRatio, 
-		object['geometry'].parameters.radiusBottom * heightRatio, 
+		object['geometry'].parameters.radiusTop * radiusRatio, 
+		object['geometry'].parameters.radiusBottom * radiusRatio, 
 		object['geometry'].parameters.height * heightRatio, 
 		cyclinderRadicalSegment);
 
-		
-	object['geometry'].parameters.radiusTop *= heightRatio;
-	object['geometry'].parameters.radiusBottom *= heightRatio;
-	object['geometry'].parameters.height *= heightRatio;
-
-	const eulerX = majorAxis === 'y' ? PI_2 : 0;
-	const eulerY = majorAxis === 'z' ? PI_2 : 0;
+	object['geometry'].parameters.radiusTop *= radiusRatio;
+	object['geometry'].parameters.radiusBottom *= radiusRatio;
+	object['geometry'].parameters.height *= radiusRatio;
 
 	return {
 		shape,
-		orientation: new CQuaternion()
-			.setFromEuler(eulerX, eulerY, 0, 'XYZ')
-			.normalize()
+		orientation: null,
 	};
 }
 

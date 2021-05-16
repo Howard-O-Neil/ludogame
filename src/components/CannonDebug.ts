@@ -115,10 +115,13 @@ export class CannonDebugRenderer {
 
     case CANNON.Shape.types.CYLINDER:
       // console.log(shape.halfExtents)
-      const ratio = (<CANNON.Cylinder>shape).height / mesh.geometry['parameters'].height;
+      const heightRatio = (<CANNON.Cylinder>shape).height / mesh.geometry['parameters'].height;
+      const radiusRatio = (<CANNON.Cylinder>shape).radiusBottom / mesh.geometry['parameters'].radiusBottom;
       // console.log(ratio);
-      mesh.geometry.scale(ratio, ratio, ratio);
+      mesh.geometry.scale(radiusRatio, heightRatio, radiusRatio);
       mesh.geometry['parameters'].height = (<CANNON.Cylinder>shape).height;
+      mesh.geometry['parameters'].radiusTop = (<CANNON.Cylinder>shape).radiusTop;
+      mesh.geometry['parameters'].radiusBottom = (<CANNON.Cylinder>shape).radiusBottom;
       // mesh.scale.multiplyScalar(ratio);
 
       break;

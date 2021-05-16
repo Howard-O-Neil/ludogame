@@ -52,7 +52,7 @@ export default class Board extends GameObject {
     listMesh[1].receiveShadow = true;
 
     this.addMesh(...listMesh);
-    this.initScale(...[5, 5, 5]);
+    this.initScale(...[2, 2, 2]);
     this.initRigidBody();
   }
 

@@ -54,12 +54,13 @@ export default class Dice extends GameObject {
     this.initRigidBody();
   }
 
-  keyboardHandle = (ev: KeyboardEvent) => {
-    if (ev.key == 't') {
-      // 0this.setPosition(convertToCannonVec3(this.camera.position));
-      this.launch(new CANNON.Vec3(10, 30, 20));
-    } else if (ev.key == 'x') {
-      this.applyScale(2);
+  keyboardHandle = (table) => {
+    let keycode = require('keycode');
+    if (table[keycode('space')]) {
+      this.setPosition(convertToCannonVec3(this.camera.position));
+      this.setRotation(new CANNON.Vec3(-Math.PI / 2, 0, Math.PI / 2));
+
+      this.launch(new CANNON.Vec3(0, 10, -20));
     }
   }
 
