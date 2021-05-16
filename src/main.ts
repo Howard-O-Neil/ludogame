@@ -51,7 +51,7 @@ const data = [
 
 const colors = ["#8aacae", "#b4cb5f", "#ca5452", "#d7c944"];
 
-const FPS = 1 / 60;
+const FPS = 1 / 80;
 
 export default class MainGame {
 
