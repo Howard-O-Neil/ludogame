@@ -96,27 +96,20 @@ function createBoxShape (geometry: BufferGeometry): ShapeResult | null {
 
 /** Bounding box needs to be computed with the entire subtree, not just geometry. */
 function createBoundingBoxShape (object: Object3D): ShapeResult | null {
-	const clone = object.clone();
-	clone.quaternion.set(0, 0, 0, 1);
-	clone.updateMatrixWorld();
+	const size = (object as Mesh).geometry.boundingBox.getSize(new Vector3());
+	// size.y /= 2;
 
-	const box = new Box3().setFromObject(clone);
-
-	if (!isFinite(box.min.lengthSq())) return null;
+	console.log("========= object start =========");
+	console.log(size);
+	console.log((object as Mesh).geometry.boundingBox.getSize(new Vector3()))
 
 	const shape = new Box(new Vec3(
-		(box.max.x - box.min.x) / 2,
-		(box.max.y - box.min.y) / 2,
-		(box.max.z - box.min.z) / 2
-	));
-
-	const localPosition = box.translate(clone.position.negate()).getCenter(new Vector3());
+		...Object.values(size)
+	).scale(0.5));
 
 	return {
 		shape,
-		offset: localPosition.lengthSq()
-			? new Vec3(localPosition.x, localPosition.y, localPosition.z)
-			: undefined
+		offset: null
 	};
 }
 
@@ -193,23 +186,19 @@ function createBoundingCylinderShape (object: Object3D, options: ShapeOptions): 
 	const minorAxes = axes.splice(axes.indexOf(majorAxis), 1) && axes;
 	const box = new Box3().setFromObject(object);
 
+	// console.log(object);
+
 	if (!isFinite(box.min.lengthSq())) return null;
 
-	// Compute cylinder dimensions.
-	const height = box.max[majorAxis] - box.min[majorAxis];
-	const radius = 0.5 * Math.max(
-		getComponent(box.max, minorAxes[0]) - getComponent(box.min, minorAxes[0]),
-		getComponent(box.max, minorAxes[1]) - getComponent(box.min, minorAxes[1]),
-	);
+	const radicalSegment = 10; // performance consideration
 
 	// Create shape.
-	const shape = new Cylinder(radius, radius, height, 12);
 
-	// Include metadata for serialization.
-	shape.radiusTop = radius;
-	shape.radiusBottom = radius;
-	shape.height = height;
-	shape.numSegments = 12;
+	const shape = new Cylinder(
+		object['geometry'].parameters.radiusTop, 
+		object['geometry'].parameters.radiusBottom, 
+		object['geometry'].parameters.height,
+		radicalSegment);
 
 	const eulerX = majorAxis === 'y' ? PI_2 : 0;
 	const eulerY = majorAxis === 'z' ? PI_2 : 0;

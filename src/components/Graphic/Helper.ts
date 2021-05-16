@@ -102,6 +102,12 @@ function getMeshes (object: Object3D): Mesh[] {
 	return meshes;
 }
 
+/**
+ * Get number value base on axis
+ * @param v 
+ * @param component 
+ * @returns 
+ */
 export function getComponent(v: Vector3, component: string): number {
 	switch(component) {
 		case 'x': return v.x;

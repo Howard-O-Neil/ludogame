@@ -4,12 +4,13 @@ import * as CANNON from "cannon-es";
 import * as THREE from "three";
 
 export default class GameObject {
-  geometry: any;
+  geometry: THREE.BufferGeometry;
   material: any;
   texture: any;
   scale: CANNON.Vec3;
   rotation: CANNON.Vec3;
   position: CANNON.Vec3;
+  quaternion: CANNON.Quaternion;
   size: CANNON.Vec3;
   world: CANNON.World
   mass: number;
@@ -56,5 +57,9 @@ export default class GameObject {
 
   launch = (velocity: CANNON.Vec3) => {
     this.rigidBody.velocity = velocity;
+  }
+
+  setPosition = (position: CANNON.Vec3) => {
+    this.rigidBody.position = position;
   }
 }

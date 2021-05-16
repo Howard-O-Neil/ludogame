@@ -7153,6 +7153,13 @@
   "resolved" "https://registry.npmjs.org/lines-and-columns/-/lines-and-columns-1.1.6.tgz"
   "version" "1.1.6"
 
+"link-module-alias@^1.2.0":
+  "integrity" "sha512-ahPjXepbSVKbahTB6LxR//VHm8HPfI+QQygCH+E82spBY4HR5VPJTvlhKBc9F7muVxnS6C1rRfoPOXAbWO/fyw=="
+  "resolved" "https://registry.npmjs.org/link-module-alias/-/link-module-alias-1.2.0.tgz"
+  "version" "1.2.0"
+  dependencies:
+    "chalk" "^2.4.1"
+
 "load-json-file@^2.0.0":
   "integrity" "sha1-eUfkIUmvgNaWy/eXvKq8/h/inKg="
   "resolved" "https://registry.npmjs.org/load-json-file/-/load-json-file-2.0.0.tgz"

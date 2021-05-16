@@ -11,8 +11,7 @@ import * as dat from "dat.gui";
 import GameObject from "./components/GameObject";
 import Piece from "./components/Piece";
 import Dice from "./components/Dice";
-// import { createCannonDebugRenderer } from "./components/CannonDebug";
-import {createCannonDebugger} from "./components/CannonDebug";
+import { createCannonDebugger } from "./components/CannonDebug";
 
 let client = new Colyseus.Client("ws://localhost:2567");
 
@@ -43,10 +42,10 @@ export interface CyclinderBasicParam {
 }
 
 const data = [
-  [-5.439477664422223, 10.199988980367679, -5.308972802276404],
-  [-5.393146085870269, 10.1999890702525435, -7.71029413378612],
-  [-7.779093281241222, 10.1999884336587399, -7.6962970855280775],
-  [-7.735512466757786, 10.199988657083725, -5.359430200465674],
+  [-5.439477664422223, 2.199988980367679, -5.308972802276404],
+  [-5.393146085870269, 2.1999890702525435, -7.71029413378612],
+  [-7.779093281241222, 2.1999884336587399, -7.6962970855280775],
+  [-7.735512466757786, 2.199988657083725, -5.359430200465674],
 ];
 
 const colors = ["#8aacae", "#b4cb5f", "#ca5452", "#d7c944"];
@@ -65,7 +64,7 @@ export default class MainGame {
   controls: OrbitControls;
   gridHelper: THREE.GridHelper;
 
-  cannonDebugRenderer: any;
+  cannonDebugger: any;
 
 
   // physics
@@ -147,6 +146,8 @@ export default class MainGame {
   public initWorld = async () => {
     this.world = new CANNON.World();
     this.world.gravity.set(0, -50, 0);
+    this.world.allowSleep = true;
+    this.world.broadphase.useBoundingBoxes = true;
   }
 
   public initGameplay = async () => {
@@ -187,10 +188,10 @@ export default class MainGame {
 
     this.gameObjectList = [];
     this.gameObjectList.push(new Board(this.world));
-    // objList.push(new Dice([0, 5, 0], [1, 1, 1]));
+    this.gameObjectList.push(new Dice([0, 10, 0], [5, 5, 5], this.camera, this.world));
 
     //cannonDebugRenderer = new THREE.CannonDebugRenderer(scene, world);
-    // this.cannonDebugRenderer = createCannonDebugger(this.scene, this.world);
+    this.cannonDebugger = createCannonDebugger(this.scene, this.world);
 
     for (let i = 0; i < data.length; i++) {
       this.gameObjectList.push(new Piece(
@@ -228,7 +229,8 @@ export default class MainGame {
 
   updatePhysics = () => {
     for (const gameObj of this.gameObjectList) {
-      gameObj.update();
+      if (gameObj.update)
+        gameObj.update();
     }
     this.world.step(FPS);
   }
@@ -236,12 +238,12 @@ export default class MainGame {
   render = () => {
     this.renderer.render(this.scene, this.camera);
 
+    this.cannonDebugger.update();
+    
     this.controls.update();
     this.updatePhysics();
 
     requestAnimationFrame(this.render);
-
-    // this.cannonDebugRenderer.update();
   }
 }
 

@@ -1,4 +1,4 @@
-import { createRigidBodyForGroup } from './../utils';
+import { createRigidBodyForGroup, convertToCannonQuaternion } from './../utils';
 import * as Colyseus from "colyseus.js";
 import * as THREE from "three";
 import * as CANNON from "cannon-es";
@@ -52,6 +52,7 @@ export default class Board extends GameObject {
     this.mainModel.add(baseMesh);
     this.mainModel.add(topMesh);
 
+    console.log("========= board =========")
     this.rigidBody = createRigidBodyForGroup(<THREE.Group>this.mainModel, {
       mass: this.mass,
       position: this.position,
