@@ -19,7 +19,7 @@ export default class Dice extends GameObject {
   constructor(position, scale, camera, world) {
     super();
 
-    this.mass = 5;
+    this.mass = 15;
     this.scale = new CANNON.Vec3(...scale);
     this.position = new CANNON.Vec3(...position);
     this.camera = camera;
@@ -55,11 +55,16 @@ export default class Dice extends GameObject {
   }
 
   keyboardHandle = (table) => {
+    this.rigidBody.wakeUp(); // very important
+
     let keycode = require('keycode');
     if (table[keycode('space')]) {
       this.setPosition(convertToCannonVec3(this.camera.position));
-      this.setRotation(new CANNON.Vec3(-Math.PI / 2, 0, Math.PI / 2));
-
+      this.setRotation(new CANNON.Vec3(-Math.PI / 4, 0, Math.PI / 4));
+      this.setAngularVelocity(new CANNON.Vec3(10, 10, 10));
+      this.launch(new CANNON.Vec3(0, 10, -22));
+    } else if (table[keycode('q')]) {
+      console.log('cc');
       this.launch(new CANNON.Vec3(0, 10, -20));
     }
   }
@@ -71,8 +76,11 @@ export default class Dice extends GameObject {
     // console.log(this.mainModel.position);
     // console.log(this.rigidBody.position);
 
+
     this.mainModel.position.fromArray(Object.values(this.rigidBody.position));
     this.mainModel.quaternion.fromArray(Object.values(this.rigidBody.quaternion));
+
+    // console.log(this.rigidBody.velocity);
   }
 
   getMesh = async () => {

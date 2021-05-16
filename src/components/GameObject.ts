@@ -72,6 +72,10 @@ export default class GameObject {
     this.rigidBody.position.set(position.x, position.y, position.z);
   }
 
+  setAngularVelocity = (velocity: CANNON.Vec3) => {
+    this.rigidBody.angularVelocity.set(velocity.x, velocity.y, velocity.z);
+  }
+
   setRotation = (rotation: CANNON.Vec3) => {
     let quatX = new CANNON.Quaternion();
     let quatY = new CANNON.Quaternion();
@@ -84,7 +88,7 @@ export default class GameObject {
     let quaternion = quatX.mult(quatY).mult(quatZ);
     quaternion.normalize();
 
-    quaternion.vmult(new CANNON.Vec3(100, 100, 100));
+    quaternion.vmult(new CANNON.Vec3(10, 10, 10));
 
     this.rigidBody.quaternion.set(
       quaternion.x,

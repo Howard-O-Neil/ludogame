@@ -50,6 +50,8 @@ export default class Piece extends GameObject {
   }
 
   keyboardHandle = (table) => {
+    this.rigidBody.wakeUp(); // very important
+    
     let keycode = require('keycode');
     if (table[keycode('e')]) {
       this.launch(new CANNON.Vec3(20, 30, 0));
