@@ -52,7 +52,7 @@ export default class Board extends GameObject {
     this.mainModel.add(baseMesh);
     this.mainModel.add(topMesh);
 
-    this.applyScale(...[2, 2, 2]);
+    this.initScale(...[2, 2, 2]);
 
     this.rigidBody = createRigidBodyForGroup(<THREE.Group>this.mainModel, {
       mass: this.mass,

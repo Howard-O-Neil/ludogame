@@ -16,7 +16,7 @@ export default class Dice extends GameObject {
   constructor(position, scale, camera, world) {
     super();
 
-    this.mass = 0;
+    this.mass = 10;
     this.scale = new CANNON.Vec3(...scale);
     this.position = new CANNON.Vec3(...position);
     this.camera = camera;
@@ -56,7 +56,7 @@ export default class Dice extends GameObject {
     this.mainModel = new THREE.Group();
     this.mainModel.add(mesh);
 
-    this.applyScale(...[2, 2, 2]);
+    this.initScale(...[2, 2, 2]);
 
     this.rigidBody = createRigidBodyForGroup(<THREE.Group>this.mainModel, {
       mass: this.mass,
@@ -74,7 +74,9 @@ export default class Dice extends GameObject {
   keyboardHandle = (ev: KeyboardEvent) => {
     if (ev.key == 'r') {
       // 0this.setPosition(convertToCannonVec3(this.camera.position));
-      this.launch(new CANNON.Vec3(0, 20, -20));
+      this.launch(new CANNON.Vec3(0, 50, 0));
+    } else if (ev.key == 'x') {
+      this.applyScale(...[2, 2, 2]);
     }
   }
 

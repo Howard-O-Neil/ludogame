@@ -50,29 +50,6 @@ export const threeToCannon = function (object: Object3D, options: ShapeOptions =
 	if (!geometry) return null;
 
 	return createBoxShape(geometry);
-
-	switch (geometry.type) {
-		case 'BoxGeometry':
-		case 'BoxBufferGeometry':
-			return createBoxShape(geometry);
-		case 'CylinderGeometry':
-		case 'CylinderBufferGeometry':
-			return createCylinderShape(geometry as CylinderGeometry);
-		case 'PlaneGeometry':
-		case 'PlaneBufferGeometry':
-			return createPlaneShape(geometry);
-		case 'SphereGeometry':
-		case 'SphereBufferGeometry':
-			return createSphereShape(geometry as SphereGeometry);
-		case 'TubeGeometry':
-		case 'BufferGeometry':
-			return createBoundingBoxShape(object);
-		default:
-			console.warn(
-				'Unrecognized geometry: "%s". Using bounding box as shape.', geometry.type
-			);
-			return createBoxShape(geometry);
-	}
 };
 
 /******************************************************************************

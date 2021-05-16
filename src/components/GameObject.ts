@@ -1,5 +1,5 @@
 import { BufferGeometryUtils } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
-import { convertToCannonVec3 } from './../utils';
+import { convertToCannonVec3, createRigidBodyForGroup } from './../utils';
 import * as CANNON from "cannon-es";
 import * as THREE from "three";
 
@@ -63,10 +63,30 @@ export default class GameObject {
     this.rigidBody.position = position;
   }
 
+  initScale = (x?: number, y?: number, z?: number) => {
+    for (const child of this.mainModel.children) {
+      const mesh = <THREE.Mesh>child;
+      mesh.geometry.scale(x, y, z);
+    }
+  }
+
+  resetRigidBody = () => {
+    const oldRigid = this.rigidBody;
+    this.world.removeBody(this.rigidBody);
+    
+    this.rigidBody = createRigidBodyForGroup(<THREE.Group>this.mainModel, {
+      position: oldRigid.position,
+      velocity: oldRigid.velocity,
+      mass: oldRigid.mass,
+    });
+    this.world.addBody(this.rigidBody);
+  }
+
   applyScale = (x?: number, y?: number, z?: number) => {
     for (const child of this.mainModel.children) {
       const mesh = <THREE.Mesh>child;
       mesh.geometry.scale(x, y, z);
     }
+    this.resetRigidBody();
   }
 }
