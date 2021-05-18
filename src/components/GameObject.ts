@@ -133,22 +133,21 @@ export default class GameObject {
     }
   }
 
-  applyScale = (num: number) => {
-    this.scale.x *= num;
-    this.scale.y *= num;
-    this.scale.z *= num;
+  applyScale = (x?: number, y?: number, z?: number) => {
+    this.scale.x *= x;
+    this.scale.y *= y;
+    this.scale.z *= z;
 
     for (const child of this.mainModel.children) {
       const mesh = <THREE.Mesh>child;
       // console.log(mesh.geometn.z ry.type);
       mesh.position.set(
-        (mesh.position.x * num),
-        (mesh.position.y * num),
-        (mesh.position.z * num),
+        (mesh.position.x * x),
+        (mesh.position.y * y),
+        (mesh.position.z * z),
       );
-      
 
-      mesh.geometry.scale(num, num, num);
+      mesh.geometry.scale(x, y, z);
     }
     this.resetRigidBody();
   }

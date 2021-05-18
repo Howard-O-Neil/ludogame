@@ -2,6 +2,13 @@ import * as THREE from "three";
 import * as CANNON from "cannon-es";
 import { ShapeType, threeToCannon } from "./components/Graphic/ThreeToCannon";
 
+export function uuidv4() {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+}
+
 export interface ShapeProps {
   size: CANNON.Vec3;
   center: CANNON.Vec3;

@@ -199,24 +199,26 @@ export class CannonDebugRenderer {
       //   break;
 
       // case CANNON.Shape.types.TRIMESH:
-      //   let geometry = new THREE.Geometry();
+      //   let geometry = new THREE.BufferGeometry();
       //   let v0 = this.tmpVec0;
       //   let v1 = this.tmpVec1;
       //   let v2 = this.tmpVec2;
-      //   for (let i = 0; i < shape.indices.length / 3; i++) {
-      //     shape.getTriangleVertices(i, v0, v1, v2);
-      //     geometry.vertices.push(
-      //       new THREE.Vector3(v0.x, v0.y, v0.z),
-      //       new THREE.Vector3(v1.x, v1.y, v1.z),
-      //       new THREE.Vector3(v2.x, v2.y, v2.z)
-      //     );
-      //     let j = geometry.vertices.length - 3;
-      //     geometry.faces.push(new THREE.Face3(j, j + 1, j + 2));
-      //   }
+
+      //   // sconsole.log(shape);
+      //   // for (let i = 0; i < shape.indices.length / 3; i++) {
+      //   //   shape.getTriangleVertices(i, v0, v1, v2);
+      //   //   geometry.vertices.push(
+      //   //     new THREE.Vector3(v0.x, v0.y, v0.z),
+      //   //     new THREE.Vector3(v1.x, v1.y, v1.z),
+      //   //     new THREE.Vector3(v2.x, v2.y, v2.z)
+      //   //   );
+      //   //   let j = geometry.vertices.length - 3;
+      //   //   geometry.faces.push(new THREE.Face3(j, j + 1, j + 2));
+      //   // }
       //   geometry.computeBoundingSphere();
-      //   geometry.computeFaceNormals();
+      //   geometry.computeVertexNormals();
       //   mesh = new THREE.Mesh(geometry, material);
-      //   shape.geometryId = geometry.id;
+      //   // shape = geometry.id;
       //   break;
 
       // case CANNON.Shape.types.HEIGHTFIELD:

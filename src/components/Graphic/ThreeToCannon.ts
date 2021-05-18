@@ -42,6 +42,7 @@ export const threeToCannon = function (object: Object3D, options: ShapeOptions =
 		return createConvexPolyhedron(object);
 	} else if (options.type === ShapeType.MESH) {
 		geometry = getGeometry(object);
+		console.log(geometry);
 		return geometry ? createTrimeshShape(geometry) : null;
 	} else if (options.type) {
 		throw new Error(`[CANNON.threeToCannon] Invalid type "${options.type}".`);
@@ -167,8 +168,8 @@ function createBoundingCylinderShape (object: Object3D, options: ShapeOptions): 
 	const size = mesh.geometry.boundingBox.getSize(new Vector3());
 	const height = size.y;
 
-	const radiusTop = object['geometry']?.parameters?.radiusTop;
-	const radiusBottom = object['geometry']?.parameters?.radiusBottom;
+	const radiusTop = object['geometry'].parameters.radiusTop;
+	const radiusBottom = object['geometry'].parameters.radiusBottom;
 	
 	const radiusRatio = (size.x * 0.5) / Math.max(radiusTop, radiusBottom);
 
@@ -201,8 +202,13 @@ function createBoundingSphereShape (object: Object3D, options: ShapeOptions): Sh
 function createTrimeshShape (geometry: BufferGeometry): ShapeResult | null {
 	const vertices = getVertices(geometry);
 
+	console.log(vertices);
+
 	if (!vertices.length) return null;
 
-	const indices = Object.keys(vertices).map(Number);
+	const indices = [];
+	for (let i = 0; i < vertices.length; i+= 3) {
+		indices.push(i);
+	}
 	return {shape: new Trimesh(vertices as unknown as number[], indices)};
 }

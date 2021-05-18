@@ -10,8 +10,15 @@
 
 ### `How to run`
 
+#### Frontend
+  ```bash
+    live-server public --port=8082
+    npm run start
+  ```
+
+#### Backend
 ```bash
-  live-server public --port=8082;
+  cd backend/colyseus
   npm run start;
 ```
 

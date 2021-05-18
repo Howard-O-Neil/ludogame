@@ -1,7 +1,6 @@
 // import Board from "./components/Board";
 // import Piece from "./components/Piece";
 // import Dice from "./components/Dice";
-import * as Colyseus from "colyseus.js";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import { Sky } from "three/examples/jsm/objects/Sky";
 import * as THREE from "three";
@@ -14,26 +13,10 @@ import Dice from "./components/Dice";
 import $ from "jquery";
 import { CannonDebugRenderer, createCannonDebugger } from "./components/CannonDebug";
 
-let client = new Colyseus.Client("ws://localhost:2567");
 
 export let globalState = {
   sayHi: "",
 };
-
-// client.joinOrCreate("main_game").then(room => {
-//   // client.send("powerup", { kind: "ammo" });
-//   console.log('==== client ====')
-//   console.log(client);
-//   room.onStateChange((state) => {
-//     console.log(state)
-//   })
-//   console.log(room.sessionId, "joined", room.name);
-// }).catch(e => {
-//   console.log("JOIN ERROR", e);
-// });
-
-
-
 
 export interface CyclinderBasicParam {
   radiusTop: number,
@@ -159,7 +142,8 @@ export default class MainGame {
     this.world.broadphase.useBoundingBoxes = true;
   }
 
-  public initGameplay = async () => {
+  public initGameplay = async (cameraPos: any, dices: any[]) => {
+    // console.log(cameraPos, dices);
     // setup renderer
     this.renderer = new THREE.WebGLRenderer();
     this.renderer.setSize(window.innerWidth, window.innerHeight);
@@ -175,7 +159,7 @@ export default class MainGame {
       this.camera.updateProjectionMatrix();
     };
 
-    this.camera.position.fromArray([-11.5, 14, 15.5]);
+    this.camera.position.fromArray(Object.values(cameraPos.position));
 
     const ambinentLight = new THREE.AmbientLight(); // soft white light
     ambinentLight.intensity = 0.5;
@@ -198,7 +182,13 @@ export default class MainGame {
     this.gameObjectList = [];
 
     this.gameObjectList.push(new Board(this.world));
-    this.gameObjectList.push(new Dice([0, 10, 0], [5, 5, 5], this.camera, this.world));
+
+    for (let i = 0; i < dices.length; i++) {
+      this.gameObjectList.push(new Dice(
+        Object.values(dices[i].position), Object.values(dices[i].scale),
+        this.camera, this.world));
+    }
+      
 
     for (let i = 0; i < data.length; i++) {
       this.gameObjectList.push(new Piece(
@@ -228,7 +218,7 @@ export default class MainGame {
     $(document).on('keypress', ev => {
       let keycode = require('keycode');
       this.keyCodes[keycode(ev.key)] = true;
-    })
+    });
 
     // setup orbit controls
     this.controls = new OrbitControls(this.camera, this.renderer.domElement);
@@ -238,7 +228,8 @@ export default class MainGame {
   };
 
   keyboardHandle = () => {
-    // console.log(ev);
+    let keycode = require('keycode');
+    
     for (const gameObj of this.gameObjectList) {
       if (gameObj.keyboardHandle)
         gameObj.keyboardHandle(this.keyCodes);
@@ -268,6 +259,4 @@ export default class MainGame {
   }
 }
 
-
-export const gameplay = new MainGame();
-gameplay.initGameplay();
+require('./gameplayHandler'); // load gameplay handler

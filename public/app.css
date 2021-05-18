@@ -9,3 +9,30 @@ body {
   padding: 0;
   margin: 0;
 }
+
+.selectRoom {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  justify-items: center;
+}
+.selectRoom form {
+  width: 500px;
+  padding: 15px;
+  background-color: whitesmoke;
+  margin: auto;
+}
+.selectRoom .formbody {
+  max-height: 500px;
+  overflow: auto;
+}
+.selectRoom label {
+  font-size: large;
+}
+.selectRoom .form-check {
+  margin-bottom: 20px;
+}
+.selectRoom input[type=radio] {
+  width: 15px;
+  height: 15px;
+}
