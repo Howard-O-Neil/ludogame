@@ -1,3 +1,4 @@
+import { ShapeOptions } from './Graphic/ThreeToCannon';
 import { type } from '@colyseus/schema';
 import { BufferGeometryUtils } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { convertToCannonVec3, createRigidBodyForGroup } from './../utils';
@@ -105,15 +106,15 @@ export default class GameObject {
     }
   }
 
-  initRigidBody = () => {
+  initRigidBody = (shapeOptions: ShapeOptions = {}) => {
     this.rigidBody = createRigidBodyForGroup(<THREE.Group>this.mainModel, {
       mass: this.mass,
       position: new CANNON.Vec3(this.position.x, this.position.y *  0.5, this.position.z),
-    });
+    }, shapeOptions);
     this.world.addBody(this.rigidBody);
   }
 
-  resetRigidBody = () => {
+  resetRigidBody = (shapeOptions: ShapeOptions = {}) => {
     const oldRigid = this.rigidBody;
     
     this.rigidBody = createRigidBodyForGroup(<THREE.Group>this.mainModel, {
@@ -121,7 +122,7 @@ export default class GameObject {
       velocity: oldRigid.velocity,
       quaternion: oldRigid.quaternion,
       mass: oldRigid.mass,
-    });
+    }, shapeOptions);
     this.world.removeBody(oldRigid);
     this.world.addBody(this.rigidBody);
   }
@@ -133,7 +134,7 @@ export default class GameObject {
     }
   }
 
-  applyScale = (x?: number, y?: number, z?: number) => {
+  applyScale = (x?: number, y?: number, z?: number, shapeOptions: ShapeOptions = {}) => {
     this.scale.x *= x;
     this.scale.y *= y;
     this.scale.z *= z;
@@ -149,6 +150,6 @@ export default class GameObject {
 
       mesh.geometry.scale(x, y, z);
     }
-    this.resetRigidBody();
+    this.resetRigidBody(shapeOptions);
   }
 }

@@ -56,7 +56,7 @@ export default class Piece extends GameObject {
     if (table[keycode('e')]) {
       this.launch(new CANNON.Vec3(20, 30, 0));
     } else if (table[keycode('w')]) {
-      this.applyScale(1, 2, 1);
+      this.applyScale(-2, 2, 2);
     }
   }
 

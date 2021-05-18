@@ -33,6 +33,37 @@ const getFormSubmitValue = (jquerySelectString: string) => {
   return values;
 }
 
+// <tr class="users-list">
+// <td class="title">
+//   <div class="thumb">
+//     <img class="img-fluid" src="https://bootdey.com/img/Content/avatar/avatar7.png" alt="">
+//   </div>
+//   <div class="user-list-details">
+//     <div class="user-list-info">
+//       <div class="user-list-title">
+//         <h5 class="mb-0"><a href="#">Brooke Kelly</a></h5>
+//       </div>
+//       <div class="user-list-option">
+//         <ul class="list-unstyled">
+//           <li><i class="fas fa-filter pr-1"></i>Information Technology</li>
+//           <li><i class="fas fa-map-marker-alt pr-1"></i>Rolling Meadows, IL 60008</li>
+//         </ul>
+//       </div>
+//     </div>
+//   </div>
+// </td>
+// <td class="user-list-favourite-time text-center">
+//   <a class="user-list-favourite order-2 text-danger" href="#"><i class="fas fa-heart"></i></a>
+//   <span class="user-list-time order-1">Shortlisted</span>
+// </td>
+// <td>
+//   <ul class="list-unstyled mb-0 d-flex justify-content-end">
+//     <li><a href="#" class="text-primary" data-toggle="tooltip" title="" data-original-title="chat"><i class="far fa-eye"></i></a></li>
+//     <li><a href="#" class="text-info" data-toggle="tooltip" title="" data-original-title="view"><i class="far fa-comment-dots"></i></a></li>
+//   </ul>
+// </td>
+// </tr>
+
 // handle join room
 $('.selectRoom form').on('submit', ev => {
   ev.preventDefault();
@@ -44,7 +75,7 @@ $('.selectRoom form').on('submit', ev => {
 })
 
 // handle create room
-$('#createroom').on('click', ev => {
+$('#createRoom').on('click', ev => {
   ev.preventDefault();
 
   const roomAlias = window.prompt('Input Room Name', 'lets play');
@@ -63,7 +94,7 @@ $('#createroom').on('click', ev => {
       gameRoom.onMessage(InitGameState, mess => {
         $('.selectRoom').hide();
         gameplay.initGameplay(mess.camera, mess.dices);
-      })
+      });
 
       getRoom();
     })
@@ -84,14 +115,14 @@ const joinRoom = (room: IRoomClient) => {
         gameplay.initGameplay(mess.camera, mess.dices);
       })
     })
-    .catch(message => {
+    .catch(_ => {
       // console.log(message);
     })
 }
 
 // handle load room id
 const loadRoomId = (arr: IRoomClient[]) => {
-  $('.selectRoom form .formbody').empty();
+  $('.selectRoom form .formBody').empty();
   
   for (const room of arr.reverse()) {
     const element = $(`
@@ -103,9 +134,9 @@ const loadRoomId = (arr: IRoomClient[]) => {
       </label>
       </div>`);
     
-    $('.selectRoom form .formbody').append(element);
+    $('.selectRoom form .formBody').append(element);
   }
-}   
+}
 
 const getRoom = (callBack?: any) => {
   client.getAvailableRooms("gameplay").then((x) => {
@@ -116,10 +147,18 @@ const getRoom = (callBack?: any) => {
           roomAlias: x1.metadata.roomAlias
         }
       });
-      loadRoomId(listRoom);
-      
-      if (callBack) callBack()
+      loadRoomId(listRoom);      
+    } else {
+      $('.selectRoom form .formBody').append(
+        $(`<div style="margin-top: 10px;">There is currently no room available</div>`)
+      );
+      $('.selectRoom form .formBody').append(
+        $(`<div style="margin-bottom: 50px;">Create new room or refresh your browser</div>`)
+      );
+      // $('.selectRoom form .formBody').append(
+      //   $(`<div>There is currently no room available</div>`));
     }
+    if (callBack) callBack()
   });
 }
 getRoom();

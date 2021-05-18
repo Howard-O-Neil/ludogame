@@ -1,5 +1,4 @@
 export const StartGame = "StartGame";
-export const StartPlaying = "StartPlaying";
-export const InitGameState = "InitGameState";
-
-export const NormalErrorCode = "[NORMAL]";
+export const GameInProgress = "GameInProgress";
+export const UserReady = "UserReady";
+export const InitGamePlay = "InitGamePlay";

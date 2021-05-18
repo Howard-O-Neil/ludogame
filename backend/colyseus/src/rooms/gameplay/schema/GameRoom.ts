@@ -13,35 +13,45 @@ interface ClientGameState {
 // 4 slot on each gameplay
 export class GameRoom extends Schema {
   @type('string')
-  roomId: string;
+  private roomId: string;
 
   @type([Dice])
-  dices: Dice[];
+  private dices: Dice[];
 
   @type([Camera])
-  cameras: Camera[];
+  private cameras: Camera[];
 
   @type([User])
-  slots: User[];
+  private slots: User[];
 
   @type('boolean')
-  gameplayProgressing: boolean;
+  private gameplayProgressing: boolean;
 
   @type('boolean')
-  gameEnd: boolean;
+  private gameEnd: boolean;
 
-  public getClientById = (id: string) => {
+  public addUser(user: User) {
+    this.slots.push(user);
+  }
+
+  public getUserById = (id: string) => {
     return this.slots.find(x => x.id === id);
   }
 
-  public getClientGameState = (): ClientGameState => {
-    return {
-      dices: this.dices
-    };
+  public setUserReady = (id: string, isReady: boolean) => {
+    this.getUserById(id).isReady = isReady;
   }
 
   public getCameraPosition = (id: string) => {
     return this.cameras[this.slots.findIndex(x => x.id === id)];
+  }
+
+  public getUserInitGameState = (id: string) => {
+    return {
+      isReady: this.getUserById(id).isReady,
+      camera: this.getCameraPosition(id),
+      dices: this.getDice()
+    }
   }
 
   public getDice = () => {
@@ -49,7 +59,7 @@ export class GameRoom extends Schema {
   }
 
   public userReadyToPlay = () => {
-    return this.slots.findIndex(x => x.startPlaying === false) !== -1;
+    return this.slots.findIndex(x => x.isReady === false) !== -1;
   }
 
   // init gameState

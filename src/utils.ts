@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import * as CANNON from "cannon-es";
-import { ShapeType, threeToCannon } from "./components/Graphic/ThreeToCannon";
+import { ShapeOptions, ShapeType, threeToCannon } from "./components/Graphic/ThreeToCannon";
 
 export function uuidv4() {
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
@@ -64,7 +64,7 @@ const getFaceFromVertices = (array: CANNON.Vec3[]): number[][] => {
 export const createRigidBodyForGroup = (
   model: THREE.Group,
   bodyOption: CANNON.BodyOptions,
-  option?: AlterNativeOptions
+  shapeOption: ShapeOptions = {}
 ) => {
   // compute size + center
   // only 1 rigidbody
@@ -74,7 +74,7 @@ export const createRigidBodyForGroup = (
   let i = 0,
     arr = model.children.filter((x) => x.type === "Mesh");
   for (const item of arr) {
-    const shape = createShapeForMesh(<THREE.Mesh>item);
+    const shape = createShapeForMesh(<THREE.Mesh>item, shapeOption);
 
     const offset = new CANNON.Vec3(...Object.values(
       item.position));
@@ -88,7 +88,7 @@ export const createRigidBodyForGroup = (
   return rigidBody;
 };
 
-export const createShapeForMesh = (model: THREE.Mesh): CANNON.Shape => {
+export const createShapeForMesh = (model: THREE.Mesh, shapeOption: ShapeOptions = {}): CANNON.Shape => {
   model.geometry.computeBoundingSphere();
   model.geometry.computeBoundingBox();
 
@@ -96,25 +96,25 @@ export const createShapeForMesh = (model: THREE.Mesh): CANNON.Shape => {
 
   switch (model.geometry.type) {
     case "BufferGeometry":
-      res = threeToCannon(model, { type: ShapeType.BOX }).shape;
+      res = threeToCannon(model, { ...shapeOption, type: ShapeType.BOX }).shape;
       break;
     case "BoxGeometry":
-      res = threeToCannon(model, { type: ShapeType.BOX }).shape;
+      res = threeToCannon(model, { ...shapeOption, type: ShapeType.BOX }).shape;
       break;
     case "ConvexPolyhedronGeometry":
-      res = threeToCannon(model, { type: ShapeType.HULL }).shape;
+      res = threeToCannon(model, { ...shapeOption, type: ShapeType.HULL }).shape;
       break;
     case "CylinderGeometry":
-      res = threeToCannon(model, { type: ShapeType.CYLINDER }).shape;
+      res = threeToCannon(model, { ...shapeOption, type: ShapeType.CYLINDER }).shape;
       break;
     case "PlaneGeometry":
-      res = threeToCannon(model, { type: ShapeType.BOX }).shape;
+      res = threeToCannon(model, { ...shapeOption, type: ShapeType.BOX }).shape;
       break;
     case "SphereGeometry":
-      res = threeToCannon(model, { type: ShapeType.SPHERE }).shape;
+      res = threeToCannon(model, { ...shapeOption, type: ShapeType.SPHERE }).shape;
       break;
     default:
-      res = threeToCannon(model, { type: ShapeType.MESH }).shape;
+      res = threeToCannon(model, { ...shapeOption, type: ShapeType.MESH }).shape;
   }
   return res;
 };

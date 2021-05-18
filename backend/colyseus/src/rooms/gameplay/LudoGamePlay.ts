@@ -7,22 +7,31 @@ import { GameRoom } from './schema/GameRoom';
 export const NormalErrorCode = "[NORMAL]";
 
 export const StartGame = "StartGame";
-export const StartPlaying = "StartPlaying";
-export const InitGameState = "InitGameState";
+export const GameInProgress = "GameInProgress";
+export const UserReady = "UserReady";
+export const InitGamePlay = "InitGamePlay";
 
 const maxPlayer = 4;
 
 export class LudoGameplay extends Room<GameRoom> {
+
+  // client join room by their id
   clientJoinRoom = (client: Client, options: any) => {
-    this.state.slots.push(new User(options.clientId, false));
+    this.onMessage(StartGame, client => {
+      this.state.setUserReady(options.clientId, true);
+
+      client.send(InitGamePlay, this.state.getUserInitGameState(options.clientId));
+      this.broadcast(UserReady, this.state.getUserById(options.clientId));
+
+      if (this.state.userReadyToPlay()) {
+        this.lock();
+        this.broadcast(GameInProgress, this.state.getUserInitGameState(options.clientId));
+      }
+    });
+    this.state.addUser(new User(options.clientId, false));
 
     console.log(options.clientId, "joined room ", this.roomId);
     console.log("client count: ", this.clients.length);
-
-    client.send(InitGameState, {
-      camera: this.state.getCameraPosition(options.clientId),
-      dices: this.state.getDice(),
-    });
   }
 
   onCreate (options: any) {
@@ -31,19 +40,10 @@ export class LudoGameplay extends Room<GameRoom> {
     // this.roomName = options.roomName;
 
     this.setState(new GameRoom());
-
-    this.onMessage(StartGame, client => {
-      this.state.getClientById(client.id).startPlaying = true;
-      client.send(InitGameState, this.state.getCameraPosition(client.id));
-
-      if (this.state.userReadyToPlay()) {
-        this.broadcast(StartPlaying, this.state.getClientGameState());
-      }
-    })
   }
 
   onJoin (client: Client, options: any) {
-    if (this.state.getClientById(options.clientId)) {
+    if (this.state.getUserById(options.clientId)) {
       throw new Error(`${NormalErrorCode} You already join this room`);
     }
     this.clientJoinRoom(client, options);
