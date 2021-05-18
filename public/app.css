@@ -5,8 +5,21 @@
   width: 100vw;
 }
 
-body{
-  background-color: #f8f9fa
+html {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  background: yellow;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  max-height: 100%;
+  background-color: #f8f9fa;
+  float: left;
+  width: 100%;
 }
 
 .selectRoom {
@@ -47,6 +60,7 @@ body{
   z-index: 50;
   width: 100vw;
   height: 100vh;
+  display: none;
 }
 
 .userInRoomList {
@@ -57,6 +71,20 @@ body{
   overflow: auto;
   margin-left: 5px;
   margin-top: 5px;
+}
+
+.gameplay {
+  width: 100vw;
+  height: 100vh;
+  display: none;
+}
+
+.showUserInfo {
+  cursor: pointer;
+}
+
+.showChatBox {
+  cursor: pointer;
 }
 
 /* list user box */

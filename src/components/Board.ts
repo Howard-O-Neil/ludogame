@@ -10,7 +10,7 @@ export default class Board extends GameObject {
     super();
     this.world = world;
     this.scale = new CANNON.Vec3(2, 2, 2);
-    this.mass = 0;
+    this.mass = -10;
   }
 
   childNode = ['ludoludo4_ludolambert3_0'];
@@ -49,17 +49,21 @@ export default class Board extends GameObject {
     
     listMesh[1].rotation.fromArray([-Math.PI / 2, 0, 0]);
     listMesh[1].position.fromArray([0, 0.2, 0]);
-    listMesh[1].receiveShadow = true;
+    listMesh[1].receiveShadow = false;
 
     this.addMesh(...listMesh);
     this.initScale(...Object.values(this.scale));
     this.initRigidBody();
+
+    this.setSpaceFriction(0.01);
   }
 
   update = () => {
     // update rigidBody upon value from object
 
     this.rigidBody.position.copy(this.position); // stand still
+
+    this.applyFriction();
     this.mainModel.position.fromArray(Object.values(this.rigidBody.position));
     this.mainModel.quaternion.fromArray(Object.values(this.rigidBody.quaternion));
   }

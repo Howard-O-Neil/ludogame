@@ -26,30 +26,30 @@ export interface CyclinderBasicParam {
 }
 
 const data = [
-  [-5.439477664422223, 20.199988980367679, -5.308972802276404],
-  [-5.393146085870269, 20.1999890702525435, -7.71029413378612],
-  [-7.779093281241222, 20.1999884336587399, -7.6962970855280775],
-  [-7.735512466757786, 20.199988657083725, -5.359430200465674],
+  [-5.439477664422223, 5.199988980367679, -5.308972802276404],
+  [-5.393146085870269, 5.1999890702525435, -7.71029413378612],
+  [-7.779093281241222, 5.1999884336587399, -7.6962970855280775],
+  [-7.735512466757786, 5.199988657083725, -5.359430200465674],
 
-  [5.439477664422223, 20.199988980367679, 5.308972802276404],
-  [5.393146085870269, 20.1999890702525435, 7.71029413378612],
-  [7.779093281241222, 20.1999884336587399, 7.6962970855280775],
-  [7.735512466757786, 20.199988657083725, 5.359430200465674],
+  [-5.439477664422223 , 5.199988980367679, 5.308972802276404        + 0.25],
+  [-5.393146085870269 , 5.1999890702525435, 7.71029413378612        + 0.25],
+  [-7.779093281241222 , 5.1999884336587399, 7.6962970855280775      + 0.25],
+  [-7.735512466757786 , 5.199988657083725, 5.359430200465674        + 0.25],
 
-  [-5.439477664422223, 20.199988980367679, -5.308972802276404],
-  [-5.393146085870269, 20.1999890702525435, -7.71029413378612],
-  [-7.779093281241222, 20.1999884336587399, -7.6962970855280775],
-  [-7.735512466757786, 20.199988657083725, -5.359430200465674],
+  [5.439477664422223 + 0.15, 5.199988980367679, -5.308972802276404],
+  [5.393146085870269 + 0.15, 5.1999890702525435, -7.71029413378612],
+  [7.779093281241222 + 0.15, 5.1999884336587399, -7.6962970855280775],
+  [7.735512466757786 + 0.15, 5.199988657083725, -5.359430200465674],
 
-  [-5.439477664422223, 20.199988980367679, -5.308972802276404],
-  [-5.393146085870269, 20.1999890702525435, -7.71029413378612],
-  [-7.779093281241222, 20.1999884336587399, -7.6962970855280775],
-  [-7.735512466757786, 20.199988657083725, -5.359430200465674],
+  [5.439477664422223 + 0.1, 5.199988980367679, 5.308972802276404     + 0.15],
+  [5.393146085870269 + 0.1, 5.1999890702525435, 7.71029413378612     + 0.15],
+  [7.779093281241222 + 0.1, 5.1999884336587399, 7.6962970855280775   + 0.15],
+  [7.735512466757786 + 0.1, 5.199988657083725, 5.359430200465674     + 0.15],
 ];
 
-const colors = ["#8aacae", "#b4cb5f", "#ca5452", "#d7c944"];
+const colors = ["#8aacae", "#ca5452", "#d7c944", "#b4cb5f"];
 
-const FPS = 1 / 80;
+const FPS = 1 / 60;
 
 export default class MainGame {
 
@@ -60,7 +60,7 @@ export default class MainGame {
   scene: THREE.Scene;
   camera: THREE.PerspectiveCamera;
   renderer: THREE.WebGLRenderer;
-  controls: OrbitControls;
+  orbitControl: OrbitControls;
   gridHelper: THREE.GridHelper;
 
   cannonDebugger: CannonDebugRenderer;
@@ -136,11 +136,9 @@ export default class MainGame {
 
     gui.add(this.effectController, "turbidity", 0.0, 20.0, 0.1).onChange(this.guiChanged);
     gui.add(this.effectController, "rayleigh", 0.0, 4, 0.001).onChange(this.guiChanged);
-    gui
-      .add(this.effectController, "mieCoefficient", 0.0, 0.1, 0.001)
+    gui.add(this.effectController, "mieCoefficient", 0.0, 0.1, 0.001)
       .onChange(this.guiChanged);
-    gui
-      .add(this.effectController, "mieDirectionalG", 0.0, 1, 0.001)
+    gui.add(this.effectController, "mieDirectionalG", 0.0, 1, 0.001)
       .onChange(this.guiChanged);
     gui.add(this.effectController, "elevation", 0, 90, 0.1).onChange(this.guiChanged);
     gui.add(this.effectController, "azimuth", -180, 180, 0.1).onChange(this.guiChanged);
@@ -160,23 +158,25 @@ export default class MainGame {
   public initGameplay = async (cameraPos: any, dices: any[]) => {
     // console.log(cameraPos, dices);
     // setup renderer
-    this.renderer = new THREE.WebGLRenderer();
-    this.renderer.setSize(window.innerWidth, window.innerHeight);
+    this.renderer = new THREE.WebGLRenderer({
+      canvas: <HTMLCanvasElement>($('.gameplay')[0])
+    });
+    // this.renderer.setSize(window.innerWidth, window.innerHeight);
 
-    document.body.appendChild(this.renderer.domElement);
+    // document.body.appendChild(this.renderer.domElement);
 
     // camera + scene
     this.scene = new THREE.Scene();
-    this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 500);
     window.onresize = (ev) => {
-      this.renderer.setSize(window.innerWidth, window.innerHeight);
+      // this.renderer.setSize(window.innerWidth, window.innerHeight);
       this.camera.aspect = window.innerWidth / window.innerHeight;
       this.camera.updateProjectionMatrix();
     };
 
     this.camera.position.fromArray(Object.values(cameraPos.position));
 
-    const ambinentLight = new THREE.AmbientLight(); // soft white light
+    const ambinentLight = new THREE.AmbientLight(); // soft whit light
     ambinentLight.intensity = 0.5;
 
     const spotLight = new THREE.PointLight();
@@ -187,8 +187,8 @@ export default class MainGame {
 
     this.initSky();
 
-    this.gridHelper = new THREE.GridHelper(200, 2, 0xffffff, 0xffffff);
-    this.scene.add(this.gridHelper);
+    // this.gridHelper = new THREE.GridHelper(200, 2, 0xffffff, 0xffffff);
+    // this.scene.add(this.gridHelper);
 
     // init game objects
 
@@ -205,20 +205,23 @@ export default class MainGame {
     }
       
 
-    for (let i = 0; i < data.length; i++) {
-      this.gameObjectList.push(new Piece(
-        colors[i],
-        {
-          radiusTop: 0.08,
-          radiusBottom: 0.7,
-          radialSegments: 2,
-          heightSegments: 50
-        },
-        data[i], this.world));
+    for (let i = 0; i < data.length; i += 4) {
+
+      for (let j = i; j < i + 4; j++) {
+        this.gameObjectList.push(new Piece(
+          colors[parseInt((j / 4).toString())],
+          {
+            radiusTop: 0.08,
+            radiusBottom: 0.7,
+            radialSegments: 2,
+            heightSegments: 50
+          },
+          data[j], this.world));
+      }
     }
     
     //cannonDebugRenderer = new THREE.CannonDebugRenderer(scene, world);
-    this.cannonDebugger = createCannonDebugger(this.scene, this.world);
+    // this.cannonDebugger = createCannonDebugger(this.scene, this.world);
 
     for (const obj of this.gameObjectList) {
       if (obj.getMesh) {
@@ -236,8 +239,11 @@ export default class MainGame {
     });
 
     // setup orbit controls
-    this.controls = new OrbitControls(this.camera, this.renderer.domElement);
-    this.controls.update();
+    this.orbitControl = new OrbitControls(this.camera, this.renderer.domElement);
+    this.orbitControl.autoRotate = true;
+    this.orbitControl.autoRotateSpeed = 1;
+    
+    this.orbitControl.update();
 
     this.render();
   };
@@ -260,17 +266,28 @@ export default class MainGame {
     this.world.step(FPS);
   }
 
+  dt = FPS * 1000;
+  timeTarget = 0;
+
   render = () => {
-    this.renderer.render(this.scene, this.camera);
-
-    this.cannonDebugger.update();
-
-    this.controls.update();
+    if (Date.now()>= this.timeTarget) {
+      this.orbitControl.update();
     
-    this.keyboardHandle();
-    this.updatePhysics();
+      this.keyboardHandle();
+      this.updatePhysics();
 
+      this.renderer.render(this.scene, this.camera);
+
+      this.timeTarget += this.dt;
+      if (Date.now() >= this.timeTarget){
+        this.timeTarget = Date.now();
+      }
+    }
     requestAnimationFrame(this.render);
+
+    // this.cannonDebugger.update();
+
+    
   }
 }
 

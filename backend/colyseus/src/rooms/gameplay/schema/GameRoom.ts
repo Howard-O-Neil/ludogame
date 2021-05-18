@@ -1,3 +1,4 @@
+import { Piece } from './Piece';
 import { User } from './User';
 import { Camera } from './Camera';
 import { Dice } from './Dice';
@@ -18,6 +19,9 @@ export class GameRoom extends Schema {
   @type([Dice])
   private dices: Dice[];
 
+  @type([[Piece]])
+  private pieces: Piece[][];
+
   @type([Camera])
   private cameras: Camera[];
 
@@ -31,11 +35,27 @@ export class GameRoom extends Schema {
   private gameEnd: boolean;
 
   public addUser(user: User) {
+    user.order = this.slots.length + 1;
     this.slots.push(user);
   }
 
   public getUserById = (id: string) => {
     return this.slots.find(x => x.id === id);
+  }
+
+  public getUserByClientId = (id: string) => {
+    return this.slots.find(x => x.clientId === id);
+  }
+
+  public removeUserByClientId = (id: string) => {
+    const temp = this.slots.find(x => x.clientId === id);
+    const userIndex = this.slots.findIndex(x => x.clientId === id);
+    this.slots.splice(userIndex, 1);
+    return temp;
+  }
+
+  public isEmptyRoom = () => {
+    return this.slots.length <= 1;
   }
 
   public setUserReady = (id: string, isReady: boolean) => {
@@ -71,10 +91,10 @@ export class GameRoom extends Schema {
     this.slots = [];
     this.cameras = [];
     this.dices = [];
-    this.cameras.push(new Camera(new Vec3(-15, 12, 15)));
-    this.cameras.push(new Camera(new Vec3(15, 12, 15)));
-    this.cameras.push(new Camera(new Vec3(15, 12, -15)));
     this.cameras.push(new Camera(new Vec3(-15, 12, -15)));
+    this.cameras.push(new Camera(new Vec3(-15, 12, 15)));
+    this.cameras.push(new Camera(new Vec3(15, 12, -15)));
+    this.cameras.push(new Camera(new Vec3(15, 12, 15)));
 
     this.dices.push(new Dice(
       new Vec3(-2, 10, 0),

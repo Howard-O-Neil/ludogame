@@ -15,6 +15,7 @@ export default class GameObject {
   quaternion: CANNON.Quaternion;
   size: CANNON.Vec3;
   world: CANNON.World
+  spaceFriction: number;
   mass: number;
   rigidBody: CANNON.Body;
   // velocity: CANNON.Vec3;
@@ -32,7 +33,7 @@ export default class GameObject {
     this.texture = new Map();
 
     this.mainModel = new THREE.Group();
-    this.mainModel.receiveShadow = true;
+    this.mainModel.receiveShadow = false;
 
     // this.mesh = [];
   }
@@ -114,6 +115,10 @@ export default class GameObject {
     this.world.addBody(this.rigidBody);
   }
 
+  setSpaceFriction = (val: number) => {
+    this.spaceFriction = val;
+  }
+
   resetRigidBody = (shapeOptions: ShapeOptions = {}) => {
     const oldRigid = this.rigidBody;
     
@@ -131,6 +136,21 @@ export default class GameObject {
     for (const mesh of meshes) {
       mesh.geometry.center(); // very important
       this.mainModel.add(mesh);
+    }
+  }
+
+  applyFriction = () =>  {
+    const spaceFrictionRatio = 10;
+    if (this.rigidBody) {
+      if (this.rigidBody.velocity.x <= -this.spaceFriction)
+        this.rigidBody.velocity.x += this.spaceFriction / spaceFrictionRatio;
+      if (this.rigidBody.velocity.z <= -this.spaceFriction)
+        this.rigidBody.velocity.z += this.spaceFriction / spaceFrictionRatio;
+
+      if (this.rigidBody.velocity.x >= this.spaceFriction)
+        this.rigidBody.velocity.x -= this.spaceFriction / spaceFrictionRatio;
+      if (this.rigidBody.velocity.z >= this.spaceFriction)
+        this.rigidBody.velocity.z -= this.spaceFriction / spaceFrictionRatio;
     }
   }
 

@@ -7,6 +7,11 @@ import * as fk from "faker";
 
 // 4 slot on each gameplay
 export class User extends Schema {
+  @type('string')
+  clientId: string; // id by browser when connect to socket
+
+  @type('number')
+  order: number;
 
   @type('string')
   id: string;
@@ -28,14 +33,17 @@ export class User extends Schema {
 
   // init gameState
   // set exact value
-  constructor(id: string, play: boolean) {
+  constructor(id: string, clientId: string, play: boolean) {
     super();
 
     this.id = id;
+    this.clientId = clientId;
     this.isReady = play;
+
+    // seed data
     this.name = fk.internet.userName();
     this.avatar = fk.internet.avatar(); 
     this.jobTitle = fk.name.jobTitle()
-    this.address = fk.address;
+    this.address = fk.address.streetAddress(false);
   }
 }

@@ -1,12 +1,21 @@
 import * as THREE from "three";
 import * as CANNON from "cannon-es";
 import { ShapeOptions, ShapeType, threeToCannon } from "./components/Graphic/ThreeToCannon";
+import $ from 'jquery';
 
 export function uuidv4() {
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
     var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
     return v.toString(16);
   });
+}
+
+export const getFormSubmitValue = (jquerySelectString: string) => {
+  let values = {};
+  $.each($(jquerySelectString).serializeArray(), function(i, field) {
+    values[field.name] = field.value;
+  });
+  return values;
 }
 
 export interface ShapeProps {

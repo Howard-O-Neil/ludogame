@@ -35,18 +35,19 @@ export default class Piece extends GameObject {
 
     listMesh.push(new THREE.Mesh(baseGeometry, baseMaterial));
     listMesh[0].position.add(new THREE.Vector3(0, 1, 0)); // sphere on top
-    listMesh[0].receiveShadow = true;
-    listMesh[0].castShadow = true;
+    listMesh[0].receiveShadow = false;
+    listMesh[0].castShadow = false;
 
     const topGeometry = new THREE.CylinderBufferGeometry(
       ...Object.values(this.args)
     );
     listMesh.push(new THREE.Mesh(topGeometry, baseMaterial));
-    listMesh[1].receiveShadow = true;
-    listMesh[1].castShadow = true;
+    listMesh[1].receiveShadow = false;
+    listMesh[1].castShadow = false;
 
     this.addMesh(...listMesh);
     this.initRigidBody();
+    this.setSpaceFriction(0.08);
   }
 
   keyboardHandle = (table) => {
@@ -63,6 +64,7 @@ export default class Piece extends GameObject {
   update = () => {
     // update rigidBody upon value from object
 
+    this.applyFriction();
     this.mainModel.position.fromArray(Object.values(this.rigidBody.position));
     this.mainModel.quaternion.fromArray(Object.values(this.rigidBody.quaternion));
   }

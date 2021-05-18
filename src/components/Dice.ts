@@ -47,7 +47,7 @@ export default class Dice extends GameObject {
     const listMesh: THREE.Mesh[] = [];
 
     listMesh.push(new THREE.Mesh(this.geometry[this.childNode[0]], this.material[this.childNode[0]]));
-    listMesh[0].receiveShadow = true;
+    listMesh[0].receiveShadow = false;
     
     this.addMesh(...listMesh);
     this.initScale(...Object.values(this.scale));
