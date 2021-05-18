@@ -11,10 +11,10 @@ export class Dice extends Schema {
   @type(Vec3)
   rotation: Vec3;
 
-  @type('number')
-  scale: number;
+  @type(Vec3)
+  scale: Vec3;
 
-  constructor(position: Vec3, velocity: Vec3, rotation: Vec3, scale: number) {
+  constructor(position: Vec3, velocity: Vec3, rotation: Vec3, scale: Vec3) {
     super();
     
     this.position = position;

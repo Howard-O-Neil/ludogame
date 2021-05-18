@@ -2,6 +2,7 @@ import * as Colyseus from "colyseus.js";
 import MainGame from "./main";
 import $ from 'jquery';
 import { uuidv4 } from "./utils";
+import { InitGameState } from "./gameEvent";
 
 // <div class="form-check">
 //   <input class="form-check-input" type="radio" name="flexRadioDefault" id="flexRadioDefault1">
@@ -18,10 +19,11 @@ interface IRoomClient {
 export const client = new Colyseus.Client("ws://localhost:2567");
 export let gameRoom: Colyseus.Room = null;
 
-export const StartGame = "StartGame";
+export let listRoom: IRoomClient[] = [];
+export let currentRoomId = "";
+export let clientId = uuidv4();
 
 export const gameplay = new MainGame();
-export let listRoom: IRoomClient[] = [];
 
 const getFormSubmitValue = (jquerySelectString: string) => {
   let values = {};
@@ -36,7 +38,6 @@ $('.selectRoom form').on('submit', ev => {
   ev.preventDefault();
 
   const formValue = getFormSubmitValue('.selectRoom form');
-
   joinRoom(listRoom.find(x => x.roomId === formValue['choosenRoomId']));
   // console.log('what the fuck')
   // console.log(ev);
@@ -54,13 +55,17 @@ $('#createroom').on('click', ev => {
   }
   // console.log(roomAlias);
 
-  client.create("gameplay", {roomAlias})
+  client.create("gameplay", {roomAlias, clientId})
     .then(room => {
-      console.log(room);
+      currentRoomId = room.id;
+      gameRoom = room;
 
-      getRoom(() => {
-        joinRoom(listRoom.find(x => x.roomId === room.id));
+      gameRoom.onMessage(InitGameState, mess => {
+        $('.selectRoom').hide();
+        gameplay.initGameplay(mess.camera, mess.dices);
       })
+
+      getRoom();
     })
 })
 
@@ -69,8 +74,19 @@ const joinRoom = (room: IRoomClient) => {
     alert('room is not available');
     return;
   }
-  $('.selectRoom').hide();
-  gameplay.initGameplay();
+  currentRoomId = room.roomId;
+
+  client.joinById(room.roomId, {clientId})
+    .then(room => {
+      gameRoom = room;
+      gameRoom.onMessage(InitGameState, mess => {
+        $('.selectRoom').hide();
+        gameplay.initGameplay(mess.camera, mess.dices);
+      })
+    })
+    .catch(message => {
+      // console.log(message);
+    })
 }
 
 // handle load room id
@@ -107,20 +123,4 @@ const getRoom = (callBack?: any) => {
   });
 }
 getRoom();
-
-
-// const joinOrCrerate = () => {
-//   client
-//     .joinOrCreate("gameplay")
-//     .then((room) => {
-//       gameRoom = room;
-
-//       // gameplay.initGameplay();
-//       console.log(room.sessionId, "joined", room.name);
-//     })
-//     .catch((e) => {
-//       console.log("JOIN ERROR", e);
-//     });
-// }
-
 

@@ -44,6 +44,10 @@ export class GameRoom extends Schema {
     return this.cameras[this.slots.findIndex(x => x.id === id)];
   }
 
+  public getDice = () => {
+    return this.dices;
+  }
+
   public userReadyToPlay = () => {
     return this.slots.findIndex(x => x.startPlaying === false) !== -1;
   }
@@ -63,17 +67,17 @@ export class GameRoom extends Schema {
     this.cameras.push(new Camera(new Vec3(-15, 12, -15)));
 
     this.dices.push(new Dice(
-      new Vec3(0, 10, 0),
+      new Vec3(-2, 10, 0),
       new Vec3(0, 0, 0),
       new Vec3(0, 0, 0),
-      2
+      new Vec3(2, 2, 2),
     ));
 
     this.dices.push(new Dice(
-      new Vec3(5, 10, 0),
+      new Vec3(1, 10, 0),
       new Vec3(0, 0, 0),
       new Vec3(0, 0, 0),
-      2
+      new Vec3(2, 2, 2),
     ));
 
     this.gameplayProgressing = false;

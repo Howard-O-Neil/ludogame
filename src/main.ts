@@ -142,7 +142,8 @@ export default class MainGame {
     this.world.broadphase.useBoundingBoxes = true;
   }
 
-  public initGameplay = async () => {
+  public initGameplay = async (cameraPos: any, dices: any[]) => {
+    // console.log(cameraPos, dices);
     // setup renderer
     this.renderer = new THREE.WebGLRenderer();
     this.renderer.setSize(window.innerWidth, window.innerHeight);
@@ -158,7 +159,7 @@ export default class MainGame {
       this.camera.updateProjectionMatrix();
     };
 
-    this.camera.position.fromArray([-11.5, 14, 15.5]);
+    this.camera.position.fromArray(Object.values(cameraPos.position));
 
     const ambinentLight = new THREE.AmbientLight(); // soft white light
     ambinentLight.intensity = 0.5;
@@ -181,7 +182,13 @@ export default class MainGame {
     this.gameObjectList = [];
 
     this.gameObjectList.push(new Board(this.world));
-    this.gameObjectList.push(new Dice([0, 10, 0], [5, 5, 5], this.camera, this.world));
+
+    for (let i = 0; i < dices.length; i++) {
+      this.gameObjectList.push(new Dice(
+        Object.values(dices[i].position), Object.values(dices[i].scale),
+        this.camera, this.world));
+    }
+      
 
     for (let i = 0; i < data.length; i++) {
       this.gameObjectList.push(new Piece(

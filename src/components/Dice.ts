@@ -50,7 +50,7 @@ export default class Dice extends GameObject {
     listMesh[0].receiveShadow = true;
     
     this.addMesh(...listMesh);
-    this.initScale(2);
+    this.initScale(...Object.values(this.scale));
     this.initRigidBody();
   }
 
