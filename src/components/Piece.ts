@@ -55,13 +55,9 @@ export default class Piece extends GameObject {
     let keycode = require('keycode');
     if (table[keycode('e')]) {
       this.launch(new CANNON.Vec3(20, 30, 0));
+    } else if (table[keycode('w')]) {
+      this.applyScale(1);
     }
-    // } else if (ev.key === 'w') {
-    //   this.applyScale(2);
-    // }
-    // else if (ev.key === 'q') {
-    //   this.applyScale(0.5);
-    // }
   }
 
   update = () => {

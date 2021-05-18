@@ -1,38 +1,24 @@
 import Arena from "@colyseus/arena";
 import { monitor } from "@colyseus/monitor";
+import { LudoGameplay } from "./rooms/gameplay/LudoGamePlay";
 
-/**
- * Import your Room files
- */
-import { MyRoom } from "./rooms/MyRoom";
 
 export default Arena({
-  getId: () => "Your Colyseus App",
+  getId: () => "LudoGame Backend Socket",
 
   initializeGameServer: (gameServer) => {
-    // define main room for all use among all game
-    gameServer.define("main_game", MyRoom);
+    gameServer.define("gameplay", LudoGameplay);
   },
 
   initializeExpress: (app) => {
-    /**
-     * Bind your custom express routes here:
-     */
     app.get("/", (req, res) => {
       res.send("It's time to kick ass and chew bubblegum!");
     });
 
-    /**
-     * Bind @colyseus/monitor
-     * It is recommended to protect this route with a password.
-     * Read more: https://docs.colyseus.io/tools/monitor/
-     */
+    // monitor room
     app.use("/colyseus", monitor());
   },
 
   beforeListen: () => {
-    /**
-     * Before before gameServer.listen() is called.
-     */
   },
 });

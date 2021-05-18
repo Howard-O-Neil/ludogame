@@ -19,7 +19,7 @@ export default class Dice extends GameObject {
   constructor(position, scale, camera, world) {
     super();
 
-    this.mass = 15;
+    this.mass = 30;
     this.scale = new CANNON.Vec3(...scale);
     this.position = new CANNON.Vec3(...position);
     this.camera = camera;
@@ -38,7 +38,7 @@ export default class Dice extends GameObject {
         this.material[this.childNode[0]] = child['material'];
         return;
       }
-    });    
+    });
   }
 
   initObject = async () =>  {
@@ -50,7 +50,7 @@ export default class Dice extends GameObject {
     listMesh[0].receiveShadow = true;
     
     this.addMesh(...listMesh);
-    this.initScale(...[2, 2, 2]);
+    this.initScale(2);
     this.initRigidBody();
   }
 
@@ -71,11 +71,6 @@ export default class Dice extends GameObject {
 
   update = () => {
     // update rigidBody upon value from object
-
-    // console.log("the fuck")
-    // console.log(this.mainModel.position);
-    // console.log(this.rigidBody.position);
-
 
     this.mainModel.position.fromArray(Object.values(this.rigidBody.position));
     this.mainModel.quaternion.fromArray(Object.values(this.rigidBody.quaternion));

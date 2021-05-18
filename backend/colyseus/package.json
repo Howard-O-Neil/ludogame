@@ -31,8 +31,11 @@
     "@colyseus/arena": "^0.14.9",
     "@colyseus/monitor": "^0.14.0",
     "@colyseus/social": "^0.10.9",
+    "@types/lodash": "^4.14.169",
     "colyseus": "^0.14.0",
     "cors": "^2.8.5",
-    "express": "^4.16.4"
+    "express": "^4.16.4",
+    "lodash": "^4.17.21",
+    "uuid": "^3.4.0"
   }
 }

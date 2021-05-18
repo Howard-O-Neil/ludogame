@@ -98,10 +98,10 @@ export default class GameObject {
     );
   }
 
-  initScale = (x?: number, y?: number, z?: number) => {
+  initScale = (num: number) => {
     for (const child of this.mainModel.children) {
       const mesh = <THREE.Mesh>child;
-      mesh.geometry.scale(x, y, z);
+      mesh.geometry.scale(num, num, num);
     }
   }
 
@@ -146,7 +146,6 @@ export default class GameObject {
         (mesh.position.y * num),
         (mesh.position.z * num),
       );
-      
 
       mesh.geometry.scale(num, num, num);
     }
