@@ -83,7 +83,7 @@ export class CannonDebugRenderer {
       }
       mesh = this._meshes[index] = this._resetMesh(shape);
     }
-    this._scaleMesh(mesh, shape);
+    this._scaleMesh(mesh, shape, index);
   }
 
   _typeMatch = (mesh: THREE.Mesh, shape: CANNON.Shape) => {
@@ -99,7 +99,7 @@ export class CannonDebugRenderer {
     );
   }
 
-  _scaleMesh = (mesh: THREE.Mesh, shape) => {
+  _scaleMesh = (mesh: THREE.Mesh, shape, index) => {
     switch(shape.type){
     case CANNON.Shape.types.SPHERE:
       const sphereRadius = (<CANNON.Sphere>shape).radius;
@@ -114,16 +114,9 @@ export class CannonDebugRenderer {
       break;
 
     case CANNON.Shape.types.CYLINDER:
-      // console.log(shape.halfExtents)
-      const heightRatio = (<CANNON.Cylinder>shape).height / mesh.geometry['parameters'].height;
-      const radiusRatio = (<CANNON.Cylinder>shape).radiusBottom / mesh.geometry['parameters'].radiusBottom;
-      // console.log(ratio);
-      mesh.geometry.scale(radiusRatio, heightRatio, radiusRatio);
-      mesh.geometry['parameters'].height = (<CANNON.Cylinder>shape).height;
-      mesh.geometry['parameters'].radiusTop = (<CANNON.Cylinder>shape).radiusTop;
-      mesh.geometry['parameters'].radiusBottom = (<CANNON.Cylinder>shape).radiusBottom;
-      // mesh.scale.multiplyScalar(ratio);
-
+      this.scene.remove(mesh);
+      mesh = this._meshes[index] = this._resetMesh(shape)
+      
       break;
 
 

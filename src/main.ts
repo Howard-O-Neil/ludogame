@@ -1,3 +1,4 @@
+import { initBaseNodes, initCommonRoutes, initFinalRoutes } from './testDataBoard';
 // import Board from "./components/Board";
 // import Piece from "./components/Piece";
 // import Dice from "./components/Dice";
@@ -13,6 +14,10 @@ import Dice from "./components/Dice";
 import $ from "jquery";
 import { CannonDebugRenderer, createCannonDebugger } from "./components/CannonDebug";
 
+export const cannonTypeMaterials: Map<string, CANNON.Material> = new Map();
+cannonTypeMaterials['slippery'] = new CANNON.Material('slippery');
+cannonTypeMaterials['ground'] = new CANNON.Material('ground');
+
 
 export let globalState = {
   sayHi: "",
@@ -25,16 +30,8 @@ export interface CyclinderBasicParam {
   heightSegments: number,
 }
 
-const data = [
-  [-5.439477664422223, 20.199988980367679, -5.308972802276404],
-  [-5.393146085870269, 20.1999890702525435, -7.71029413378612],
-  [-7.779093281241222, 20.1999884336587399, -7.6962970855280775],
-  [-7.735512466757786, 20.199988657083725, -5.359430200465674],
-];
-
-const colors = ["#8aacae", "#b4cb5f", "#ca5452", "#d7c944"];
-
 const FPS = 1 / 80;
+const GRAVITY = -100;
 
 export default class MainGame {
 
@@ -42,13 +39,15 @@ export default class MainGame {
 
   sky: Sky;
   sunPosition: THREE.Vector3;
-  scene: THREE.Scene;
+  scene: THREE.Scene = null;
   camera: THREE.PerspectiveCamera;
   renderer: THREE.WebGLRenderer;
-  controls: OrbitControls;
+  orbitControl: OrbitControls;
   gridHelper: THREE.GridHelper;
 
   cannonDebugger: CannonDebugRenderer;
+
+  cannonContactMaterials: CANNON.ContactMaterial[];
 
   keyCodes: Array<boolean>;
 
@@ -71,6 +70,33 @@ export default class MainGame {
   };
 
   constructor() {
+    // define CANNON.Material
+
+    this.cannonContactMaterials = [];
+
+    this.cannonContactMaterials.push(new CANNON.ContactMaterial(
+      cannonTypeMaterials['ground'], cannonTypeMaterials['ground'],
+      {
+        friction: 0.5,
+        restitution: 0.3,
+        contactEquationStiffness: 1e8,
+        contactEquationRelaxation: 3,
+        frictionEquationStiffness: 1e8,
+      }
+    ));
+
+    this.cannonContactMaterials.push(new CANNON.ContactMaterial(
+      cannonTypeMaterials['ground'], cannonTypeMaterials['slippery'],
+      {
+        friction: 0,
+        restitution: 0.3,
+        contactEquationStiffness: 1e8,
+        contactEquationRelaxation: 3
+      }
+    ));
+
+    // end define
+
     this.effectController = {
       turbidity: 10,
       rayleigh: 3,
@@ -82,6 +108,10 @@ export default class MainGame {
     }
     this.keyCodes = new Array(255);
     this.resetKeycode();
+  }
+
+  public getWorld = () => {
+    return this.world;
   }
 
   resetKeycode = () => {
@@ -121,11 +151,9 @@ export default class MainGame {
 
     gui.add(this.effectController, "turbidity", 0.0, 20.0, 0.1).onChange(this.guiChanged);
     gui.add(this.effectController, "rayleigh", 0.0, 4, 0.001).onChange(this.guiChanged);
-    gui
-      .add(this.effectController, "mieCoefficient", 0.0, 0.1, 0.001)
+    gui.add(this.effectController, "mieCoefficient", 0.0, 0.1, 0.001)
       .onChange(this.guiChanged);
-    gui
-      .add(this.effectController, "mieDirectionalG", 0.0, 1, 0.001)
+    gui.add(this.effectController, "mieDirectionalG", 0.0, 1, 0.001)
       .onChange(this.guiChanged);
     gui.add(this.effectController, "elevation", 0, 90, 0.1).onChange(this.guiChanged);
     gui.add(this.effectController, "azimuth", -180, 180, 0.1).onChange(this.guiChanged);
@@ -137,31 +165,59 @@ export default class MainGame {
 
   public initWorld = async () => {
     this.world = new CANNON.World();
-    this.world.gravity.set(0, -50, 0);
+    this.world.gravity.set(0, GRAVITY, 0);
     this.world.allowSleep = true;
     this.world.broadphase.useBoundingBoxes = true;
+
+    for (const contactMaterial of this.cannonContactMaterials) {
+      this.world.addContactMaterial(contactMaterial);
+    }
   }
 
-  public initGameplay = async (cameraPos: any, dices: any[]) => {
+  public addObject = (obj: GameObject[]) => {
+    obj.forEach(x => {
+      if (x.getMesh) {
+        x.getMesh().then(gr => {
+          this.gameObjectList.push(x);
+          this.scene.add(gr);
+        })
+      }
+    });
+  }
+
+  // public removeObject = (callBack: (item) => boolean) => {
+  //   this.gameObjectList = this.gameObjectList.filter(item => !callBack(item));
+  // }
+
+  public setCameraStopOrbitAuto = (cameraPos: any) => {
+    this.camera.position.fromArray(Object.values(cameraPos.position));
+    this.orbitControl.autoRotate = false;
+  }
+
+  public initGameplay = async (cameraPos: any) => { // iddle
+    if (this.scene !== null) // game already launch
+      return;
     // console.log(cameraPos, dices);
     // setup renderer
-    this.renderer = new THREE.WebGLRenderer();
-    this.renderer.setSize(window.innerWidth, window.innerHeight);
+    this.renderer = new THREE.WebGLRenderer({
+      canvas: <HTMLCanvasElement>($('.gameplay')[0])
+    });
+    // this.renderer.setSize(window.innerWidth, window.innerHeight);
 
-    document.body.appendChild(this.renderer.domElement);
+    // document.body.appendChild(this.renderer.domElement);
 
     // camera + scene
     this.scene = new THREE.Scene();
-    this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 500);
     window.onresize = (ev) => {
-      this.renderer.setSize(window.innerWidth, window.innerHeight);
+      // this.renderer.setSize(window.innerWidth, window.innerHeight);
       this.camera.aspect = window.innerWidth / window.innerHeight;
       this.camera.updateProjectionMatrix();
     };
 
     this.camera.position.fromArray(Object.values(cameraPos.position));
 
-    const ambinentLight = new THREE.AmbientLight(); // soft white light
+    const ambinentLight = new THREE.AmbientLight(); // soft whit light
     ambinentLight.intensity = 0.5;
 
     const spotLight = new THREE.PointLight();
@@ -172,8 +228,8 @@ export default class MainGame {
 
     this.initSky();
 
-    this.gridHelper = new THREE.GridHelper(200, 2, 0xffffff, 0xffffff);
-    this.scene.add(this.gridHelper);
+    // this.gridHelper = new THREE.GridHelper(200, 2, 0xffffff, 0xffffff);
+    // this.scene.add(this.gridHelper);
 
     // init game objects
 
@@ -182,28 +238,25 @@ export default class MainGame {
     this.gameObjectList = [];
 
     this.gameObjectList.push(new Board(this.world));
+    this.gameObjectList.push(new Dice([0, 10, 0], [2, 2, 2], this.camera, this.world));
 
-    for (let i = 0; i < dices.length; i++) {
-      this.gameObjectList.push(new Dice(
-        Object.values(dices[i].position), Object.values(dices[i].scale),
-        this.camera, this.world));
-    }
-      
+    // for (let i = 0; i < data.length; i += 4) {
 
-    for (let i = 0; i < data.length; i++) {
-      this.gameObjectList.push(new Piece(
-        colors[i],
-        {
-          radiusTop: 0.08,
-          radiusBottom: 0.7,
-          radialSegments: 2,
-          heightSegments: 50
-        },
-        data[i], this.world));
-    }
+    //   for (let j = i; j < i + 4; j++) {
+    //     this.gameObjectList.push(new Piece(
+    //       colors[parseInt((j / 4).toString())],
+    //       {
+    //         radiusTop: 0.08,
+    //         radiusBottom: 0.7,
+    //         radialSegments: 2,
+    //         heightSegments: 50
+    //       },
+    //       data[j], this.world));
+    //   }
+    // }
     
     //cannonDebugRenderer = new THREE.CannonDebugRenderer(scene, world);
-    this.cannonDebugger = createCannonDebugger(this.scene, this.world);
+    // this.cannonDebugger = createCannonDebugger(this.scene, this.world);
 
     for (const obj of this.gameObjectList) {
       if (obj.getMesh) {
@@ -221,8 +274,11 @@ export default class MainGame {
     });
 
     // setup orbit controls
-    this.controls = new OrbitControls(this.camera, this.renderer.domElement);
-    this.controls.update();
+    this.orbitControl = new OrbitControls(this.camera, this.renderer.domElement);
+    this.orbitControl.autoRotate = true;
+    this.orbitControl.autoRotateSpeed = 1;
+    
+    this.orbitControl.update();
 
     this.render();
   };
@@ -245,18 +301,27 @@ export default class MainGame {
     this.world.step(FPS);
   }
 
+  dt = FPS * 1000;
+  timeTarget = 0;
+
   render = () => {
-    this.renderer.render(this.scene, this.camera);
-
-    this.cannonDebugger.update();
-
-    this.controls.update();
+    if (Date.now()>= this.timeTarget) {
+      this.orbitControl.update();
     
-    this.keyboardHandle();
-    this.updatePhysics();
+      this.keyboardHandle();
+      this.updatePhysics();
 
+      this.renderer.render(this.scene, this.camera);
+
+      this.timeTarget += this.dt;
+      if (Date.now() >= this.timeTarget){
+        this.timeTarget = Date.now();
+      }
+    }
     requestAnimationFrame(this.render);
+
+    // this.cannonDebugger.update();    
   }
 }
-
+// require('./testDataBoard');
 require('./gameplayHandler'); // load gameplay handler

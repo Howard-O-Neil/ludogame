@@ -18,6 +18,7 @@ export interface ShapeOptions {
 	cylinderAxis?: 'x' | 'y' | 'z',
 	cylinderScale?: number,
 	sphereRadius?: number,
+  scale?: Vec3,
 }
 
 export interface ShapeResult<T extends Shape = Shape> {
@@ -42,7 +43,6 @@ export const threeToCannon = function (object: Object3D, options: ShapeOptions =
 		return createConvexPolyhedron(object);
 	} else if (options.type === ShapeType.MESH) {
 		geometry = getGeometry(object);
-		console.log(geometry);
 		return geometry ? createTrimeshShape(geometry) : null;
 	} else if (options.type) {
 		throw new Error(`[CANNON.threeToCannon] Invalid type "${options.type}".`);
@@ -164,7 +164,6 @@ function createBoundingCylinderShape (object: Object3D, options: ShapeOptions): 
 
 	const mesh = <THREE.Mesh>object;
 
-	mesh.geometry.computeBoundingBox();
 	const size = mesh.geometry.boundingBox.getSize(new Vector3());
 	const height = size.y;
 
@@ -176,15 +175,29 @@ function createBoundingCylinderShape (object: Object3D, options: ShapeOptions): 
 	const heightRatio = height / object['geometry'].parameters.height;
 
 	// Create shape.
-	const shape = new Cylinder(
-		object['geometry'].parameters.radiusTop * radiusRatio, 
-		object['geometry'].parameters.radiusBottom * radiusRatio, 
-		object['geometry'].parameters.height * heightRatio, 
-		cyclinderRadicalSegment);
+	let shape: Shape = null;
 
-	object['geometry'].parameters.radiusTop *= radiusRatio;
+  object['geometry'].parameters.radiusTop *= radiusRatio;
 	object['geometry'].parameters.radiusBottom *= radiusRatio;
-	object['geometry'].parameters.height *= radiusRatio;
+	object['geometry'].parameters.height *= heightRatio;
+
+  if (options.scale && options.scale.y < 0) {
+    shape = new Cylinder(
+      object['geometry'].parameters.radiusBottom, 
+      object['geometry'].parameters.radiusTop, 
+      object['geometry'].parameters.height, 
+      cyclinderRadicalSegment);
+
+    const temp = object['geometry'].parameters.radiusTop;
+    object['geometry'].parameters.radiusTop = object['geometry'].parameters.radiusBottom;
+    object['geometry'].parameters.radiusBottom = temp;
+  } else {
+    shape = new Cylinder(
+      object['geometry'].parameters.radiusTop, 
+      object['geometry'].parameters.radiusBottom, 
+      object['geometry'].parameters.height, 
+      cyclinderRadicalSegment);
+  }
 
 	return {
 		shape,
@@ -193,6 +206,9 @@ function createBoundingCylinderShape (object: Object3D, options: ShapeOptions): 
 }
 
 function createBoundingSphereShape (object: Object3D, options: ShapeOptions): ShapeResult | null {
+  const mesh = <THREE.Mesh>object;
+  const size = mesh.geometry.boundingBox.getSize(new Vector3());
+  // console.log(size);
 	if (options.sphereRadius) {
 		return {shape: new Sphere(options.sphereRadius)};
 	}
@@ -201,8 +217,6 @@ function createBoundingSphereShape (object: Object3D, options: ShapeOptions): Sh
 
 function createTrimeshShape (geometry: BufferGeometry): ShapeResult | null {
 	const vertices = getVertices(geometry);
-
-	console.log(vertices);
 
 	if (!vertices.length) return null;
 
