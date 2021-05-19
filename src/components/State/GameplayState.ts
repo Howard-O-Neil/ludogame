@@ -18,26 +18,61 @@ export interface IUser {
   order: number;
 }
 
-let _client = new Colyseus.Client("ws://localhost:2567");
-let _gameRoom: Colyseus.Room = null;
-let _listRoom: IRoomClient[] = [];
-let _gameplay = new MainGame();
-let _currentRoomId = "";
-let _userId = uuidv4();
-let _listUserInRoom: IUser[] = [];  
+export interface IPiece {
+  order: number;
+  initPosition: any; // position x, y, z
+  color: string;
+  prevStep: number;
+  nextStep: number;
+  isReturn: boolean;
+}
 
-export const getClient = () => _client;
-export const getGameRoom = () => _gameRoom;
-export const setGameRoom = (val) => _gameRoom = val;
-export const getListRoom = () => _listRoom;
-export const setListRoom = (val) => _listRoom = val;
-export const getGameplay = () => _gameplay;
-export const getCurrentRoomId = () => _currentRoomId;
-export const setCurrentRoomId = (val) => _currentRoomId = val;
-export const getUserId = () => _userId;
-export const setUserId = (val) => _userId = val;
-export const getListUserInRoom = () => _listUserInRoom;
-export const setListUserInRoom = (val) => _listUserInRoom = val;
+export class GameplayState {
+  private _client: Colyseus.Client;
+  private _gameRoom: Colyseus.Room;
+  private _listRoom: IRoomClient[];
+  private _gameplay: MainGame;
+  private _userId: string;
+  private _currentRoomId: string;
+  private _listUserInRoom: IUser[];
+  private _userCommonPath: Map<string, any[]>; // list position x, y, z
+  private _userFinalPath: Map<string, any[]>; // list position x, y, z
+  private _userPiece: Map<string, IPiece[]>;
 
-export const addUserInRoom = (user) => _listUserInRoom.push(user);
-export const searchUserInRoom = (id) => _listUserInRoom.find(x => x.id === id);
+  constructor() {
+    this._client = new Colyseus.Client("ws://localhost:2567");
+    this._gameRoom = null;
+    this._listRoom = [];
+    this._userCommonPath = new Map();
+    this._userFinalPath = new Map();
+    this._userPiece = new Map();
+
+    this._gameplay = new MainGame();
+    this._userId = uuidv4();
+    this._currentRoomId = "";
+    this._listUserInRoom = [];
+  }
+
+  public getClient = () => this._client;
+  public getGameRoom = () => this._gameRoom;
+  public setGameRoom = (val) => this._gameRoom = val;
+  public getListRoom = () => this._listRoom;
+  public setListRoom = (val) => this._listRoom = val;
+  public getGameplay = () => this._gameplay;
+  public getCurrentRoomId = () => this._currentRoomId;
+  public setCurrentRoomId = (val) => this._currentRoomId = val;
+  public getUserId = () => this._userId;
+  public getListUserInRoom = (): IUser[] => this._listUserInRoom;
+  public setListUserInRoom = (val) => this._listUserInRoom = val;
+
+  public addUserInRoom = (user) => this._listUserInRoom.push(user);
+  public searchUserInRoom = (id) => this._listUserInRoom.find(x => x.id === id);
+
+  public getUserCommonPath = (id): any[] => this._userCommonPath[id];
+  public getUserFinalPath = (id): any[] => this._userFinalPath[id];
+  public getUserPiece = (id): IPiece[] => this._userPiece[id];
+
+  public setUserCommonPath = (id, data: any[]) => this._userCommonPath[id] = data;
+  public setUserFinalPath = (id, data: any[]) => this._userFinalPath[id] = data;
+  public setUserPiece = (id, data: IPiece[]) => this._userPiece[id] = data;
+}

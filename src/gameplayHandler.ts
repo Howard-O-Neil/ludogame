@@ -1,14 +1,17 @@
-import { getGameRoom, getListRoom, getClient, getUserId, setCurrentRoomId, setGameRoom, IRoomClient, setListRoom, IUser, addUserInRoom, getGameplay, searchUserInRoom } from './components/State/GameplayState';
-import MainGame from "./main";
+import { GameplayState, IPiece, IRoomClient, IUser } from './components/State/GameplayState';
 import $ from 'jquery';
-import { getFormSubmitValue, uuidv4 } from "./utils";
-import { UserJoin } from "./gameEvent";
+import { downloadOutput, getFormSubmitValue, uuidv4 } from "./utils";
+import { GetUserReady, MeJoin, StartGame, UserJoin, UserLeave, UserReady } from "./gameEvent";
+import Piece from './components/Piece';
 
-const setUserStatus = (id: string) => {
-  const elementSelectString = `#${id} .user-list-favourite-time`;
+const state = new GameplayState();
+
+const setUserStatus = (val: IUser) => {
+  const elementSelectString = `#${val.id} .user-list-favourite-time`;
   $(elementSelectString).empty();
 
-  const user = <IUser>searchUserInRoom(id);
+  const user = <IUser>state.searchUserInRoom(val.id);
+  user.isReady = val.isReady;
 
   if (user.isReady) {
     $(elementSelectString).append(
@@ -33,13 +36,35 @@ const handleShowChatBox = (ev: JQuery.ClickEvent, id: string) => {
 
 }
 
+const handleUserReady = (mess: any) => {
+  if (mess.user.id === state.getUserId())
+    state.getGameplay().setCameraStopOrbitAuto(mess.camera);
+
+  state.setUserCommonPath(mess.user.id, mess.commonPath.data);
+  state.setUserFinalPath(mess.user.id, mess.finalPath.data);
+  state.setUserPiece(mess.user.id, <IPiece[]>mess.pieces.data);
+
+  // load piece to map
+  state.getGameplay().addObject(
+    state.getUserPiece(mess.user.id).map(x => new Piece(
+      x.color, x.order,
+      {
+        radiusTop: 0.08,
+        radiusBottom: 0.7,
+        radialSegments: 2,
+        heightSegments: 50
+      },
+      Object.values(x.initPosition), 
+      state.getGameplay().getWorld()
+    ))
+  )
+}
+
 const handleAddUserUI = (mess: IUser) => {
-  $('.selectRoom').hide();
-  $('.userInRoom').show();
-  $('.gameplay').show();
+  // state.addUserInRoom(mess);
 
   const element = $(`
-    <tr class="users-list" id="${mess.id}">
+    <tr class="users-list ${mess.id === state.getUserId() ? "users-main" : ""}" id="${mess.id}">
       <td class="title">
         <div class="thumb">
           <img class="img-fluid" src="${mess.avatar}" alt="">
@@ -87,25 +112,74 @@ const handleAddUserUI = (mess: IUser) => {
   });
 }
 
+const handleUserLeaveUI = (mess: IUser) => {
+  $(`#${mess.id}`).remove();
+}
+
 const initGameEvent = () => {
   $('.userInRoom tbody').empty();
+  $('.selectRoom').hide();
+  $('.userInRoom').show();
+  $('.gameplay').show();
 
-  const gameRoom = getGameRoom();
-  gameRoom.onMessage(UserJoin, (mess: IUser) => {
-    addUserInRoom(mess);
-    handleAddUserUI(mess);
+  const gameRoom = state.getGameRoom();
 
-    setUserStatus(mess.id);
-    getGameplay().initGameplay({position: {x: 15, y: 12, z: 15}}, []);
+  gameRoom.onLeave((_) => {
+    location.reload();
   });
+
+  gameRoom.onError((code) => {
+    location.reload();
+  })
+
+  gameRoom.onMessage(UserJoin, (mess) => {
+    state.setListUserInRoom(mess.userList);
+
+    $('.userInRoom tbody').empty();
+
+    for (const user of mess.userList) {
+      handleAddUserUI(user);
+      setUserStatus(user);
+    }
+  });
+  gameRoom.onMessage(StartGame, (mess) => {
+    downloadOutput(mess, 'startGame.json');
+  });
+  gameRoom.onMessage(UserLeave, (mess) => {
+    handleUserLeaveUI(mess);
+  });
+  gameRoom.onMessage(MeJoin, (mess) => {
+    state.getGameplay().initGameplay(mess.cameraPos)
+      .then(_ => {
+        state.getGameRoom().send(GetUserReady, '');
+      })
+  });
+  gameRoom.onMessage(GetUserReady, (mess: any) => {
+    // downloadOutput(mess, 'test.json');
+
+    for (const payload of mess.data) {
+      handleUserReady(payload);
+    }
+  });
+  gameRoom.onMessage(UserReady, (mess) => {
+    if (mess.user.id === state.getUserId())
+      $('#startGame').prop('disabled', true);
+    
+    setUserStatus(mess.user);
+    handleUserReady(mess);
+  })
 }
+
+$('#startGame').on('click', ev => {
+  state.getGameRoom().send(UserReady, {userId: state.getUserId()})
+})
 
 // handle join room
 $('.selectRoom form').on('submit', ev => {
   ev.preventDefault();
 
   const formValue = getFormSubmitValue('.selectRoom form');
-  joinRoom(getListRoom().find(x => x.roomId === formValue['choosenRoomId']));
+  joinRoom(state.getListRoom().find(x => x.roomId === formValue['choosenRoomId']));
   // console.log('what the fuck')
   // console.log(ev);
 });
@@ -122,10 +196,10 @@ $('#createRoom').on('click', ev => {
   }
   // console.log(roomAlias);
 
-  getClient().create("gameplay", {roomAlias, clientId: getUserId()})
+  state.getClient().create("gameplay", { roomAlias, userId: state.getUserId() })
     .then(room => {
-      setCurrentRoomId(room.id);
-      setGameRoom(room);
+      state.setCurrentRoomId(room.id);
+      state.setGameRoom(room);
 
       initGameEvent();
       getRoom();
@@ -137,10 +211,10 @@ const joinRoom = (room: IRoomClient) => {
     alert('room is not available');
     return;
   }
-  setCurrentRoomId(room.roomId);
-  getClient().joinById(room.roomId, {clientId: getUserId()})
+  state.setCurrentRoomId(room.roomId);
+  state.getClient().joinById(room.roomId, { userId: state.getUserId() })
     .then(room => {
-      setGameRoom(room);
+      state.setGameRoom(room);
 
       initGameEvent();
     })
@@ -152,38 +226,45 @@ const joinRoom = (room: IRoomClient) => {
 // handle load room id
 const loadRoomId = (arr: IRoomClient[]) => {
   $('.selectRoom form .formBody').empty();
-  
+
   for (const room of arr.reverse()) {
     const element = $(`
       <div class="form-check">
-      <input class="form-check-input" type="radio" name="choosenRoomId" value="${room.roomId}" id="${uuidv4()}" 
-        ${arr.findIndex(x => x === room) === 0 ? "checked" : ""}>
-      <label class="form-check-label" for="${uuidv4()}">
-        ${`${room.roomAlias} (${room.roomId})`}
-      </label>
+        <input class="form-check-input" type="radio" name="choosenRoomId" value="${room.roomId}" id="${uuidv4()}" 
+          ${arr.findIndex(x => x === room) === 0 ? "checked" : ""}>
+        <label class="form-check-label" for="${uuidv4()}">
+          ${`${room.roomAlias} (${room.roomId})`}
+        </label>
       </div>`);
-    
+
     $('.selectRoom form .formBody').append(element);
   }
 }
 
 const getRoom = (callBack?: any) => {
-  getClient().getAvailableRooms("gameplay").then((x) => {
-    if (x.length > 0) {
-      setListRoom(x.map(x1 => {
-        return {
-          roomId: x1.roomId,
-          roomAlias: x1.metadata.roomAlias
-        }
-      }));
-      loadRoomId(getListRoom());      
-    } else {
+  state.getClient().getAvailableRooms("gameplay")
+    .then((x) => {
+      if (x.length > 0) {
+        state.setListRoom(x.map(x1 => {
+          return {
+            roomId: x1.roomId,
+            roomAlias: x1.metadata.roomAlias
+          }
+        }));
+        loadRoomId(state.getListRoom());
+      } else {
+        $('.selectRoom form .formBody').append(
+          $(`<div style="margin-top: 10px;">There is currently no room available</div>`),
+          $(`<div style="margin-bottom: 50px;">Create new room or refresh your browser</div>`)
+        );
+      }
+      if (callBack) callBack()
+    })
+    .catch(er => {
       $('.selectRoom form .formBody').append(
-        $(`<div style="margin-top: 10px;">There is currently no room available</div>`),
-        $(`<div style="margin-bottom: 50px;">Create new room or refresh your browser</div>`)
+        $(`<div style="margin-top: 10px;">Cannot connect to server</div>`),
+        $(`<div style="margin-bottom: 50px;">Please try again later</div>`)
       );
-    }
-    if (callBack) callBack()
-  });
+    })
 }
 getRoom();

@@ -1,3 +1,4 @@
+import { initBaseNodes, initCommonRoutes, initFinalRoutes } from './testDataBoard';
 // import Board from "./components/Board";
 // import Piece from "./components/Piece";
 // import Dice from "./components/Dice";
@@ -13,6 +14,10 @@ import Dice from "./components/Dice";
 import $ from "jquery";
 import { CannonDebugRenderer, createCannonDebugger } from "./components/CannonDebug";
 
+export const cannonTypeMaterials: Map<string, CANNON.Material> = new Map();
+cannonTypeMaterials['slippery'] = new CANNON.Material('slippery');
+cannonTypeMaterials['ground'] = new CANNON.Material('ground');
+
 
 export let globalState = {
   sayHi: "",
@@ -25,31 +30,8 @@ export interface CyclinderBasicParam {
   heightSegments: number,
 }
 
-const data = [
-  [-5.439477664422223, 5.199988980367679, -5.308972802276404],
-  [-5.393146085870269, 5.1999890702525435, -7.71029413378612],
-  [-7.779093281241222, 5.1999884336587399, -7.6962970855280775],
-  [-7.735512466757786, 5.199988657083725, -5.359430200465674],
-
-  [-5.439477664422223 , 5.199988980367679, 5.308972802276404        + 0.25],
-  [-5.393146085870269 , 5.1999890702525435, 7.71029413378612        + 0.25],
-  [-7.779093281241222 , 5.1999884336587399, 7.6962970855280775      + 0.25],
-  [-7.735512466757786 , 5.199988657083725, 5.359430200465674        + 0.25],
-
-  [5.439477664422223 + 0.15, 5.199988980367679, -5.308972802276404],
-  [5.393146085870269 + 0.15, 5.1999890702525435, -7.71029413378612],
-  [7.779093281241222 + 0.15, 5.1999884336587399, -7.6962970855280775],
-  [7.735512466757786 + 0.15, 5.199988657083725, -5.359430200465674],
-
-  [5.439477664422223 + 0.1, 5.199988980367679, 5.308972802276404     + 0.15],
-  [5.393146085870269 + 0.1, 5.1999890702525435, 7.71029413378612     + 0.15],
-  [7.779093281241222 + 0.1, 5.1999884336587399, 7.6962970855280775   + 0.15],
-  [7.735512466757786 + 0.1, 5.199988657083725, 5.359430200465674     + 0.15],
-];
-
-const colors = ["#8aacae", "#ca5452", "#d7c944", "#b4cb5f"];
-
-const FPS = 1 / 60;
+const FPS = 1 / 80;
+const GRAVITY = -100;
 
 export default class MainGame {
 
@@ -57,13 +39,15 @@ export default class MainGame {
 
   sky: Sky;
   sunPosition: THREE.Vector3;
-  scene: THREE.Scene;
+  scene: THREE.Scene = null;
   camera: THREE.PerspectiveCamera;
   renderer: THREE.WebGLRenderer;
   orbitControl: OrbitControls;
   gridHelper: THREE.GridHelper;
 
   cannonDebugger: CannonDebugRenderer;
+
+  cannonContactMaterials: CANNON.ContactMaterial[];
 
   keyCodes: Array<boolean>;
 
@@ -86,6 +70,33 @@ export default class MainGame {
   };
 
   constructor() {
+    // define CANNON.Material
+
+    this.cannonContactMaterials = [];
+
+    this.cannonContactMaterials.push(new CANNON.ContactMaterial(
+      cannonTypeMaterials['ground'], cannonTypeMaterials['ground'],
+      {
+        friction: 0.5,
+        restitution: 0.3,
+        contactEquationStiffness: 1e8,
+        contactEquationRelaxation: 3,
+        frictionEquationStiffness: 1e8,
+      }
+    ));
+
+    this.cannonContactMaterials.push(new CANNON.ContactMaterial(
+      cannonTypeMaterials['ground'], cannonTypeMaterials['slippery'],
+      {
+        friction: 0,
+        restitution: 0.3,
+        contactEquationStiffness: 1e8,
+        contactEquationRelaxation: 3
+      }
+    ));
+
+    // end define
+
     this.effectController = {
       turbidity: 10,
       rayleigh: 3,
@@ -97,6 +108,10 @@ export default class MainGame {
     }
     this.keyCodes = new Array(255);
     this.resetKeycode();
+  }
+
+  public getWorld = () => {
+    return this.world;
   }
 
   resetKeycode = () => {
@@ -150,12 +165,38 @@ export default class MainGame {
 
   public initWorld = async () => {
     this.world = new CANNON.World();
-    this.world.gravity.set(0, -50, 0);
+    this.world.gravity.set(0, GRAVITY, 0);
     this.world.allowSleep = true;
     this.world.broadphase.useBoundingBoxes = true;
+
+    for (const contactMaterial of this.cannonContactMaterials) {
+      this.world.addContactMaterial(contactMaterial);
+    }
   }
 
-  public initGameplay = async (cameraPos: any, dices: any[]) => {
+  public addObject = (obj: GameObject[]) => {
+    obj.forEach(x => {
+      if (x.getMesh) {
+        x.getMesh().then(gr => {
+          this.gameObjectList.push(x);
+          this.scene.add(gr);
+        })
+      }
+    });
+  }
+
+  // public removeObject = (callBack: (item) => boolean) => {
+  //   this.gameObjectList = this.gameObjectList.filter(item => !callBack(item));
+  // }
+
+  public setCameraStopOrbitAuto = (cameraPos: any) => {
+    this.camera.position.fromArray(Object.values(cameraPos.position));
+    this.orbitControl.autoRotate = false;
+  }
+
+  public initGameplay = async (cameraPos: any) => { // iddle
+    if (this.scene !== null) // game already launch
+      return;
     // console.log(cameraPos, dices);
     // setup renderer
     this.renderer = new THREE.WebGLRenderer({
@@ -197,28 +238,22 @@ export default class MainGame {
     this.gameObjectList = [];
 
     this.gameObjectList.push(new Board(this.world));
+    this.gameObjectList.push(new Dice([0, 10, 0], [2, 2, 2], this.camera, this.world));
 
-    for (let i = 0; i < dices.length; i++) {
-      this.gameObjectList.push(new Dice(
-        Object.values(dices[i].position), Object.values(dices[i].scale),
-        this.camera, this.world));
-    }
-      
+    // for (let i = 0; i < data.length; i += 4) {
 
-    for (let i = 0; i < data.length; i += 4) {
-
-      for (let j = i; j < i + 4; j++) {
-        this.gameObjectList.push(new Piece(
-          colors[parseInt((j / 4).toString())],
-          {
-            radiusTop: 0.08,
-            radiusBottom: 0.7,
-            radialSegments: 2,
-            heightSegments: 50
-          },
-          data[j], this.world));
-      }
-    }
+    //   for (let j = i; j < i + 4; j++) {
+    //     this.gameObjectList.push(new Piece(
+    //       colors[parseInt((j / 4).toString())],
+    //       {
+    //         radiusTop: 0.08,
+    //         radiusBottom: 0.7,
+    //         radialSegments: 2,
+    //         heightSegments: 50
+    //       },
+    //       data[j], this.world));
+    //   }
+    // }
     
     //cannonDebugRenderer = new THREE.CannonDebugRenderer(scene, world);
     // this.cannonDebugger = createCannonDebugger(this.scene, this.world);
@@ -285,10 +320,8 @@ export default class MainGame {
     }
     requestAnimationFrame(this.render);
 
-    // this.cannonDebugger.update();
-
-    
+    // this.cannonDebugger.update();    
   }
 }
-
+// require('./testDataBoard');
 require('./gameplayHandler'); // load gameplay handler

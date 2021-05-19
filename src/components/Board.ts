@@ -5,12 +5,15 @@ import * as CANNON from "cannon-es";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
 import GameObject from "./GameObject";
 import { convertToCannonVec3, createShapeForMesh } from "../utils";
+import { cannonTypeMaterials } from '../main';
+
 export default class Board extends GameObject {
   constructor(world) {
     super();
     this.world = world;
     this.scale = new CANNON.Vec3(2, 2, 2);
     this.mass = -10;
+    this.collisionTag = 'board';
   }
 
   childNode = ['ludoludo4_ludolambert3_0'];
@@ -53,9 +56,20 @@ export default class Board extends GameObject {
 
     this.addMesh(...listMesh);
     this.initScale(...Object.values(this.scale));
-    this.initRigidBody();
+    this.initRigidBody(cannonTypeMaterials['ground']);
 
-    this.setSpaceFriction(0.01);
+    this.setRotation(new CANNON.Vec3(0, 0, 0));
+    // this.setQuaternion(new CANNON.Quaternion(0, 0, Math.PI / 2, 1));
+    // this.setSpaceFriction(0.01);
+  }
+
+  keyboardHandle = (table) => {
+    this.rigidBody.wakeUp(); // very important
+
+    let keycode = require('keycode');
+    if (table[keycode('a')]) {
+      alert(this.rigidBody.quaternion);
+    }
   }
 
   update = () => {
@@ -63,7 +77,7 @@ export default class Board extends GameObject {
 
     this.rigidBody.position.copy(this.position); // stand still
 
-    this.applyFriction();
+    // this.applyFriction();
     this.mainModel.position.fromArray(Object.values(this.rigidBody.position));
     this.mainModel.quaternion.fromArray(Object.values(this.rigidBody.quaternion));
   }

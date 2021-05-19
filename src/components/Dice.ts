@@ -5,6 +5,7 @@ import * as CANNON from "cannon-es";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
 import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader";
 import GameObject from "./GameObject";
+import { cannonTypeMaterials } from '../main';
 
 // props
 
@@ -19,7 +20,7 @@ export default class Dice extends GameObject {
   constructor(position, scale, camera, world) {
     super();
 
-    this.mass = 30;
+    this.mass = 10000;
     this.scale = new CANNON.Vec3(...scale);
     this.position = new CANNON.Vec3(...position);
     this.camera = camera;
@@ -51,7 +52,7 @@ export default class Dice extends GameObject {
     
     this.addMesh(...listMesh);
     this.initScale(...Object.values(this.scale));
-    this.initRigidBody();
+    this.initRigidBody(cannonTypeMaterials['slippery']);
   }
 
   keyboardHandle = (table) => {
@@ -62,7 +63,8 @@ export default class Dice extends GameObject {
       this.setPosition(convertToCannonVec3(this.camera.position));
       this.setRotation(new CANNON.Vec3(-Math.PI / 4, 0, Math.PI / 4));
       this.setAngularVelocity(new CANNON.Vec3(10, 10, 10));
-      this.launch(new CANNON.Vec3(0, 10, -22));
+      this.launch(new CANNON.Vec3(this.camera.position.x * -1, 10, this.camera.position.z * -1));
+      
     } else if (table[keycode('q')]) {
       console.log('cc');
       this.launch(new CANNON.Vec3(0, 10, -20));

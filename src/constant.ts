@@ -1,1 +1,1 @@
-export const cyclinderRadicalSegment = 5; // performance consideration
+export const cyclinderRadicalSegment = 8; // performance consideration

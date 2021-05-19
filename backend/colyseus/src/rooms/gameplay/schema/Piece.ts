@@ -2,6 +2,9 @@ import { Vec3 } from './Vec3';
 import { Schema, Context, type } from "@colyseus/schema";
 
 export class Piece extends Schema {
+  @type('number')
+  order: number;
+
   @type(Vec3)
   initPosition: Vec3;
 
@@ -9,13 +12,22 @@ export class Piece extends Schema {
   color: string;
   
   @type('number')
-  step: number;
+  prevStep: number;
 
-  constructor(initPosition: Vec3, color: string, step: number) {
+  @type('number')
+  nextStep: number;
+
+  @type('boolean')
+  isReturn: boolean;
+
+  constructor(initPosition: Vec3, color: string, order: number) {
     super();
     
-    this.initPosition = initPosition;
+    this.order = order;
+    this.initPosition = initPosition; 
     this.color = color;
-    this.step = step;
+    this.prevStep = 0;
+    this.nextStep = -1; // unknown
+    this.isReturn = false;
   }
 }

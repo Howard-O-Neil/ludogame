@@ -21,6 +21,7 @@ export default class GameObject {
   // velocity: CANNON.Vec3;
   // mesh: THREE.Mesh[];
   mainModel: THREE.Group;
+  collisionTag: string;
   
   constructor() {
     this.size = new CANNON.Vec3();
@@ -38,7 +39,7 @@ export default class GameObject {
     // this.mesh = [];
   }
 
-  getMesh; // abstract function
+  getMesh: () => Promise<THREE.Group>; // abstract function
   update; // abstract function
   initObject; // abstract function
   keyboardHandle; // abstract function
@@ -88,10 +89,16 @@ export default class GameObject {
     quatZ.setFromAxisAngle(new CANNON.Vec3(0,0,1), rotation.z);
 
     let quaternion = quatX.mult(quatY).mult(quatZ);
-    quaternion.normalize();
 
-    quaternion.vmult(new CANNON.Vec3(10, 10, 10));
+    this.rigidBody.quaternion.set(
+      quaternion.x,
+      quaternion.y,
+      quaternion.z,
+      quaternion.w
+    );
+  }
 
+  setQuaternion = (quaternion: CANNON.Quaternion) => {
     this.rigidBody.quaternion.set(
       quaternion.x,
       quaternion.y,
@@ -107,10 +114,11 @@ export default class GameObject {
     }
   }
 
-  initRigidBody = (shapeOptions: ShapeOptions = {}) => {
+  initRigidBody = (shapeOptions: ShapeOptions = {}, material?: CANNON.Material) => {
     this.rigidBody = createRigidBodyForGroup(<THREE.Group>this.mainModel, {
       mass: this.mass,
       position: new CANNON.Vec3(this.position.x, this.position.y *  0.5, this.position.z),
+      material: material,
     }, shapeOptions);
     this.world.addBody(this.rigidBody);
   }
@@ -139,18 +147,34 @@ export default class GameObject {
     }
   }
 
-  applyFriction = () =>  {
-    const spaceFrictionRatio = 10;
-    if (this.rigidBody) {
-      if (this.rigidBody.velocity.x <= -this.spaceFriction)
-        this.rigidBody.velocity.x += this.spaceFriction / spaceFrictionRatio;
-      if (this.rigidBody.velocity.z <= -this.spaceFriction)
-        this.rigidBody.velocity.z += this.spaceFriction / spaceFrictionRatio;
+  upFrictionX = true;
+  upFrictionZ = true;
 
-      if (this.rigidBody.velocity.x >= this.spaceFriction)
+  applyFriction = () =>  {
+    const spaceFrictionRatio = 80;
+    if (this.rigidBody) {
+      if (this.upFrictionX) this.rigidBody.velocity.x += this.spaceFriction / spaceFrictionRatio;
+      else this.rigidBody.velocity.x -= this.spaceFriction / spaceFrictionRatio;
+
+      if (this.upFrictionZ) this.rigidBody.velocity.z += this.spaceFriction / spaceFrictionRatio;
+      else this.rigidBody.velocity.z -= this.spaceFriction / spaceFrictionRatio;
+
+      if (this.rigidBody.velocity.x <= -this.spaceFriction) {
+        this.rigidBody.velocity.x += this.spaceFriction / spaceFrictionRatio;
+        this.upFrictionX = true;
+      }
+      if (this.rigidBody.velocity.x >= this.spaceFriction) {
         this.rigidBody.velocity.x -= this.spaceFriction / spaceFrictionRatio;
-      if (this.rigidBody.velocity.z >= this.spaceFriction)
+        this.upFrictionX = false;
+      }
+      if (this.rigidBody.velocity.z <= -this.spaceFriction) {
+        this.rigidBody.velocity.z += this.spaceFriction / spaceFrictionRatio;
+        this.upFrictionZ = true;
+      }
+      if (this.rigidBody.velocity.z >= this.spaceFriction) {
         this.rigidBody.velocity.z -= this.spaceFriction / spaceFrictionRatio;
+        this.upFrictionZ = false;
+      }
     }
   }
 

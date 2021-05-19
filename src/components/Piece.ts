@@ -2,7 +2,7 @@ import { convertToThreeVec3, createRigidBodyForGroup } from './../utils';
 import * as Colyseus from "colyseus.js";
 import * as THREE from "three";
 import * as CANNON from "cannon-es";
-import { CyclinderBasicParam } from "../main";
+import { cannonTypeMaterials, CyclinderBasicParam } from "../main";
 import GameObject from "./GameObject";
 
 // 0.08, 0.7, 2, 50
@@ -13,14 +13,26 @@ export default class Piece extends GameObject {
   active: boolean;
   color: string;
 
-  constructor(color: string, args: CyclinderBasicParam, position: number[], world: CANNON.World) {
+  initPosition: CANNON.Vec3; // position x, y, z
+  prevStep: number;
+  nextStep: number;
+  isReturn: boolean;
+  order: number;
+
+
+  constructor(color: string, order: number, args: CyclinderBasicParam, position: number[], world: CANNON.World) {
     super();
 
     this.world = world;
     this.args = args;
     this.position = new CANNON.Vec3(...position);
+    this.initPosition = new CANNON.Vec3(...position);
+    this.prevStep = 0;
+    this.nextStep = -1;
+    this.isReturn = false;
     this.color = color;
-    this.mass = 5;
+    this.order = order;
+    this.mass = 5000;
   }
 
   initObject = async () => {
@@ -46,8 +58,7 @@ export default class Piece extends GameObject {
     listMesh[1].castShadow = false;
 
     this.addMesh(...listMesh);
-    this.initRigidBody();
-    this.setSpaceFriction(0.08);
+    this.initRigidBody(cannonTypeMaterials['ground']);
   }
 
   keyboardHandle = (table) => {
@@ -55,23 +66,24 @@ export default class Piece extends GameObject {
     
     let keycode = require('keycode');
     if (table[keycode('e')]) {
-      this.launch(new CANNON.Vec3(20, 30, 0));
+      this.launch(new CANNON.Vec3(0, 30, -30));
     } else if (table[keycode('w')]) {
       this.applyScale(-2, 2, 2);
+    } else if (table[keycode('a')]) {
+      alert(this.rigidBody.velocity);
     }
   }
 
   update = () => {
     // update rigidBody upon value from object
 
-    this.applyFriction();
     this.mainModel.position.fromArray(Object.values(this.rigidBody.position));
     this.mainModel.quaternion.fromArray(Object.values(this.rigidBody.quaternion));
   }
 
   getMesh = async () => {
     await this.initObject();
-  
+
     return this.mainModel;
   }
 }
