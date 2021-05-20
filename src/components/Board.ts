@@ -24,7 +24,7 @@ export default class Board extends GameObject {
 
     this.texture[this.txtNode[0]] = await (new THREE.TextureLoader().loadAsync('../models/board/textures/ludolambert2_baseColor.jpeg'));   
     const map = await loader.loadAsync("../models/board/scene.gltf");
- 
+    
     map.scene.traverse((child) => {
       if (child.name === this.childNode[0]) {
         this.geometry[this.childNode[0]] = child['geometry'];
@@ -54,11 +54,31 @@ export default class Board extends GameObject {
     listMesh[1].position.fromArray([0, 0.2, 0]);
     listMesh[1].receiveShadow = false;
 
-    this.addMesh(...listMesh);
+    let scale = 1.5;
+    let heightBoxPlane = -1;
+    const opaqueMaterial = new THREE.MeshBasicMaterial();
+    const boxPlane: THREE.Mesh[] = [];
+    for (let i = 0; i < 4; i++)
+      boxPlane.push(new THREE.Mesh(new THREE.BoxGeometry(3.75, 3.75, 0.05), opaqueMaterial));
+    boxPlane[0].rotation.fromArray([Math.PI / 2, -Math.PI / 2, 0]); 
+    boxPlane[0].position.fromArray([2.25 + scale, heightBoxPlane, 0.15]);
+
+    boxPlane[1].rotation.fromArray([Math.PI / 2, -Math.PI / 2, 0]); 
+    boxPlane[1].position.fromArray([-2.25 - scale, heightBoxPlane, 0.15]);
+
+    boxPlane[2].rotation.fromArray([0, 0, 0]); 
+    boxPlane[2].position.fromArray([0, heightBoxPlane, 2.35 + scale]);
+
+    boxPlane[3].rotation.fromArray([0, 0, 0]); 
+    boxPlane[3].position.fromArray([0, heightBoxPlane, -2.15 - scale]);
+
+    this.addMesh(...listMesh, ...boxPlane);
     this.initScale(...Object.values(this.scale));
     this.initRigidBody(cannonTypeMaterials['ground']);
 
     this.setRotation(new CANNON.Vec3(0, 0, 0));
+
+    this.rigidBody.id = 5;
     // this.setQuaternion(new CANNON.Quaternion(0, 0, Math.PI / 2, 1));
     // this.setSpaceFriction(0.01);
   }

@@ -20,7 +20,7 @@ export default class Dice extends GameObject {
   constructor(position, scale, camera, world) {
     super();
 
-    this.mass = 10000;
+    this.mass = 500;
     this.scale = new CANNON.Vec3(...scale);
     this.position = new CANNON.Vec3(...position);
     this.camera = camera;
@@ -53,6 +53,15 @@ export default class Dice extends GameObject {
     this.addMesh(...listMesh);
     this.initScale(...Object.values(this.scale));
     this.initRigidBody(cannonTypeMaterials['slippery']);
+
+    // this.rigidBody.id = 1;
+
+    this.rigidBody.addEventListener('collide', (ev) => {
+      console.log(ev.body.id);
+      // if (body.id === 1) {
+      //   alert('boom');
+      // }
+    })
   }
 
   keyboardHandle = (table) => {
@@ -60,14 +69,17 @@ export default class Dice extends GameObject {
 
     let keycode = require('keycode');
     if (table[keycode('space')]) {
-      this.setPosition(convertToCannonVec3(this.camera.position));
+      const vecFrom = convertToCannonVec3(this.camera.position);
+      vecFrom.y -= 10;
+
+      this.setPosition(vecFrom);
       this.setRotation(new CANNON.Vec3(-Math.PI / 4, 0, Math.PI / 4));
-      this.setAngularVelocity(new CANNON.Vec3(10, 10, 10));
-      this.launch(new CANNON.Vec3(this.camera.position.x * -1, 10, this.camera.position.z * -1));
+      this.setAngularVelocity(new CANNON.Vec3(30, 10, 10));
+      // this.launch(new CANNON.Vec3(this.camera.position.x * -1, 10, this.camera.position.z * -1));
+      this.launch(this.velocityToTarget(new CANNON.Vec3(0, 5, 0), 15));
       
     } else if (table[keycode('q')]) {
-      console.log('cc');
-      this.launch(new CANNON.Vec3(0, 10, -20));
+      alert(this.rigidBody.quaternion.toAxisAngle(new CANNON.Vec3(1, 0, 0))[1] * (180/Math.PI));
     }
   }
 
