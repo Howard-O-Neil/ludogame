@@ -30,8 +30,8 @@ export interface CyclinderBasicParam {
   heightSegments: number,
 }
 
-const FPS = 1 / 80;
-const GRAVITY = -100;
+export const FPS = 1 / 80;
+export const GRAVITY = -100;
 
 export default class MainGame {
 
@@ -256,7 +256,7 @@ export default class MainGame {
     // }
     
     //cannonDebugRenderer = new THREE.CannonDebugRenderer(scene, world);
-    // this.cannonDebugger = createCannonDebugger(this.scene, this.world);
+    this.cannonDebugger = createCannonDebugger(this.scene, this.world);
 
     for (const obj of this.gameObjectList) {
       if (obj.getMesh) {
@@ -320,7 +320,7 @@ export default class MainGame {
     }
     requestAnimationFrame(this.render);
 
-    // this.cannonDebugger.update();    
+    this.cannonDebugger.update();    
   }
 }
 // require('./testDataBoard');

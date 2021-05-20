@@ -1,3 +1,4 @@
+import { GRAVITY } from './../main';
 import { ShapeOptions } from './Graphic/ThreeToCannon';
 import { type } from '@colyseus/schema';
 import { BufferGeometryUtils } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
@@ -72,6 +73,7 @@ export default class GameObject {
   }
 
   setPosition = (position: CANNON.Vec3) => {
+    this.position = position;
     this.rigidBody.position.set(position.x, position.y, position.z);
   }
 
@@ -145,6 +147,33 @@ export default class GameObject {
       mesh.geometry.center(); // very important
       this.mainModel.add(mesh);
     }
+  }
+
+  velocityToTarget = (targetPos: CANNON.Vec3, shootingHeight: number): CANNON.Vec3 => {
+    let distanceY = targetPos.y - this.position.y;
+    let h = distanceY + shootingHeight;
+    let distanceXZ = new CANNON.Vec3(targetPos.x - this.position.x, 0, targetPos.z - this.position.z);
+
+    if (distanceY < 0) {
+      h = this.position.y + shootingHeight;
+      const velocity = this.calculateBallisticsVelocity_targetBelow(distanceXZ, distanceY, h, GRAVITY);
+
+      return velocity;
+    }
+
+    return this.calculateBallisticsVelocity_targetAbove(distanceXZ, distanceY, h, GRAVITY);
+  }
+
+  calculateBallisticsVelocity_targetAbove = (distanceXZ: CANNON.Vec3, py: number, h: number, gravity: number): CANNON.Vec3 => {
+    const fxz = distanceXZ.scale(1 / (Math.sqrt( (-2 * h) / gravity ) + Math.sqrt( (2 * (py - h)) / gravity )));
+    const fy = (new CANNON.Vec3(0, 1, 0)).scale(Math.sqrt( -2 * gravity * h));
+    return fxz.vadd(fy).scale(-1 * Math.sign(gravity));
+  }
+
+  calculateBallisticsVelocity_targetBelow = (distanceXZ: CANNON.Vec3, py: number, h: number, gravity: number): CANNON.Vec3 => {
+    const fxz = distanceXZ.scale(1 / (Math.sqrt( (-2 * h) / gravity ) + Math.sqrt( (-2 * (py + h)) / gravity )));
+    const fy = (new CANNON.Vec3(0, 1, 0)).scale(Math.sqrt( -2 * gravity * (h + py)));
+    return fxz.vadd(fy).scale(-1 * Math.sign(gravity));
   }
 
   upFrictionX = true;
