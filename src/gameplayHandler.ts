@@ -1,10 +1,110 @@
-import { GameplayState, IPiece, IRoomClient, IUser } from './components/State/GameplayState';
+import GameplayState, { IPiece, IRoomClient, IUser } from './components/State/GameplayState';
 import $ from 'jquery';
 import { downloadOutput, getFormSubmitValue, uuidv4 } from "./utils";
-import { GetUserReady, MeJoin, StartGame, UserJoin, UserLeave, UserReady } from "./gameEvent";
+import { GetUserReady, MeJoin, RollDicePoint, StartGame, StartTurn, SyncPieceState, ThrowDice, UpdatePieceState, UserJoin, UserLeave, UserReady, UserSkipTurn } from "./gameEvent";
 import Piece from './components/Piece';
+import Board from './components/Board';
+import GameObject from './components/GameObject';
+import DiceManager from './components/DiceManager';
 
-const state = new GameplayState();
+export const state = new GameplayState();
+
+const loadGame = () => {
+  const diceManager = new DiceManager(state.getGameplay().getCamera(),
+    state.getGameplay().getWorld());
+
+  state.getGameplay().addObject([diceManager]);
+
+  state.getGameRoom().onMessage(ThrowDice, mess => {
+    diceManager.throwDiceOnSchema(mess.dice, mess.camera);
+  });
+
+  $('.gameToolBox .toolBox #throwDice').on('click', ev => {
+    state.getGameRoom().send(ThrowDice, {userId: state.getUserId()});
+    state.setHaveThrowDice(true);
+  });
+  $('.gameToolBox .toolBox #skipTurn').on('click', ev => {
+    state.getGameRoom().send(UserSkipTurn, {userId: state.getUserId()});
+    state.setHaveThrowDice(false);
+  });
+  $('.gameToolBox .toolBox #spawnNewPiece').on('click', ev => {
+    const listPieceAvailable = state.getGamePiece(state.getUserId()).filter(x => x.atBase === true);
+    if (listPieceAvailable.length > 0) {
+      state.getGameRoom().send(SyncPieceState, {
+        step: 1,
+        userId: listPieceAvailable[0].userId,
+        order: listPieceAvailable[0].order,
+      });
+    }
+  });
+  $('.gameToolBox .toolBox #goOldPiece').on('click', ev => {
+    const listPieceAvailable = state.getGamePiece(state.getUserId()).filter(x => x.atBase === false);
+    if (listPieceAvailable.length > 0) {
+
+      state.getGameRoom().send(SyncPieceState, {
+        step: state.getPointDice1() + state.getPointDice2(),
+        userId: listPieceAvailable[0].userId,
+        order: listPieceAvailable[0].order,
+      });
+    }
+  });
+};
+
+const displayDots = (num: number, jqueryComponent) => {
+  let cls = 'odd-'
+  if (num % 2 === 0) {
+    cls = 'even-'
+  }
+
+  $(jqueryComponent).empty();
+  for (let i = 1; i <= num; i++) {
+    $(jqueryComponent).append('<div class="dot ' + cls + i + '"></div>');
+  }
+}
+
+
+
+export const displayToolBoxOnState = () => {
+  const dice1 = state.getPointDice1();
+  const dice2 = state.getPointDice2();
+
+  displayDots(dice1, '#dice1');
+  displayDots(dice2, '#dice2');
+
+  $('.gameToolBox .toolBox #throwDice').prop('disabled', true);
+  $('.gameToolBox .toolBox #skipTurn').prop('disabled', true);
+  $('.gameToolBox .toolBox #goOldPiece').prop('disabled', true);
+  $('.gameToolBox .toolBox #spawnNewPiece').prop('disabled', true);
+
+  if (state.getCurrentTurn() === state.getUserId()) {
+    
+    if (!state.getHaveThrowDice()) {
+      $('.gameToolBox .toolBox').prop('disabled', true);
+      $('.gameToolBox .toolBox #throwDice').prop('disabled', false);
+      $('.gameToolBox .toolBox #skipTurn').prop('disabled', false);
+    } else {
+      $('.gameToolBox .toolBox').prop('disabled', true);
+      $('.gameToolBox .toolBox #goOldPiece').prop('disabled', false);
+      $('.gameToolBox .toolBox #skipTurn').prop('disabled', false);
+
+      const listPieceAvailable = state.getGamePiece(state.getUserId()).filter(x => x.atBase === false);
+      if (listPieceAvailable.length <= 0) {
+        $('.gameToolBox .toolBox #goOldPiece').prop('disabled', true);
+      }
+
+      const listPieceAvailable1 = state.getGamePiece(state.getUserId()).filter(x => x.atBase === true);
+        if (listPieceAvailable1.length <= 0) {
+          $('.gameToolBox .toolBox #spawnNewPiece').prop('disabled', true);
+        } else $('.gameToolBox .toolBox #spawnNewPiece').prop('disabled', false);
+
+      // if (dice1 === dice2 && (dice1 === 1 || dice1 === 6)) {
+        
+      // }
+    }
+  }
+}
+displayToolBoxOnState();
+
 
 const setUserStatus = (val: IUser) => {
   const elementSelectString = `#${val.id} .user-list-favourite-time`;
@@ -28,6 +128,13 @@ const setUserStatus = (val: IUser) => {
   }
 }
 
+const setUserTurnIcon = (userId: string) =>  {
+  const elementSelectString = `#${userId}`;
+
+  $('.userInRoom .userInRoomList .users-list').removeClass('users-main');
+  $(elementSelectString).addClass('users-main');
+}
+
 const handleShowUserInfo = (ev: JQuery.ClickEvent, id: string, isModal: boolean = true) => {
   if (isModal) alert('fuck');
 }
@@ -46,25 +153,40 @@ const handleUserReady = (mess: any) => {
 
   // load piece to map
   state.getGameplay().addObject(
-    state.getUserPiece(mess.user.id).map(x => new Piece(
-      x.color, x.order,
-      {
-        radiusTop: 0.08,
-        radiusBottom: 0.7,
-        radialSegments: 2,
-        heightSegments: 50
-      },
-      Object.values(x.initPosition), 
-      state.getGameplay().getWorld()
-    ))
+    state.getUserPiece(mess.user.id).map(x => {
+      const piece = new Piece(
+        x.color, x.order,
+        {
+          radiusTop: 0.08,
+          radiusBottom: 0.7,
+          radialSegments: 2,
+          heightSegments: 50
+        },
+        Object.values(x.initPosition), 
+        state.getGameplay().getWorld(),
+        mess.user.id,
+      );
+      state.addGamePiece(mess.user.id, piece);
+      return piece;
+    })
   )
+}
+
+const handleUpdatePiece = (mess: any) => {
+  const piece = <Piece>state.getGamePiece(mess.userId).find(x => x.order === mess.data.order);
+  piece.targetPoint = mess.data.targetPoint;
+  piece.prevStep = mess.data.prevStep;
+  piece.nextStep = mess.data.nextStep;
+  piece.goal = mess.data.goal;
+  piece.isReturn = mess.data.isReturn;
+  piece.atBase = mess.data.atBase;
 }
 
 const handleAddUserUI = (mess: IUser) => {
   // state.addUserInRoom(mess);
 
   const element = $(`
-    <tr class="users-list ${mess.id === state.getUserId() ? "users-main" : ""}" id="${mess.id}">
+    <tr class="users-list" id="${mess.id}">
       <td class="title">
         <div class="thumb">
           <img class="img-fluid" src="${mess.avatar}" alt="">
@@ -72,7 +194,8 @@ const handleAddUserUI = (mess: IUser) => {
         <div class="user-list-details">
           <div class="user-list-info">
             <div class="user-list-title">
-              <h5 class="mb-0"><a class="showUserInfo" href="#">${mess.name}</a></h5>
+              <h5 class="mb-0"><a class="showUserInfo" href="#">${mess.name} 
+                ${mess.id === state.getUserId() ? "( YOU )" : ""}</a></h5>
             </div>
             <div class="user-list-option">
               <ul class="list-unstyled">
@@ -143,7 +266,12 @@ const initGameEvent = () => {
     }
   });
   gameRoom.onMessage(StartGame, (mess) => {
-    downloadOutput(mess, 'startGame.json');
+    loadGame();
+
+    if (mess.userId === state.getUserId())
+      state.setCurrentTurn(mess.userId);
+    setUserTurnIcon(mess.userId);
+    displayToolBoxOnState();
   });
   gameRoom.onMessage(UserLeave, (mess) => {
     handleUserLeaveUI(mess);
@@ -162,11 +290,32 @@ const initGameEvent = () => {
     }
   });
   gameRoom.onMessage(UserReady, (mess) => {
-    if (mess.user.id === state.getUserId())
+    if (mess.user.id === state.getUserId()) {
       $('#startGame').prop('disabled', true);
-    
+    }
     setUserStatus(mess.user);
     handleUserReady(mess);
+  });
+  gameRoom.onMessage(UpdatePieceState, (mess) => {
+    handleUpdatePiece(mess);
+  });
+  gameRoom.onMessage(StartTurn, (mess) => {
+    state.setCurrentTurn(mess.userId);
+    setUserTurnIcon(mess.userId);
+
+    displayToolBoxOnState();
+  });
+  gameRoom.onMessage(RollDicePoint, (mess) => {
+    state.setPointDice1(mess.dice1);
+    state.setPointDice2(mess.dice2);
+
+    displayToolBoxOnState();
+  });
+  gameRoom.onMessage(SyncPieceState, (mess) => {
+    const piece = state.getGamePiece(mess.userId).find(x => x.order === mess.order);
+
+    console.log(piece);
+    piece.goByStep(mess.step);
   })
 }
 

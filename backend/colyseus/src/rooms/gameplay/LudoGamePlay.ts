@@ -16,6 +16,10 @@ export const MeJoin = "MeJoin";
 export const InitGamePlay = "InitGamePlay";
 export const StartTurn = "StartTurn";
 export const ThrowDice = "ThrowDice";
+export const UpdatePieceState = "UpdatePieceState";
+export const UserSkipTurn = "UserSkipTurn";
+export const RollDicePoint = "RollDicePoint";
+export const SyncPieceState = "SyncPieceState";
 
 const maxPlayer = 4;
 
@@ -30,7 +34,7 @@ export class LudoGameplay extends Room<GameRoom> {
 
       if (this.state.userReadyToPlay()) {
         this.lock();
-        this.broadcast(StartTurn, this.state.getUserInitGameState());
+        this.broadcast(StartGame, this.state.getUserTurnState());
       }
     });
     this.onMessage(UserLeave, client => {
@@ -39,6 +43,22 @@ export class LudoGameplay extends Room<GameRoom> {
     this.onMessage(GetUserReady, (client, message) => {
       client.send(GetUserReady, this.state.getUserReady());
     });
+    this.onMessage(UpdatePieceState, (client, message) => {
+      this.broadcast(UpdatePieceState, this.state.updatePiece(message));
+    });
+    this.onMessage(UserSkipTurn, (client, message) => {
+      this.broadcast(StartTurn, this.state.getUserTurnState());
+    });
+    this.onMessage(ThrowDice, (client, message) => {
+      this.broadcast(ThrowDice, this.state.getDice(message.userId))
+    });
+    this.onMessage(RollDicePoint, (client, message) => {
+      this.broadcast(RollDicePoint, this.state.updateDicePoint(message.dice1, message.dice2));
+    })
+    this.onMessage(SyncPieceState, (client, message) => {
+      console.log(message);
+      this.broadcast(SyncPieceState, message);
+    })
   }
 
   // client join room by their id
@@ -61,7 +81,7 @@ export class LudoGameplay extends Room<GameRoom> {
     } else {
       if (this.state.userReadyToPlay()) {
         this.lock();
-        this.broadcast(StartGame, this.state.getUserInitGameState());
+        this.broadcast(StartGame, this.state.getUserTurnState());
       }
     }
   }

@@ -13,6 +13,8 @@ import Piece from "./components/Piece";
 import Dice from "./components/Dice";
 import $ from "jquery";
 import { CannonDebugRenderer, createCannonDebugger } from "./components/CannonDebug";
+import DiceManager from './components/DiceManager';
+import WallDice from './components/WallDice';
 
 export const cannonTypeMaterials: Map<string, CANNON.Material> = new Map();
 cannonTypeMaterials['slippery'] = new CANNON.Material('slippery');
@@ -39,9 +41,9 @@ export default class MainGame {
 
   sky: Sky;
   sunPosition: THREE.Vector3;
-  scene: THREE.Scene = null;
+  scene: THREE.Scene;
   camera: THREE.PerspectiveCamera;
-  renderer: THREE.WebGLRenderer;
+  renderer: THREE.WebGLRenderer = null;
   orbitControl: OrbitControls;
   gridHelper: THREE.GridHelper;
 
@@ -77,7 +79,7 @@ export default class MainGame {
     this.cannonContactMaterials.push(new CANNON.ContactMaterial(
       cannonTypeMaterials['ground'], cannonTypeMaterials['ground'],
       {
-        friction: 0.5,
+        friction: 0.3,
         restitution: 0.3,
         contactEquationStiffness: 1e8,
         contactEquationRelaxation: 3,
@@ -108,10 +110,24 @@ export default class MainGame {
     }
     this.keyCodes = new Array(255);
     this.resetKeycode();
+
+    this.world = new CANNON.World();
+    this.scene = new THREE.Scene();
+    this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 500);
+    window.onresize = (ev) => {
+      // this.renderer.setSize(window.innerWidth, window.innerHeight);
+      this.camera.aspect = window.innerWidth / window.innerHeight;
+      this.camera.updateProjectionMatrix();
+    };
+    this.gameObjectList = [];
   }
 
   public getWorld = () => {
     return this.world;
+  }
+
+  public getCamera = () => {
+    return this.camera;
   }
 
   resetKeycode = () => {
@@ -164,7 +180,6 @@ export default class MainGame {
   };
 
   public initWorld = async () => {
-    this.world = new CANNON.World();
     this.world.gravity.set(0, GRAVITY, 0);
     this.world.allowSleep = true;
     this.world.broadphase.useBoundingBoxes = true;
@@ -177,9 +192,17 @@ export default class MainGame {
   public addObject = (obj: GameObject[]) => {
     obj.forEach(x => {
       if (x.getMesh) {
-        x.getMesh().then(gr => {
+        x.getMesh().then(mesh => {
+
+          if (mesh) {
+            if (Array.isArray(mesh)) {
+              this.scene.add(...mesh);
+            }
+            else {
+              this.scene.add(mesh);
+            }
+          }
           this.gameObjectList.push(x);
-          this.scene.add(gr);
         })
       }
     });
@@ -195,25 +218,19 @@ export default class MainGame {
   }
 
   public initGameplay = async (cameraPos: any) => { // iddle
-    if (this.scene !== null) // game already launch
+    if (this.renderer !== null) // game already launch
       return;
     // console.log(cameraPos, dices);
     // setup renderer
     this.renderer = new THREE.WebGLRenderer({
-      canvas: <HTMLCanvasElement>($('.gameplay')[0])
+      canvas: <HTMLCanvasElement>($('.gameplay')[0]),
+      antialias: true,
+      powerPreference: "low-power",
+      precision: "mediump",
     });
     // this.renderer.setSize(window.innerWidth, window.innerHeight);
 
-    // document.body.appendChild(this.renderer.domElement);
-
-    // camera + scene
-    this.scene = new THREE.Scene();
-    this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 500);
-    window.onresize = (ev) => {
-      // this.renderer.setSize(window.innerWidth, window.innerHeight);
-      this.camera.aspect = window.innerWidth / window.innerHeight;
-      this.camera.updateProjectionMatrix();
-    };
+    // document.body.appendChild(this.renderer.domElement);    
 
     this.camera.position.fromArray(Object.values(cameraPos.position));
 
@@ -233,12 +250,14 @@ export default class MainGame {
 
     // init game objects
 
+    this.gameObjectList.push(new Board(this.getWorld()));
+
+    const listWorldDice: GameObject[] = [];
+    listWorldDice.push(new WallDice(this.getWorld()));
+
+    this.gameObjectList.push(...listWorldDice);
+
     this.initWorld()
-
-    this.gameObjectList = [];
-
-    this.gameObjectList.push(new Board(this.world));
-    this.gameObjectList.push(new Dice([0, 10, 0], [2, 2, 2], this.camera, this.world));
 
     // for (let i = 0; i < data.length; i += 4) {
 
@@ -261,7 +280,13 @@ export default class MainGame {
     for (const obj of this.gameObjectList) {
       if (obj.getMesh) {
         const mesh = await obj.getMesh();
-        this.scene.add(mesh);  
+
+        if (mesh) {
+          if (Array.isArray(mesh)) {
+            this.scene.add(...mesh);
+          }
+          else this.scene.add(mesh);
+        }
       }
     }
 
@@ -303,7 +328,6 @@ export default class MainGame {
 
   dt = FPS * 1000;
   timeTarget = 0;
-
   render = () => {
     if (Date.now()>= this.timeTarget) {
       this.orbitControl.update();
@@ -320,7 +344,7 @@ export default class MainGame {
     }
     requestAnimationFrame(this.render);
 
-    this.cannonDebugger.update();    
+    // this.cannonDebugger.update();    
   }
 }
 // require('./testDataBoard');

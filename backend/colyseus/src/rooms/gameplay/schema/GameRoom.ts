@@ -43,6 +43,12 @@ export class GameRoom extends Schema {
   @type('boolean')
   private gameEnd: boolean;
 
+  @type('number')
+  private dice1;
+
+  @type('number')
+  private dice2;
+
   public addUser(user: User) {
     user.order = this.slots.length + 1;
     this.slots.push(user);
@@ -67,6 +73,16 @@ export class GameRoom extends Schema {
   public getUserInRoom = () => {
     return {
       userList: this.slots,
+    }
+  }
+
+  public updateDicePoint = (dice1: number, dice2: number) => {
+    this.dice1 = dice1;
+    this.dice2 = dice2;
+
+    return {
+      dice1: dice1,
+      dice2: dice2
     }
   }
 
@@ -108,33 +124,71 @@ export class GameRoom extends Schema {
   }
 
   public getUserTurnState = () => {
-    this.currentTurn += 1;
-    if (this.currentTurn >= this.slots.length) {
+    if (this.currentTurn === -1)
       this.currentTurn = 0;
+    else {
+      this.currentTurn += 1;
+      if (this.currentTurn >= this.slots.length) {
+        this.currentTurn = 0;
+      }
     }
+
+    console.log(this.slots[this.currentTurn].id, "turn...");
 
     return {
       order: this.currentTurn,
+      userId: this.slots[this.currentTurn].id,
+      camera: this.cameras[this.currentTurn],
     }
   }
 
-  public getUserInitGameState = () => {
-    let rand = Math.floor(Math.random() * this.slots.length) + 1
+  // public getUserInitGameState = () => {
+  //   let rand = Math.floor(Math.random() * this.slots.length) + 1
 
-    const id = this.slots[rand - 1].id;
+  //   const id = this.slots[rand - 1].id;
+  //   return {
+  //     dices: this.getDice()
+  //   }
+  // }
+
+  public getDice = (userId) => {
     return {
-      dices: this.getDice()
-    }
-  }
-
-  public getDice = () => {
-    return this.dices;
+      dice: {
+        rotation: {
+          x: Math.random() * Math.PI * 2,
+          y: Math.random() * Math.PI * 2,
+          z: Math.random() * Math.PI * 2,
+        },
+        angularVeloc: {
+          x: Math.random() * Math.PI * 2,
+          y: Math.random() * Math.PI * 2,
+          z: Math.random() * Math.PI * 2,
+        }
+      },
+      camera: this.cameras[this.slots.find(x => x.id === userId).order - 1],
+    };
   }
 
   public userReadyToPlay = () => {
-    if (this.slots.length < 2)
+    if (this.slots.length < 1)
       return false;
     return this.slots.findIndex(x => x.isReady === false) === -1;
+  }
+
+  public updatePiece = (mess: any) => {
+    let userIndex = this.slots.findIndex(x => x.id === mess.id);
+    const piece = this.listPiece[userIndex].data.find(x => x.order === mess.order);
+    piece.targetPoint = mess.targetPoint;
+    piece.prevStep = mess.prevStep;
+    piece.nextStep = mess.nextStep;
+    piece.goal = mess.goal;
+    piece.isReturn = mess.isReturn;
+    piece.atBase = mess.atBase;
+
+    return {
+      userId: mess.id,
+      data: piece
+    };
   }
 
   // init gameState
@@ -142,6 +196,7 @@ export class GameRoom extends Schema {
   constructor() {
     super();
 
+    this.dice1 = this.dice2 = 0;
     this.currentTurn = -1;
     this.roomId = v4();
     this.slots = [];
@@ -170,8 +225,12 @@ export class GameRoom extends Schema {
     ));
 
     for (let i = 0; i < BoardCommonPath.length; i += 13) {
-      this.listCommonRoutes.push(
-        new ListRoute(<[number[]]>BoardCommonPath.slice(i, i + 13)));
+      const startArr = <[number[]]>BoardCommonPath.slice(i, BoardCommonPath.length);
+      if (startArr.length < 52) {
+        startArr.push(...<[number[]]>BoardCommonPath.slice(0, 52 - startArr.length));
+      }
+
+      this.listCommonRoutes.push(new ListRoute(startArr));
     }
 
     for (let i = 0; i < BoardBase.length; i += 4) {

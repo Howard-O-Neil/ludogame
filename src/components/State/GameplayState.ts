@@ -1,6 +1,7 @@
 import * as Colyseus from "colyseus.js";
 import MainGame from "../../main";
 import { uuidv4 } from "../../utils";
+import Piece from "../Piece";
 
 export interface IRoomClient {
   roomId: string;
@@ -27,7 +28,7 @@ export interface IPiece {
   isReturn: boolean;
 }
 
-export class GameplayState {
+export default class GameplayState {
   private _client: Colyseus.Client;
   private _gameRoom: Colyseus.Room;
   private _listRoom: IRoomClient[];
@@ -38,6 +39,11 @@ export class GameplayState {
   private _userCommonPath: Map<string, any[]>; // list position x, y, z
   private _userFinalPath: Map<string, any[]>; // list position x, y, z
   private _userPiece: Map<string, IPiece[]>;
+  private _gamePiece: Map<string, Piece[]>;
+  private _currentTurn: string;
+  private _haveThrowDice: boolean;
+  private _pointDice1: number;
+  private _pointDice2: number;
 
   constructor() {
     this._client = new Colyseus.Client("ws://localhost:2567");
@@ -45,12 +51,15 @@ export class GameplayState {
     this._listRoom = [];
     this._userCommonPath = new Map();
     this._userFinalPath = new Map();
+    this._gamePiece = new Map();
     this._userPiece = new Map();
-
     this._gameplay = new MainGame();
     this._userId = uuidv4();
     this._currentRoomId = "";
+    this._pointDice1 = this._pointDice2 = 0;
     this._listUserInRoom = [];
+    this._haveThrowDice = false;
+    this._currentTurn = '';
   }
 
   public getClient = () => this._client;
@@ -75,4 +84,23 @@ export class GameplayState {
   public setUserCommonPath = (id, data: any[]) => this._userCommonPath[id] = data;
   public setUserFinalPath = (id, data: any[]) => this._userFinalPath[id] = data;
   public setUserPiece = (id, data: IPiece[]) => this._userPiece[id] = data;
+
+  public addGamePiece = (id, data: Piece) => {
+    if (!this._gamePiece[id])
+      this._gamePiece[id] = [];
+    this._gamePiece[id].push(data);
+  } 
+  public setGamePiece = (id, data: Piece[]) => this._gamePiece[id] = data;
+  public getGamePiece = (id): Piece[] => this._gamePiece[id];
+
+  public getPointDice1 = () => this._pointDice1;
+  public getPointDice2 = () => this._pointDice2;
+  public setPointDice1 = (val) => this._pointDice1 = Math.floor(val);
+  public setPointDice2 = (val) => this._pointDice2 = Math.floor(val);
+
+  public getCurrentTurn = () => this._currentTurn;
+  public setCurrentTurn = (val) => this._currentTurn = val;
+
+  public getHaveThrowDice = () => this._haveThrowDice;
+  public setHaveThrowDice = (val) => this._haveThrowDice = val;
 }

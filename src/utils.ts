@@ -112,6 +112,12 @@ export const createRigidBodyForGroup = (
     const offset = new CANNON.Vec3(...Object.values(
       item.position));
 
+    if (shapeOption.moveOffset) {
+      offset.x += shapeOption.moveOffset.x;
+      offset.y += shapeOption.moveOffset.y;
+      offset.z += shapeOption.moveOffset.z;
+    }
+
     const orientation = new CANNON.Quaternion(
       ...Object.values(item.quaternion)
     );

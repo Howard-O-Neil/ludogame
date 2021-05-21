@@ -11,3 +11,8 @@ export const MeJoin = "MeJoin";
 export const InitGamePlay = "InitGamePlay";
 export const StartTurn = "StartTurn";
 export const ThrowDice = "ThrowDice";
+export const UpdatePieceState = "UpdatePieceState";
+export const UserSkipTurn = "UserSkipTurn";
+export const RollDicePoint = "RollDicePoint";
+export const SyncPieceState = "SyncPieceState";
+

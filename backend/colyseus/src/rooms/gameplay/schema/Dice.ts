@@ -12,6 +12,9 @@ export class Dice extends Schema {
   rotation: Vec3;
 
   @type(Vec3)
+  angularVeloc: Vec3;
+
+  @type(Vec3)
   scale: Vec3;
 
   constructor(position: Vec3, velocity: Vec3, rotation: Vec3, scale: Vec3) {

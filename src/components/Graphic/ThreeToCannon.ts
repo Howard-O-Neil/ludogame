@@ -18,6 +18,7 @@ export interface ShapeOptions {
 	cylinderAxis?: 'x' | 'y' | 'z',
 	cylinderScale?: number,
 	sphereRadius?: number,
+  moveOffset?: Vec3,
   scale?: Vec3,
 }
 

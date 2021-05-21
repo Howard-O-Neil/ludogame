@@ -10,6 +10,9 @@ export class Piece extends Schema {
 
   @type('string')
   color: string;
+
+  @type('string')
+  targetPoint: Vec3;
   
   @type('number')
   prevStep: number;
@@ -17,8 +20,14 @@ export class Piece extends Schema {
   @type('number')
   nextStep: number;
 
+  @type('number')
+  goal: number;
+
   @type('boolean')
   isReturn: boolean;
+
+  @type('boolean')
+  atBase: boolean;
 
   constructor(initPosition: Vec3, color: string, order: number) {
     super();

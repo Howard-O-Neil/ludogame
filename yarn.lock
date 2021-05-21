@@ -1637,7 +1637,7 @@
   dependencies:
     "@babel/types" "^7.3.0"
 
-"@types/cannon@^0.1.5":
+"@types/cannon@^0.1.2", "@types/cannon@^0.1.5":
   "integrity" "sha512-o+FQmZV4fDXKI1W+1Rt3FNDmMGU7Iv4ObWFAH/dVB9AqzdgD7FmbW4QmsxVQGcj8a563xyVV9UXVB9rba7ps2w=="
   "resolved" "https://registry.npmjs.org/@types/cannon/-/cannon-0.1.5.tgz"
   "version" "0.1.5"
@@ -1791,6 +1791,13 @@
   "resolved" "https://registry.npmjs.org/@types/three/-/three-0.127.1.tgz"
   "version" "0.127.1"
 
+"@types/three@^0.89.11":
+  "integrity" "sha512-765EF9eneCbmDluzVMJj6ix2EwrkjSSPHa5BuMKLZzYeh04Ho40iheRqHfRgRWbFbtj6oVfOB7V62ZvYYXJ0jA=="
+  "resolved" "https://registry.npmjs.org/@types/three/-/three-0.89.12.tgz"
+  "version" "0.89.12"
+  dependencies:
+    "@types/webvr-api" "*"
+
 "@types/uglify-js@*":
   "integrity" "sha512-EGkrJD5Uy+Pg0NUR8uA4bJ5WMfljyad0G+784vLCNUkD+QwOJXUbBYExXfVGf7YtyzdQp3L/XMYcliB987kL5Q=="
   "resolved" "https://registry.npmjs.org/@types/uglify-js/-/uglify-js-3.13.0.tgz"
@@ -1818,6 +1825,11 @@
     "@types/uglify-js" "*"
     "@types/webpack-sources" "*"
     "source-map" "^0.6.0"
+
+"@types/webvr-api@*":
+  "integrity" "sha512-jdpJqweU5v7hYwUlHKQU6wzjQvUfBfmTz4WBwVd/5PVGYalKm6YbEnM/3T+M+QzRYf2R/ojBGnrWpjHBZFR3Og=="
+  "resolved" "https://registry.npmjs.org/@types/webvr-api/-/webvr-api-0.0.35.tgz"
+  "version" "0.0.35"
 
 "@types/yargs-parser@*":
   "integrity" "sha512-37RSHht+gzzgYeobbG+KWryeAW8J33Nhr69cjTqSYymXVZEN9NbRYWoYlRtDhHKPVT1FyNKwaTPC1NynKZpzRA=="
@@ -11089,6 +11101,21 @@
   "integrity" "sha512-i0ap/E+OaSfzw7bD1TtYnPo3VEplkl70WX5fZqZnfZsE3k3aSFudqrrC9ldFZfYFkn1zwDmBcdGfiIm/hnbyZA=="
   "resolved" "https://registry.npmjs.org/three/-/three-0.128.0.tgz"
   "version" "0.128.0"
+
+"three@^0.90.0":
+  "integrity" "sha512-sCTgOp/0ITLy0bsUoNeUROq2Tt1G0+StfRBs9ljFTENRF5JkKlTjZ+RWSH6qyq6O3c5fDKRupfuqZE/+LbETiA=="
+  "resolved" "https://registry.npmjs.org/three/-/three-0.90.0.tgz"
+  "version" "0.90.0"
+
+"threejs-dice@^1.1.0":
+  "integrity" "sha512-OkC5DDyB6wymqTs9c85+F3Css3b6I7xiRosx7JFcQW55Ue95DSHVpdWNaaGKd5mfxFo3iwR+Q78vJXcZkC/yRw=="
+  "resolved" "https://registry.npmjs.org/threejs-dice/-/threejs-dice-1.1.0.tgz"
+  "version" "1.1.0"
+  dependencies:
+    "@types/cannon" "^0.1.2"
+    "@types/three" "^0.89.11"
+    "cannon" "^0.6.2"
+    "three" "^0.90.0"
 
 "throat@^5.0.0":
   "integrity" "sha512-fcwX4mndzpLQKBS1DVYhGAcYaYt7vsHNIvQV+WXMvnow5cgjPphq5CaayLaGsjRdSCKZFNGt7/GYAuXaNOiYCA=="
