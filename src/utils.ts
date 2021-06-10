@@ -77,6 +77,23 @@ export const getBoxSize = (model: THREE.Mesh): CANNON.Vec3 => {
   return convertToCannonVec3(box.getSize(new THREE.Vector3()));
 };
 
+export const randomRotation = (): CANNON.Vec3 => {
+  return new CANNON.Vec3(
+    Math.random() * 2 * Math.PI,
+    Math.random() * 2 * Math.PI,
+    Math.random() * 2 * Math.PI
+  )
+}
+
+export const randomAngularVeloc = (): CANNON.Vec3 => {
+  const max = 100, min = 20;
+  return new CANNON.Vec3(
+    (Math.random() * (max - min + 1)) + min,
+    (Math.random() * (max - min + 1)) + min,
+    (Math.random() * (max - min + 1)) + min,
+  )
+}
+
 const convertFromRawVertices = (array: number[]): CANNON.Vec3[] => {
   const arr: CANNON.Vec3[] = [];
 

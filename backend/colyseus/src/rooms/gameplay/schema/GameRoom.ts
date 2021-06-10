@@ -9,6 +9,9 @@ import { Schema, Context, type } from "@colyseus/schema";
 import { v4 } from 'uuid';
 import * as _ from 'lodash';
 import { BoardBase, BoardCommonPath, BoardFinalPath, BoardColors } from './BoardData';
+import { velocityToTarget } from '../Utils';
+import * as CANNON from "cannon-es";
+
 
 interface ClientGameState {
   dices: Dice[];
@@ -152,20 +155,62 @@ export class GameRoom extends Schema {
   // }
 
   public getDice = (userId) => {
+
+    const thisCam = this.cameras[this.slots.find(x => x.id === userId).order - 1].position
+    const camPos = thisCam.clone();
+    camPos.y -= 5
+
+    let center = this.dices.length % 2 == 0 ? 
+      ((this.dices.length / 2) + 0.15) : this.dices.length / 2;
+
+    for (let i = 0; i < this.dices.length; i++) {
+      const t = camPos.clone();
+
+      if (i + 1 < center) {
+        t.x -= (i + 1) * 3;
+        t.z -= (i + 1) * 3;
+      } else if (i + 1 > center) {
+        t.x += (i + 1) * 3;
+        t.z += (i + 1) * 3;
+      }
+
+      this.dices[i].value = Math.floor(Math.random() * 6) + 1;
+      this.dices[i].position = new Vec3(t.x, t.y, t.z);
+      this.dices[i].rotation = new Vec3(
+        Math.random() * Math.PI * 2,
+        Math.random() * Math.PI * 2,
+        Math.random() * Math.PI * 2
+      );
+      this.dices[i].angularVeloc = new Vec3(
+        (Math.random() * (100 - 20 + 1)) + 20,
+        (Math.random() * (100 - 20 + 1)) + 20,
+        (Math.random() * (100 - 20 + 1)) + 20
+      );
+
+      let velocity: CANNON.Vec3 = null;
+      if (thisCam.y <= -50) {
+        velocity = velocityToTarget(
+          new CANNON.Vec3(
+            this.dices[i].position.x,
+            this.dices[i].position.y,
+            this.dices[i].position.z,
+          ),
+          new CANNON.Vec3(0, 12, 0), 30);
+      }
+      else {
+        velocity = velocityToTarget(
+          new CANNON.Vec3(
+            this.dices[i].position.x,
+            this.dices[i].position.y,
+            this.dices[i].position.z,
+          ),
+          new CANNON.Vec3(0, 12, 0), 5);
+      }
+      this.dices[i].velocity = new Vec3(
+        velocity.x, velocity.y, velocity.z);
+    }
     return {
-      dice: {
-        rotation: {
-          x: Math.random() * Math.PI * 2,
-          y: Math.random() * Math.PI * 2,
-          z: Math.random() * Math.PI * 2,
-        },
-        angularVeloc: {
-          x: Math.random() * Math.PI * 2,
-          y: Math.random() * Math.PI * 2,
-          z: Math.random() * Math.PI * 2,
-        }
-      },
-      camera: this.cameras[this.slots.find(x => x.id === userId).order - 1],
+      dices: this.dices
     };
   }
 
@@ -211,14 +256,14 @@ export class GameRoom extends Schema {
     this.cameras.push(new Camera(new Vec3(-15, 12, 15)));
 
     this.dices.push(new Dice(
-      new Vec3(-2, 10, 0),
+      new Vec3(-2, 12, 0),
       new Vec3(0, 0, 0),
       new Vec3(0, 0, 0),
       new Vec3(2, 2, 2),
     ));
 
     this.dices.push(new Dice(
-      new Vec3(1, 10, 0),
+      new Vec3(1, 12, 0),
       new Vec3(0, 0, 0),
       new Vec3(0, 0, 0),
       new Vec3(2, 2, 2),

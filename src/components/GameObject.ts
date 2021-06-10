@@ -99,6 +99,19 @@ export default class GameObject {
     );
   }
 
+  setRotationReturnVal = (rotation: CANNON.Vec3) => {
+    let quatX = new CANNON.Quaternion();
+    let quatY = new CANNON.Quaternion();
+    let quatZ = new CANNON.Quaternion();
+
+    quatX.setFromAxisAngle(new CANNON.Vec3(1,0,0), rotation.x);
+    quatY.setFromAxisAngle(new CANNON.Vec3(0,1,0), rotation.y);
+    quatZ.setFromAxisAngle(new CANNON.Vec3(0,0,1), rotation.z);
+
+    let quaternion = quatX.mult(quatY).mult(quatZ);
+    return quaternion;
+  }
+
   setQuaternion = (quaternion: CANNON.Quaternion) => {
     this.rigidBody.quaternion.set(
       quaternion.x,
@@ -161,13 +174,14 @@ export default class GameObject {
     this.mainModel.quaternion.set(0, 0, 0, 1);
   }
 
-  velocityToTarget = (targetPos: CANNON.Vec3, shootingHeight: number): CANNON.Vec3 => {
-    let distanceY = targetPos.y - this.position.y;
+  velocityToTarget = (targetPos: CANNON.Vec3, shootingHeight: number, thisPos? :CANNON.Vec3): CANNON.Vec3 => {
+    let thisPosition = thisPos ? thisPos : this.position;
+    let distanceY = targetPos.y - thisPosition.y;
     let h = distanceY + shootingHeight;
-    let distanceXZ = new CANNON.Vec3(targetPos.x - this.position.x, 0, targetPos.z - this.position.z);
+    let distanceXZ = new CANNON.Vec3(targetPos.x - thisPosition.x, 0, targetPos.z - thisPosition.z);
 
     if (distanceY <= 0) {
-      h = this.position.y + shootingHeight;
+      h = thisPosition.y + shootingHeight;
       const velocity = this.calculateBallisticsVelocity_targetBelow(distanceXZ, distanceY, h, GRAVITY);
 
       return velocity;

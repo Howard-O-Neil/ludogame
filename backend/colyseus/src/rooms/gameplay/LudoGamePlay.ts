@@ -21,7 +21,9 @@ export const UserSkipTurn = "UserSkipTurn";
 export const RollDicePoint = "RollDicePoint";
 export const SyncPieceState = "SyncPieceState";
 
-const maxPlayer = 4;
+export const maxPlayer = 4;
+export const FPS = 1 / 80;
+export const GRAVITY = -100; 
 
 export class LudoGameplay extends Room<GameRoom> {
 

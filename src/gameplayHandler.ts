@@ -1,23 +1,103 @@
 import GameplayState, { IPiece, IRoomClient, IUser } from './components/State/GameplayState';
 import $ from 'jquery';
-import { downloadOutput, getFormSubmitValue, uuidv4 } from "./utils";
+import { getFormSubmitValue, uuidv4 } from "./utils";
 import { GetUserReady, MeJoin, RollDicePoint, StartGame, StartTurn, SyncPieceState, ThrowDice, UpdatePieceState, UserJoin, UserLeave, UserReady, UserSkipTurn } from "./gameEvent";
 import Piece from './components/Piece';
-import Board from './components/Board';
-import GameObject from './components/GameObject';
 import DiceManager from './components/DiceManager';
 
 export const state = new GameplayState();
 
-const loadGame = () => {
-  const diceManager = new DiceManager(state.getGameplay().getCamera(),
-    state.getGameplay().getWorld());
+// global var
+let diceManager: DiceManager = null;
 
-  state.getGameplay().addObject([diceManager]);
+const initGameEvent = () => {
+  $('.userInRoom tbody').empty();
+  $('.selectRoom').hide();
+  $('.userInRoom').show();
+  $('.gameplay').show();
 
-  state.getGameRoom().onMessage(ThrowDice, mess => {
-    diceManager.throwDiceOnSchema(mess.dice, mess.camera);
+  const gameRoom = state.getGameRoom();
+
+  gameRoom.onLeave((_) => {
+    location.reload();
   });
+
+  gameRoom.onError((code) => {
+    location.reload();
+  })
+
+  gameRoom.onMessage(UserJoin, (mess) => {
+    state.setListUserInRoom(mess.userList);
+
+    $('.userInRoom tbody').empty();
+
+    for (const user of mess.userList) {
+      addUserToRoom(user);
+      setUserStatus(user);
+    }
+  });
+  gameRoom.onMessage(StartGame, (mess) => {
+    loadGame();
+
+    if (mess.userId === state.getUserId())
+      state.setCurrentTurn(mess.userId);
+    setUserTurnIcon(mess.userId);
+    displayToolBoxOnState();
+  });
+  gameRoom.onMessage(UserLeave, (mess) => {
+    handleUserLeaveUI(mess);
+  });
+  gameRoom.onMessage(MeJoin, (mess) => {
+    state.getGameplay().initGameplay(mess.cameraPos)
+      .then(_ => {
+        state.getGameRoom().send(GetUserReady, '');
+      })
+  });
+  gameRoom.onMessage(GetUserReady, (mess: any) => {
+    // downloadOutput(mess, 'test.json');
+
+    for (const payload of mess.data) {
+      handleUserReady(payload);
+    }
+  });
+  gameRoom.onMessage(UserReady, (mess) => {
+    if (mess.user.id === state.getUserId()) {
+      $('#startGame').prop('disabled', true);
+    }
+    setUserStatus(mess.user);
+    handleUserReady(mess);
+  });
+  gameRoom.onMessage(UpdatePieceState, (mess) => {
+    handleUpdatePiece(mess);
+  });
+  gameRoom.onMessage(StartTurn, (mess) => {
+    state.setCurrentTurn(mess.userId);
+    setUserTurnIcon(mess.userId);
+
+    displayToolBoxOnState();
+  });
+  state.getGameRoom().onMessage(ThrowDice, mess => {
+    diceManager.throwDiceOnSchema(mess.dices);
+  });
+  gameRoom.onMessage(RollDicePoint, (mess) => {
+    state.setPointDice1(mess.dice1);
+    state.setPointDice2(mess.dice2);
+
+    displayToolBoxOnState();
+  });
+  gameRoom.onMessage(SyncPieceState, (mess) => {
+    const piece = state.getGamePiece(mess.userId).find(x => x.order === mess.order);
+
+    console.log(piece);
+    piece.goByStep(mess.step);
+  })
+}
+
+const loadGame = () => {
+  diceManager = new DiceManager(state.getGameplay().getCamera(),
+    state.getGameplay().getWorld());
+  
+  state.getGameplay().addObject([diceManager]);
 
   $('.gameToolBox .toolBox #throwDice').on('click', ev => {
     state.getGameRoom().send(ThrowDice, {userId: state.getUserId()});
@@ -62,8 +142,6 @@ const displayDots = (num: number, jqueryComponent) => {
   }
 }
 
-
-
 export const displayToolBoxOnState = () => {
   const dice1 = state.getPointDice1();
   const dice2 = state.getPointDice2();
@@ -93,9 +171,9 @@ export const displayToolBoxOnState = () => {
       }
 
       const listPieceAvailable1 = state.getGamePiece(state.getUserId()).filter(x => x.atBase === true);
-        if (listPieceAvailable1.length <= 0) {
-          $('.gameToolBox .toolBox #spawnNewPiece').prop('disabled', true);
-        } else $('.gameToolBox .toolBox #spawnNewPiece').prop('disabled', false);
+      if (listPieceAvailable1.length <= 0) {
+        $('.gameToolBox .toolBox #spawnNewPiece').prop('disabled', true);
+      } else $('.gameToolBox .toolBox #spawnNewPiece').prop('disabled', false);
 
       // if (dice1 === dice2 && (dice1 === 1 || dice1 === 6)) {
         
@@ -135,11 +213,11 @@ const setUserTurnIcon = (userId: string) =>  {
   $(elementSelectString).addClass('users-main');
 }
 
-const handleShowUserInfo = (ev: JQuery.ClickEvent, id: string, isModal: boolean = true) => {
+const showUserInfo = (ev: JQuery.ClickEvent, id: string, isModal: boolean = true) => {
   if (isModal) alert('fuck');
 }
 
-const handleShowChatBox = (ev: JQuery.ClickEvent, id: string) => {
+const showChatBot = (ev: JQuery.ClickEvent, id: string) => {
 
 }
 
@@ -182,7 +260,7 @@ const handleUpdatePiece = (mess: any) => {
   piece.atBase = mess.data.atBase;
 }
 
-const handleAddUserUI = (mess: IUser) => {
+const addUserToRoom = (mess: IUser) => {
   // state.addUserInRoom(mess);
 
   const element = $(`
@@ -221,102 +299,22 @@ const handleAddUserUI = (mess: IUser) => {
 
   $(`.userInRoom tbody #${mess.id} .list-unstyled .showUserInfo`).on('click', ev => {
     ev.preventDefault();
-    handleShowUserInfo(ev, mess.id, true);
+    showUserInfo(ev, mess.id, true);
   });
 
   $(`.userInRoom tbody #${mess.id} .user-list-title .showUserInfo`).on('click', ev => {
     ev.preventDefault();
-    handleShowUserInfo(ev, mess.id, false);
+    showUserInfo(ev, mess.id, false);
   });
 
   $(`.userInRoom tbody #${mess.id} .showChatBox`).on('click', ev => {
     ev.preventDefault();
-    handleShowChatBox(ev, mess.id);
+    showChatBot(ev, mess.id);
   });
 }
 
 const handleUserLeaveUI = (mess: IUser) => {
   $(`#${mess.id}`).remove();
-}
-
-const initGameEvent = () => {
-  $('.userInRoom tbody').empty();
-  $('.selectRoom').hide();
-  $('.userInRoom').show();
-  $('.gameplay').show();
-
-  const gameRoom = state.getGameRoom();
-
-  gameRoom.onLeave((_) => {
-    location.reload();
-  });
-
-  gameRoom.onError((code) => {
-    location.reload();
-  })
-
-  gameRoom.onMessage(UserJoin, (mess) => {
-    state.setListUserInRoom(mess.userList);
-
-    $('.userInRoom tbody').empty();
-
-    for (const user of mess.userList) {
-      handleAddUserUI(user);
-      setUserStatus(user);
-    }
-  });
-  gameRoom.onMessage(StartGame, (mess) => {
-    loadGame();
-
-    if (mess.userId === state.getUserId())
-      state.setCurrentTurn(mess.userId);
-    setUserTurnIcon(mess.userId);
-    displayToolBoxOnState();
-  });
-  gameRoom.onMessage(UserLeave, (mess) => {
-    handleUserLeaveUI(mess);
-  });
-  gameRoom.onMessage(MeJoin, (mess) => {
-    state.getGameplay().initGameplay(mess.cameraPos)
-      .then(_ => {
-        state.getGameRoom().send(GetUserReady, '');
-      })
-  });
-  gameRoom.onMessage(GetUserReady, (mess: any) => {
-    // downloadOutput(mess, 'test.json');
-
-    for (const payload of mess.data) {
-      handleUserReady(payload);
-    }
-  });
-  gameRoom.onMessage(UserReady, (mess) => {
-    if (mess.user.id === state.getUserId()) {
-      $('#startGame').prop('disabled', true);
-    }
-    setUserStatus(mess.user);
-    handleUserReady(mess);
-  });
-  gameRoom.onMessage(UpdatePieceState, (mess) => {
-    handleUpdatePiece(mess);
-  });
-  gameRoom.onMessage(StartTurn, (mess) => {
-    state.setCurrentTurn(mess.userId);
-    setUserTurnIcon(mess.userId);
-
-    displayToolBoxOnState();
-  });
-  gameRoom.onMessage(RollDicePoint, (mess) => {
-    state.setPointDice1(mess.dice1);
-    state.setPointDice2(mess.dice2);
-
-    displayToolBoxOnState();
-  });
-  gameRoom.onMessage(SyncPieceState, (mess) => {
-    const piece = state.getGamePiece(mess.userId).find(x => x.order === mess.order);
-
-    console.log(piece);
-    piece.goByStep(mess.step);
-  })
 }
 
 $('#startGame').on('click', ev => {
@@ -328,8 +326,7 @@ $('.selectRoom form').on('submit', ev => {
   ev.preventDefault();
 
   const formValue = getFormSubmitValue('.selectRoom form');
-  joinRoom(state.getListRoom().find(x => x.roomId === formValue['choosenRoomId']));
-  // console.log('what the fuck')
+  handleJoinRoom(state.getListRoom().find(x => x.roomId === formValue['choosenRoomId']));
   // console.log(ev);
 });
 
@@ -355,7 +352,7 @@ $('#createRoom').on('click', ev => {
     })
 })
 
-const joinRoom = (room: IRoomClient) => {
+const handleJoinRoom = (room: IRoomClient) => {
   if (!room) {
     alert('room is not available');
     return;
@@ -372,8 +369,7 @@ const joinRoom = (room: IRoomClient) => {
     })
 }
 
-// handle load room id
-const loadRoomId = (arr: IRoomClient[]) => {
+const displayListRoom = (arr: IRoomClient[]) => {
   $('.selectRoom form .formBody').empty();
 
   for (const room of arr.reverse()) {
@@ -400,7 +396,7 @@ const getRoom = (callBack?: any) => {
             roomAlias: x1.metadata.roomAlias
           }
         }));
-        loadRoomId(state.getListRoom());
+        displayListRoom(state.getListRoom());
       } else {
         $('.selectRoom form .formBody').append(
           $(`<div style="margin-top: 10px;">There is currently no room available</div>`),

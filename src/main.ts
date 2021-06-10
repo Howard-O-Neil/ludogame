@@ -130,6 +130,10 @@ export default class MainGame {
     return this.camera;
   }
 
+  public getScene = () => {
+    return this.scene;
+  }
+
   resetKeycode = () => {
     for (let i = 0; i < this.keyCodes.length; i++)
       this.keyCodes[i] = false;    
