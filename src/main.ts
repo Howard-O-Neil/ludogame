@@ -52,10 +52,15 @@ export default class MainGame {
   cannonContactMaterials: CANNON.ContactMaterial[];
 
   keyCodes: Array<boolean>;
+  mouse: THREE.Vec2;
 
   // physics
 
   world: CANNON.World;
+
+  // ray caster
+  raycaster: THREE.Raycaster;
+
 
   // gameplay
 
@@ -108,11 +113,13 @@ export default class MainGame {
       azimuth: 180,
       exposure: null,
     }
+    this.mouse = new THREE.Vector2();
     this.keyCodes = new Array(255);
     this.resetKeycode();
 
     this.world = new CANNON.World();
     this.scene = new THREE.Scene();
+    this.raycaster = new THREE.Raycaster();
     this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 500);
     window.onresize = (ev) => {
       // this.renderer.setSize(window.innerWidth, window.innerHeight);
@@ -199,6 +206,7 @@ export default class MainGame {
         x.getMesh().then(mesh => {
 
           if (mesh) {
+            console.log('is dice array ?')
             if (Array.isArray(mesh)) {
               this.scene.add(...mesh);
             }
@@ -302,6 +310,16 @@ export default class MainGame {
       this.keyCodes[keycode(ev.key)] = true;
     });
 
+    // mouse
+    $(document).on('mousemove', ev => {
+      this.mouse.x = ( ev.clientX / window.innerWidth ) * 2 - 1;
+	    this.mouse.y = - ( ev.clientY / window.innerHeight ) * 2 + 1;
+    });
+
+    $(document).on('click', ev => {
+      // 
+    });
+
     // setup orbit controls
     this.orbitControl = new OrbitControls(this.camera, this.renderer.domElement);
     this.orbitControl.autoRotate = true;
@@ -325,6 +343,24 @@ export default class MainGame {
   updatePhysics = () => {
     for (const gameObj of this.gameObjectList) {
       if (gameObj.update)
+        gameObj.mainModel['isMouseIntersect'] = false;
+    }
+
+    const intersects = this.raycaster.intersectObjects(
+      this.gameObjectList.filter(x => x.update)
+        .map(x => x.mainModel)
+    );
+    for ( let i = 0; i < intersects.length; i ++ ) {
+      
+      intersects[ i ].object.children.forEach(x => {
+        const mesh = <THREE.Mesh>x;
+        console.log('intersect')
+        mesh.material['color'].set( 0xff0000 );
+      })
+    } 
+
+    for (const gameObj of this.gameObjectList) {
+      if (gameObj.update)
         gameObj.update();
     }
     this.world.step(FPS);
@@ -335,7 +371,9 @@ export default class MainGame {
   render = () => {
     if (Date.now()>= this.timeTarget) {
       this.orbitControl.update();
-    
+
+      this.raycaster.setFromCamera( this.mouse, this.camera );
+      
       this.keyboardHandle();
       this.updatePhysics();
 

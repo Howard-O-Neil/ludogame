@@ -81,6 +81,15 @@ export default class GameObject {
     this.rigidBody.angularVelocity.set(velocity.x, velocity.y, velocity.z);
   }
 
+  setColor = (hexCode: string) => {
+    this.mainModel.children.forEach(
+      x => {
+        let mesh = <THREE.Mesh>x;
+        mesh.material['color'].setHex(hexCode);
+      }
+    )
+  }
+
   setRotation = (rotation: CANNON.Vec3) => {
     let quatX = new CANNON.Quaternion();
     let quatY = new CANNON.Quaternion();

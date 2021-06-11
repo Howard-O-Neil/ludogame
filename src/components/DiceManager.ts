@@ -1,5 +1,5 @@
 import { displayToolBoxOnState, state } from './../gameplayHandler';
-import { convertToCannonVec3, createRigidBodyForGroup, convertToThreeVec3, convertToCannonQuaternion } from './../utils';
+import { convertToCannonVec3, createRigidBodyForGroup, convertToThreeVec3, convertToCannonQuaternion, velocityNearlyStop } from './../utils';
 import * as Colyseus from "colyseus.js";
 import * as THREE from "three";
 import * as CANNON from "cannon-es";
@@ -34,64 +34,30 @@ export default class DiceManager extends GameObject {
     }
   }
 
-  throwDice = () => {
-    const camPos = convertToCannonVec3(this.camera.position);
-    camPos.y -= 5;
-
-    let center = this.listDice.length % 2 == 0 ? ((this.listDice.length / 2) + 0.15) : this.listDice.length / 2;
+  throwDice = (dices: any) => {
     for (let i = 0; i < this.listDice.length; i++) {
-      const t = camPos.clone();
+      this.listDice[i].mainModel.visible = true;
+      this.listDice[i].rigidBody.wakeUp();
 
-      if (i + 1 < center) {
-        t.x -= (i + 1) * 3;
-        t.z -= (i + 1) * 3;
-      } else if (i + 1 > center) {
-        t.x += (i + 1) * 3;
-        t.z += (i + 1) * 3;
-      }
+      this.listDice[i].rigidBody.position.set(
+        dices[i].position.x, dices[i].position.y,
+        dices[i].position.z);
+      
+      let quaternion = this.setRotationReturnVal(new CANNON.Vec3(
+        dices[i].rotation.x, dices[i].rotation.y,
+        dices[i].rotation.z));
+      this.listDice[i].rigidBody.quaternion.set(
+        quaternion.x, quaternion.y, quaternion.z, quaternion.w);
 
-      this.listDice[i].setPosition(t);
-      this.listDice[i].setRotation(new CANNON.Vec3(-Math.PI / 4, 0, Math.PI / 4));
-      this.listDice[i].setAngularVelocity(new CANNON.Vec3(30, 10, 40));
-      // this.launch(new CANNON.Vec3(this.camera.position.x * -1, 10, this.camera.position.z * -1));s
-
-      if (this.camera.position.y <= -50) {
-        this.listDice[i].launch(this.listDice[i].velocityToTarget(new CANNON.Vec3(0, 12, 0), 30));
-      }
-      else this.listDice[i].launch(this.listDice[i].velocityToTarget(new CANNON.Vec3(0, 12, 0), 5));
-
+      this.listDice[i].rigidBody.angularVelocity.set(
+        dices[i].angularVeloc.x, dices[i].angularVeloc.y,
+        dices[i].angularVeloc.z);
+        
+      this.listDice[i].rigidBody.velocity.set(
+        dices[i].velocity.x, dices[i].velocity.y, dices[i].velocity.z);
+        
       this.listDice[i].isLaunch = true;
-      this.checkDicePoint = false;
-    }
-  }
-
-  throwDiceOnSchema = (diceSchema: any, camera: any) => {
-    const camPos = new CANNON.Vec3(...<number[]>Object.values(camera.position));
-    camPos.y -= 5;
-
-    let center = this.listDice.length % 2 == 0 ? ((this.listDice.length / 2) + 0.15) : this.listDice.length / 2;
-    for (let i = 0; i < this.listDice.length; i++) {
-      const t = camPos.clone();
-
-      if (i + 1 < center) {
-        t.x -= (i + 1) * 3;
-        t.z -= (i + 1) * 3;
-      } else if (i + 1 > center) {
-        t.x += (i + 1) * 3;
-        t.z += (i + 1) * 3;
-      }
-
-      this.listDice[i].setPosition(t);
-      this.listDice[i].setRotation(new CANNON.Vec3(...<number[]>Object.values(diceSchema.rotation)));
-      this.listDice[i].setAngularVelocity(new CANNON.Vec3(...<number[]>Object.values(diceSchema.angularVeloc)));
-      // this.launch(new CANNON.Vec3(this.camera.position.x * -1, 10, this.camera.position.z * -1));s
-
-      if (this.camera.position.y <= -50) {
-        this.listDice[i].launch(this.listDice[i].velocityToTarget(new CANNON.Vec3(0, 12, 0), 30));
-      }
-      else this.listDice[i].launch(this.listDice[i].velocityToTarget(new CANNON.Vec3(0, 12, 0), 5));
-
-      this.listDice[i].isLaunch = true;
+      this.listDice[i].isTouchWall = false;
       this.checkDicePoint = false;
     }
   }
@@ -101,10 +67,10 @@ export default class DiceManager extends GameObject {
       this.listDice[i].rigidBody.wakeUp();
     }
 
-    let keycode = require('keycode');
-    if (table[keycode('space')]) {
-      this.throwDice();
-    }
+    // let keycode = require('keycode');
+    // if (table[keycode('space')]) {
+    //   this.throwDice();
+    // }
   }
 
   handleGetPointFromDice = () => {
@@ -117,7 +83,8 @@ export default class DiceManager extends GameObject {
     for (let i = 0; i < this.listDice.length; i++) {
       const dice = this.listDice[i];
 
-      const condition = dice.isTouchWall == true && dice.isLaunch == true;
+      const condition = dice.isTouchWall == true && dice.isLaunch == true &&
+        this.listDice.filter(x => velocityNearlyStop(x.rigidBody.velocity)).length >= 2;
       if (!condition) {        
         flag = false; 
       }
@@ -149,7 +116,6 @@ export default class DiceManager extends GameObject {
     for (const dice of this.listDice) {
       listMesh.push(await dice.getMesh());
       dice.setPosition(new CANNON.Vec3(0, 10, 0));
-      
     }
   
     return listMesh;

@@ -39,9 +39,11 @@ const initGameEvent = () => {
   gameRoom.onMessage(StartGame, (mess) => {
     loadGame();
 
-    if (mess.userId === state.getUserId())
-      state.setCurrentTurn(mess.userId);
+    state.setCurrentTurn(mess.userId);
+
     setUserTurnIcon(mess.userId);
+
+    calculateUserHandling();
     displayToolBoxOnState();
   });
   gameRoom.onMessage(UserLeave, (mess) => {
@@ -73,22 +75,26 @@ const initGameEvent = () => {
   gameRoom.onMessage(StartTurn, (mess) => {
     state.setCurrentTurn(mess.userId);
     setUserTurnIcon(mess.userId);
-
+    
+    calculateUserHandling();
     displayToolBoxOnState();
   });
   state.getGameRoom().onMessage(ThrowDice, mess => {
-    diceManager.throwDiceOnSchema(mess.dices);
+    diceManager.throwDice(mess.dices);
+
+    state.setEnableToolBox(false);
+    state.setCanSpawn(false);
+    state.setCanGoNext(false);
   });
   gameRoom.onMessage(RollDicePoint, (mess) => {
     state.setPointDice1(mess.dice1);
     state.setPointDice2(mess.dice2);
 
+    calculateUserHandling();
     displayToolBoxOnState();
   });
   gameRoom.onMessage(SyncPieceState, (mess) => {
     const piece = state.getGamePiece(mess.userId).find(x => x.order === mess.order);
-
-    console.log(piece);
     piece.goByStep(mess.step);
   })
 }
@@ -149,40 +155,77 @@ export const displayToolBoxOnState = () => {
   displayDots(dice1, '#dice1');
   displayDots(dice2, '#dice2');
 
-  $('.gameToolBox .toolBox #throwDice').prop('disabled', true);
-  $('.gameToolBox .toolBox #skipTurn').prop('disabled', true);
-  $('.gameToolBox .toolBox #goOldPiece').prop('disabled', true);
-  $('.gameToolBox .toolBox #spawnNewPiece').prop('disabled', true);
-
-  if (state.getCurrentTurn() === state.getUserId()) {
-    
-    if (!state.getHaveThrowDice()) {
-      $('.gameToolBox .toolBox').prop('disabled', true);
+  if (!state.getEnableToolBox() || state.getCurrentTurn() !== state.getUserId()) {
+    $('.gameToolBox .toolBox #throwDice').prop('disabled', true);
+    $('.gameToolBox .toolBox #skipTurn').prop('disabled', true);
+    $('.gameToolBox .toolBox #goOldPiece').prop('disabled', true);
+    $('.gameToolBox .toolBox #spawnNewPiece').prop('disabled', true);
+  } else {
+    if (!state.getHaveThrowDice())
       $('.gameToolBox .toolBox #throwDice').prop('disabled', false);
-      $('.gameToolBox .toolBox #skipTurn').prop('disabled', false);
-    } else {
-      $('.gameToolBox .toolBox').prop('disabled', true);
-      $('.gameToolBox .toolBox #goOldPiece').prop('disabled', false);
-      $('.gameToolBox .toolBox #skipTurn').prop('disabled', false);
+    else $('.gameToolBox .toolBox #throwDice').prop('disabled', true);
 
-      const listPieceAvailable = state.getGamePiece(state.getUserId()).filter(x => x.atBase === false);
-      if (listPieceAvailable.length <= 0) {
-        $('.gameToolBox .toolBox #goOldPiece').prop('disabled', true);
-      }
+    if (!state.getCanSpawn())
+      $('.gameToolBox .toolBox #spawnNewPiece').prop('disabled', true);
+    else $('.gameToolBox .toolBox #spawnNewPiece').prop('disabled', false);
 
-      const listPieceAvailable1 = state.getGamePiece(state.getUserId()).filter(x => x.atBase === true);
-      if (listPieceAvailable1.length <= 0) {
-        $('.gameToolBox .toolBox #spawnNewPiece').prop('disabled', true);
-      } else $('.gameToolBox .toolBox #spawnNewPiece').prop('disabled', false);
-
-      // if (dice1 === dice2 && (dice1 === 1 || dice1 === 6)) {
-        
-      // }
-    }
+    if (!state.getCanGoNext())
+      $('.gameToolBox .toolBox #goOldPiece').prop('disabled', true);
+    else $('.gameToolBox .toolBox #goOldPiece').prop('disabled', false);
   }
 }
 displayToolBoxOnState();
 
+const calculateUserHandling = () => {
+  if (state.getCurrentTurn() === state.getUserId()) {
+    state.setEnableToolBox(true);
+
+    (function specifyCanSpawn() {
+      state.setCanSpawn(false);
+      let dicePointCanSpawn = false;
+
+      if (state.getPointDice1() === state.getPointDice2()) {
+        if (state.getPointDice1() === 1 || state.getPointDice1() === 6) {
+          dicePointCanSpawn = true;
+        }
+      }
+      const piecesAtStart = state.getGamePiece(state.getUserId())
+        .filter(x => x.getPosType() === 'start');
+      const piecesAtCommonOrFinal = state.getGamePiece(state.getUserId())
+        .filter(x => x.getPosType() === 'common' 
+          || x.getPosType() === 'final');
+      
+      if (dicePointCanSpawn && piecesAtStart.length <= 0 
+        && piecesAtCommonOrFinal.length < 4) {
+          state.setCanSpawn(true);
+        }
+    })();
+    
+    (function specifyCanGoNext() {
+      state.setCanGoNext(false);
+
+      const step = state.getPointDice1() + state.getPointDice2();
+      
+      const piecesAtStart = state.getGamePiece(state.getUserId())
+        .filter(x => x.getPosType() === 'start');
+      const piecesAtCommonOrFinal = state.getGamePiece(state.getUserId())
+        .filter(x => x.getPosType() === 'common' 
+          || x.getPosType() === 'final');
+      
+      if (!(piecesAtStart.length <= 0 && piecesAtCommonOrFinal.length <= 0)) {
+        let pieceArr = state.getGamePiece(state.getUserId());
+
+        for (let i = 0; i < pieceArr.length; i++) {
+          if (pieceArr[i].goByStep(step, false)) {
+            pieceArr[i].setMode('select');
+          }
+        }
+      }
+    })();
+  } else {
+    state.setEnableToolBox(false);
+  }
+}
 
 const setUserStatus = (val: IUser) => {
   const elementSelectString = `#${val.id} .user-list-favourite-time`;
@@ -253,8 +296,8 @@ const handleUserReady = (mess: any) => {
 const handleUpdatePiece = (mess: any) => {
   const piece = <Piece>state.getGamePiece(mess.userId).find(x => x.order === mess.data.order);
   piece.targetPoint = mess.data.targetPoint;
-  piece.prevStep = mess.data.prevStep;
-  piece.nextStep = mess.data.nextStep;
+  piece.stepCounter = mess.data.prevStep;
+  piece.stepCursor = mess.data.nextStep;
   piece.goal = mess.data.goal;
   piece.isReturn = mess.data.isReturn;
   piece.atBase = mess.data.atBase;

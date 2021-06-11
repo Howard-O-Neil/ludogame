@@ -46,12 +46,6 @@ export class GameRoom extends Schema {
   @type('boolean')
   private gameEnd: boolean;
 
-  @type('number')
-  private dice1;
-
-  @type('number')
-  private dice2;
-
   public addUser(user: User) {
     user.order = this.slots.length + 1;
     this.slots.push(user);
@@ -79,13 +73,10 @@ export class GameRoom extends Schema {
     }
   }
 
-  public updateDicePoint = (dice1: number, dice2: number) => {
-    this.dice1 = dice1;
-    this.dice2 = dice2;
-
+  public getDicePoint = () => {
     return {
-      dice1: dice1,
-      dice2: dice2
+      dice1: this.dices[0].value,
+      dice2: this.dices[1].value
     }
   }
 
@@ -241,7 +232,6 @@ export class GameRoom extends Schema {
   constructor() {
     super();
 
-    this.dice1 = this.dice2 = 0;
     this.currentTurn = -1;
     this.roomId = v4();
     this.slots = [];

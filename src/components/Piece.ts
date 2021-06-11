@@ -14,15 +14,20 @@ import { timers } from 'jquery';
 export default class Piece extends GameObject {
   args: CyclinderBasicParam;
   active: boolean;
+
   color: string;
+  selectColor: string;
+
+  mode: string; // normal | select
 
   userId: string;
 
   initPosition: CANNON.Vec3; // position x, y, z
   targetPoint: CANNON.Vec3;
   isTouchBoard: boolean;
-  prevStep: number;
-  nextStep: number;
+  isAtStartCommonPath: boolean;
+  stepCounter: number;
+  stepCursor: number;
   goal: number;
   isReturn: boolean;
   atBase: boolean;
@@ -38,16 +43,19 @@ export default class Piece extends GameObject {
     this.position = new CANNON.Vec3(...position);
     this.initPosition = new CANNON.Vec3(...position);
     this.isTouchBoard = true;
-    this.prevStep = 0;
-    this.nextStep = -1;
+    this.stepCounter = 0;
+    this.stepCursor = -1;
     this.goal -1;
     this.isReturn = false;
     this.atBase = true;
     this.color = color;
+    this.selectColor = '#7852ca';
     this.order = order;
-    this.mass = 5000;
+    this.mass = 50000;
 
     this.userId = userId;
+
+    this.mode = 'normal';
 
     // this.isStartModeAuto = false;
   }
@@ -78,10 +86,12 @@ export default class Piece extends GameObject {
     this.initRigidBody();
     this.rigidBody.collisionFilterGroup = collisionGroups.piece;
     this.rigidBody.collisionFilterMask = collisionGroups.board;
+    this.rigidBody.material
 
     this.rigidBody['tag'] = collisionTags.piece;
     this.rigidBody['userId'] = this.userId;
     this.rigidBody['order'] = this.order;
+    this.rigidBody.material = cannonTypeMaterials['ground'];
 
     this.rigidBody.addEventListener('collide', ev => {
       if (ev.body.tag === collisionTags.board) {
@@ -99,25 +109,53 @@ export default class Piece extends GameObject {
     })
   }
 
+  getPosType = () => {
+    // suppose piece stop when execute this function
+
+    const commonPath = state.getUserCommonPath(this.userId);
+    const finalPath = state.getUserFinalPath(this.userId);
+
+    const currentStep = this.stepCursor + this.stepCounter;
+
+    if (currentStep === -1) return 'base';
+    if (currentStep === 0) return 'start';
+    if (currentStep > 0 && currentStep < commonPath.length)
+      return 'common';
+    if (currentStep - commonPath.length >= 0 &&
+      currentStep - commonPath.length < finalPath.length)
+      return 'final';
+
+    return 'none'
+  }
+
+  setMode = (val: string) => {
+    this.mode = val;
+    
+    if (this.mode === 'select')
+      this.setColor(this.selectColor);
+    else if (this.mode === 'normal')
+      this.setColor(this.color);
+  }
+
   handleAutoJumpMode = (commonPath: any[], finalPath: any[]) => {
     if (!commonPath || commonPath.length < 52)
       return;
 
     // console.log(commonPath[0]);
 
-    if (this.nextStep >= 0) {
+    if (this.stepCursor >= 0) {
       if (Math.abs(this.rigidBody.velocity.y) <= 0.01) {
-        if (this.nextStep + this.prevStep >= this.goal) {
-          this.nextStep = -1;
-          this.prevStep = this.goal;
+        if (this.stepCursor + this.stepCounter >= this.goal) {
+          this.stepCursor = -1;
+          this.stepCounter = this.goal;
           this.targetPoint = null;
         } else {
-          if (this.nextStep + this.prevStep >= commonPath.length) {
+          if (this.stepCursor + this.stepCounter >= commonPath.length) {
             this.targetPoint = new CANNON.Vec3(
-              ...<number[]>Object.values(finalPath[ ((this.nextStep++) + this.prevStep) - commonPath.length]));
+              ...<number[]>Object.values(finalPath[ ((this.stepCursor++) + this.stepCounter) - commonPath.length]));
           }
           else this.targetPoint = new CANNON.Vec3(
-            ...<number[]>Object.values(commonPath[(this.nextStep++) + this.prevStep]));
+            ...<number[]>Object.values(commonPath[(this.stepCursor++) + this.stepCounter]));
           
           if (this.atBase) {
             this.launch(new CANNON.Vec3(0, 40, 0));
@@ -159,14 +197,36 @@ export default class Piece extends GameObject {
   //   }
   // }
 
-  goByStep = (step: number) => {
+  goByStep = (step: number, proceed: boolean = true) => {
+    // suppose piece stop when execute this function
+
     const commonPath = state.getUserCommonPath(this.userId);
     const finalPath = state.getUserFinalPath(this.userId);
+    
+    const currentStep = this.stepCursor + this.stepCounter;
 
-    if (this.prevStep + step > commonPath.length + finalPath.length)
-      return;
-    this.nextStep++;
-    this.goal = this.prevStep + step;
+    if (this.stepCounter + step >= commonPath.length + finalPath.length)
+      return false;
+    
+    let otherPieceArr = state.getGamePiece(this.userId)
+      .filter(x => x.order !== this.order && 
+        x.stepCursor + x.stepCounter > currentStep);
+
+    for (let i = 0; i < otherPieceArr.length; i++) {
+      const otherCurrentStep = otherPieceArr[i].stepCursor + otherPieceArr[i].stepCounter;
+      if (currentStep + step >= otherCurrentStep) {
+        return false;
+      }
+    }
+    
+    if (proceed) {
+      this.stepCursor++; // = 0
+      this.goal = this.stepCounter + step;
+
+      this.setMode('normal');
+    }
+
+    return true;
   }
 
   keyboardHandle = (table) => {

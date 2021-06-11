@@ -44,6 +44,9 @@ export default class GameplayState {
   private _haveThrowDice: boolean;
   private _pointDice1: number;
   private _pointDice2: number;
+  private _enableToolBox: boolean;
+  private _canSpawn: boolean;
+  private _canGoNext: boolean;
 
   constructor() {
     this._client = new Colyseus.Client("ws://localhost:2567");
@@ -59,6 +62,9 @@ export default class GameplayState {
     this._pointDice1 = this._pointDice2 = 0;
     this._listUserInRoom = [];
     this._haveThrowDice = false;
+    this._enableToolBox = false;
+    this._canSpawn = false;
+    this._canGoNext = false;
     this._currentTurn = '';
   }
 
@@ -103,4 +109,13 @@ export default class GameplayState {
 
   public getHaveThrowDice = () => this._haveThrowDice;
   public setHaveThrowDice = (val) => this._haveThrowDice = val;
+
+  public setEnableToolBox = (val) => this._enableToolBox = val;
+  public getEnableToolBox = () => this._enableToolBox;
+
+  public setCanSpawn = (val) => this._canSpawn = val;
+  public getCanSpawn = () => this._canSpawn;
+  
+  public setCanGoNext = (val) => this._canGoNext = val;
+  public getCanGoNext = () => this._canGoNext;
 }

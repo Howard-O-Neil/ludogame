@@ -55,7 +55,7 @@ export class LudoGameplay extends Room<GameRoom> {
       this.broadcast(ThrowDice, this.state.getDice(message.userId))
     });
     this.onMessage(RollDicePoint, (client, message) => {
-      this.broadcast(RollDicePoint, this.state.updateDicePoint(message.dice1, message.dice2));
+      this.broadcast(RollDicePoint, this.state.getDicePoint());
     })
     this.onMessage(SyncPieceState, (client, message) => {
       console.log(message);

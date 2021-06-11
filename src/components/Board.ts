@@ -13,7 +13,7 @@ export default class Board extends GameObject {
     super();
     this.world = world;
     this.scale = new CANNON.Vec3(2, 2, 2);
-    this.mass = -10;
+    this.mass = 0;
     this.collisionTag = 'board';
   }
 
@@ -60,10 +60,10 @@ export default class Board extends GameObject {
     this.initRigidBody();
 
     this.rigidBody.collisionFilterGroup = collisionGroups.board;
+    this.rigidBody.material = cannonTypeMaterials['ground'];
     this.rigidBody['tag'] = collisionTags.board;
     
     this.setRotation(new CANNON.Vec3(0, 0, 0));
-
     this.rigidBody.id = 5;
     // this.setQuaternion(new CANNON.Quaternion(0, 0, Math.PI / 2, 1));
     // this.setSpaceFriction(0.01);

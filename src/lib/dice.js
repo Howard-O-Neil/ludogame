@@ -1,6 +1,7 @@
 "use strict";
-import * as CANNON from "cannon";
+import * as CANNON from "cannon-es";
 import * as THREE from "three";
+import { Geometry, Face3 } from "three/examples/jsm/deprecated/Geometry.js"
 
 class DiceManagerClass {
   constructor() {
@@ -318,7 +319,7 @@ class DiceObject {
   }
 
   makeGeometry(vertices, faces, radius, tab, af) {
-    let geom = new THREE.Geometry();
+    let geom = new Geometry();
     for (let i = 0; i < vertices.length; ++i) {
       let vertex = vertices[i].multiplyScalar(radius);
       vertex.index = geom.vertices.push(vertex) - 1;
@@ -329,7 +330,7 @@ class DiceObject {
       let aa = (Math.PI * 2) / fl;
       for (let j = 0; j < fl - 2; ++j) {
         geom.faces.push(
-          new THREE.Face3(
+          new Face3(
             ii[0],
             ii[j + 1],
             ii[j + 2],
@@ -483,7 +484,7 @@ class DiceObject {
     });
     this.object.body.linearDamping = 0.1;
     this.object.body.angularDamping = 0.1;
-    DiceManager.world.add(this.object.body);
+    DiceManager.world.addBody(this.object.body);
 
     return this.object;
   }

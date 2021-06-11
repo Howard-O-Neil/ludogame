@@ -2,7 +2,7 @@ import { randomAngularVeloc, randomRotation } from './../utils';
 import * as DM from '../lib/dice.js' // Dice Manager
 import * as THREE from 'three'
 import * as CANNON from 'cannon-es'
-import GameObject from './GameObject.js'
+import GameObject from './GameObject'
 import { convertToCannonVec3, convertToThreeVec3 } from '../utils.js';
 import { collisionTags } from '../collisionTag';
 import { state } from '../gameplayHandler';
@@ -13,9 +13,9 @@ export default class DiceTest extends GameObject {
   world: CANNON.World;
   listDice: DM.DiceD6[];
 
-  checkDicePoint
+  checkDicePoint: boolean;
 
-  constructor(camera, world, scene) {
+  constructor(camera, world) {
     super();
 
     this.camera = camera;
@@ -47,6 +47,7 @@ export default class DiceTest extends GameObject {
         } else this.listDice[i].isTouchWall = false;
       })
     }
+    console.log("dice =============");
   }
 
   throwDice = (dices: any) => {
@@ -81,11 +82,6 @@ export default class DiceTest extends GameObject {
     for (let i = 0; i < this.listDice.length; i++) {
       this.listDice[i].getBody().wakeUp();
     }
-
-    // let keycode = require('keycode');
-    // if (table[keycode('space')]) {
-    //   this.throwDice();
-    // }
   }
 
   handleGetPointFromDice = () => {
@@ -98,7 +94,8 @@ export default class DiceTest extends GameObject {
     for (let i = 0; i < this.listDice.length; i++) {
       const dice = this.listDice[i];
 
-      const condition = dice.isTouchWall == true && dice.isLaunch == true;
+      const condition = dice.isTouchWall == true && dice.isLaunch == true &&
+        this.listDice.filter(x => x.getBody().velocity);
       if (!condition) {        
         flag = false; 
       }
@@ -112,5 +109,16 @@ export default class DiceTest extends GameObject {
         dice2: Math.floor(Math.random() * 6) + 1,
       }) 
     }
+  }
+
+  update = () => {
+    for (let i = 0; i < this.listDice.length; i++) {
+      this.listDice[i].updateMeshFromBody();
+    }
+  }
+
+  getMesh = async () => {
+    await this.initObject();
+    return this.listDice.map(x => x.getObject());
   }
 }

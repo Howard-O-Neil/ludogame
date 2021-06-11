@@ -72,6 +72,12 @@ export const convertToThreeQuaternion = (
   return new THREE.Quaternion(...Object.values(coor));
 };
 
+export const velocityNearlyStop = (veloc: CANNON.Vec3): boolean => {
+  return Math.abs(veloc.x) <= 0.01 &&
+    Math.abs(veloc.y) <= 0.01 &&
+    Math.abs(veloc.z) <= 0.01;
+}
+
 export const getBoxSize = (model: THREE.Mesh): CANNON.Vec3 => {
   const box = new THREE.Box3().setFromObject(model);
   return convertToCannonVec3(box.getSize(new THREE.Vector3()));
