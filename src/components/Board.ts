@@ -56,8 +56,9 @@ export default class Board extends GameObject {
 
     this.addMesh(...listMesh);
     this.initScale(...<number[]>Object.values(this.scale));
-    this.initRigidBody();
-    
+
+    this.initRigidBody({}, cannonTypeMaterials['ground']);
+
     this.rigidBody.collisionFilterGroup = collisionGroups.board;
     this.rigidBody['tag'] = collisionTags.board;
     

@@ -13,7 +13,7 @@ import Piece from "./components/Piece";
 import Dice from "./components/Dice";
 import $ from "jquery";
 import { CannonDebugRenderer, createCannonDebugger } from "./components/CannonDebug";
-import DiceUtils from './components/DiceUtils';
+import DiceCanvas from './components/DiceCanvas';
 
 export const cannonTypeMaterials: Map<string, CANNON.Material> = new Map();
 cannonTypeMaterials['slippery'] = new CANNON.Material('slippery');
@@ -32,7 +32,7 @@ export interface CyclinderBasicParam {
 }
 
 export const FPS = 1 / 60;
-export const GRAVITY = -100;
+export const GRAVITY = -500;
 
 export default class MainGame {
 
@@ -78,11 +78,8 @@ export default class MainGame {
     this.cannonContactMaterials.push(new CANNON.ContactMaterial(
       cannonTypeMaterials['ground'], cannonTypeMaterials['ground'],
       {
-        friction: 0.3,
-        restitution: 0.3,
-        contactEquationStiffness: 1e8,
-        contactEquationRelaxation: 3,
-        frictionEquationStiffness: 1e8,
+        friction: 100,
+        restitution: 0.0,
       }
     ));
 
@@ -91,8 +88,6 @@ export default class MainGame {
       {
         friction: 0,
         restitution: 0.3,
-        contactEquationStiffness: 1e8,
-        contactEquationRelaxation: 3
       }
     ));
 

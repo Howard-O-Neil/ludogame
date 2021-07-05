@@ -5,10 +5,10 @@ import { GetUserReady, MeJoin, RollDicePoint, StartGame, StartTurn, SyncPieceSta
 import Piece from './components/Piece';
 import Board from './components/Board';
 import GameObject from './components/GameObject';
-import DiceUtils from './components/DiceUtils';
+import DiceCanvas from './components/DiceCanvas';
 
 export const state = new GameplayState();
-export const diceManager = new DiceUtils($('.gameToolBox .diceArea .diceAreaPlayground')[0]);
+export const diceManager = new DiceCanvas($('.gameToolBox .diceArea .diceAreaPlayground')[0]);
 diceManager.initWorker()
 
 const loadGame = () => {
@@ -58,6 +58,21 @@ const displayDots = (num: number, jqueryComponent) => {
     $(jqueryComponent).append('<div class="dot ' + cls + i + '"></div>');
   }
 }
+
+document.addEventListener("keydown", ev => {
+  if (ev.key == 'w') {
+    const piece = state.getGamePiece(state.getUserId())[0];
+    piece.goByStep(5);
+  }
+  if (ev.key == 'r') {
+    const piece = state.getGamePiece(state.getUserId())[0];
+    piece.returnBase();
+  }
+  if (ev.key == 's') {
+    const piece = state.getGamePiece(state.getUserId())[0];
+    piece.goByStep(1);
+  }
+})
 
 
 

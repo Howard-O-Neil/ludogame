@@ -136,6 +136,7 @@ export default class GameObject {
       velocity: oldRigid.velocity,
       quaternion: oldRigid.quaternion,
       mass: oldRigid.mass,
+      material: oldRigid.material,
     }, shapeOptions);
     this.world.removeBody(oldRigid);
     this.world.addBody(this.rigidBody);
