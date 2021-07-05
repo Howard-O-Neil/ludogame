@@ -7,8 +7,10 @@ import { Sky } from "./Graphic/three-dice/Sky";
 
 const GRAVITY = -1500;
 const FPS = 1 / 60;
-export default class DiceUtils {
-  floorScale = [30, 30, 30];
+const ORBIT_CONTROLS = false;
+
+export default class DiceCanvas {
+  floorScale = [50, 50, 50];
 
   constructor(canvasTag) {
     this.nextThrowReady = true;
@@ -75,6 +77,7 @@ export default class DiceUtils {
   };
 
   addWall = () => {
+    const wallScale = 15;
     __wall_1: {
       let wall_1_Material = new THREE.MeshPhongMaterial({
         color: "#E1E1E1",
@@ -84,7 +87,7 @@ export default class DiceUtils {
       this.wall_1_ = new THREE.Mesh(wall_1_Geometry, wall_1_Material);
       this.wall_1_.visible = false;
       this.wall_1_.receiveShadow = true;
-      this.wall_1_.geometry.scale(8, 8, 8);
+      this.wall_1_.geometry.scale(wallScale, wallScale, wallScale);
       this.scene.add(this.wall_1_);
 
       this.wall_1_.geometry.center();
@@ -104,6 +107,7 @@ export default class DiceUtils {
           ...Object.values(this.wall_1_.quaternion)
         ),
         position: new CANNON.Vec3(0, 0, 50 * 4),
+        material: DiceManager.barrierBodyMaterial,
       });
       this.world.add(this.wall_1_Body);
     }
@@ -118,7 +122,7 @@ export default class DiceUtils {
       this.wall_2_.visible = false;
       this.wall_2_.rotation.y = Math.PI / 2;
       this.wall_2_.receiveShadow = true;
-      this.wall_2_.geometry.scale(8, 8, 8);
+      this.wall_2_.geometry.scale(wallScale, wallScale, wallScale);
       this.scene.add(this.wall_2_);
 
       this.wall_2_.geometry.center();
@@ -138,6 +142,7 @@ export default class DiceUtils {
           ...Object.values(this.wall_2_.quaternion)
         ),
         position: new CANNON.Vec3(-50 * 4, 0, 0),
+        material: DiceManager.barrierBodyMaterial,
       });
       this.world.add(this.wall_2_Body);
     }
@@ -176,6 +181,7 @@ export default class DiceUtils {
       quaternion: new CANNON.Quaternion(
         ...Object.values(this.floor.quaternion)
       ),
+      material: DiceManager.floorBodyMaterial,
     });
 
     // this.floorBody.quaternion.setFromAxisAngle(
@@ -196,6 +202,9 @@ export default class DiceUtils {
       this.scene.add(this.listDice[i].getObject());
       console.log(this.listDice[i].getObject().position);
     }
+
+    this.listDice[0].getObject().body.tag = "dice";
+    this.listDice[1].getObject().body.tag = "dice";
 
     this.listDice[0].getObject().body.velocity.set(0, 0, 0);
     this.listDice[1].getObject().body.velocity.set(0, 0, 0);
@@ -227,9 +236,14 @@ export default class DiceUtils {
       this.NEAR,
       this.FAR
     );
-    this.camera.position.set(-60, 320, 65);
+    this.camera.quaternion.set(-0.27860697678997254, 0.6499065296592252, 0.6499058796519858, 0.27860725544040105);
+    this.camera.position.set(40.75678448291831, 528.9619859572825, -9.011634591458515);
+    this.camera.rotation.set(-1.5707970164143883, 7.243865697282381e-7, 2.331611798723279, "XYZ");
+
     this.scene.add(this.camera);
 
+    this.camera.updateProjectionMatrix();
+    
     this.renderer = new THREE.WebGLRenderer({
       canvas: this.canvasTag,
       antialias: true,
@@ -240,7 +254,8 @@ export default class DiceUtils {
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
-    this.controls = new OrbitControls(this.camera, this.renderer.domElement);
+    if (ORBIT_CONTROLS)
+      this.controls = new OrbitControls(this.camera, this.renderer.domElement);
 
     await this.initScene();
 
@@ -311,7 +326,7 @@ export default class DiceUtils {
 
   throwDice = (diceVals) => {
     if (this.nextThrowReady == false) return false;
-
+    if (DiceManager.throwRunning) return false;
     let i = 0;
     let diceValues = [];
 
@@ -319,9 +334,9 @@ export default class DiceUtils {
     this.cameraTracking = true;
 
     for (const dice of this.listDice) {
-      dice.getObject().position.x = 350 + i * 150;
-      dice.getObject().position.y = 500;
-      dice.getObject().position.z = -350 + i * 150;
+      dice.getObject().position.x = 500 + i * 150;
+      dice.getObject().position.y = 200;
+      dice.getObject().position.z = -500 + i * 150;
       dice.updateBodyFromMesh();
 
       dice
@@ -338,7 +353,7 @@ export default class DiceUtils {
           dice.getObject().position.y,
           dice.getObject().position.z
         ),
-        new CANNON.Vec3(0, 0, 0),
+        new CANNON.Vec3(-50, 0, 50),
         5
       );
 
@@ -348,6 +363,7 @@ export default class DiceUtils {
       i++;
     }
     DiceManager.prepareValues(diceValues);
+    // DiceManager.world.step(FPS);
 
     return true;
   };
@@ -360,10 +376,12 @@ export default class DiceUtils {
 
     document.onkeydown = (ev) => {
       if (ev.key == "f") {
-        this.throwDice([
-          Math.floor(Math.random() * 6) + 1,
-          Math.floor(Math.random() * 6) + 1,
-        ]);
+        console.log(this.camera)
+        const dice1 = Math.floor(Math.random() * 6) + 1;
+        const dice2 = Math.floor(Math.random() * 6) + 1;
+        console.log("====== dice value ======");
+        console.log(`${dice1} ${dice2}`)
+        this.throwDice([dice1, dice2]);
       }
     };
   };
@@ -380,8 +398,7 @@ export default class DiceUtils {
     for (let i = 0; i < this.listDice.length; i++) {
       this.listDice[i].updateMeshFromBody();
       objGroupCenter.add(this.listDice[i].getObject().position);
-
-      if (Math.abs(this.listDice[i].getObject().body.velocity.y) > 4) {
+      if (Math.abs(this.listDice[i].getObject().body.velocity.y) > 1) {
         checkReadyThrow = checkReadyThrow && false;
       }
       checkReadyThrow = checkReadyThrow && true;
@@ -406,8 +423,9 @@ export default class DiceUtils {
 
   render = () => {
     if (Date.now() >= this.timeTarget) {
-      this.controls.update();
-      // this.cannonDebugRenderer.update();
+      if (this.controls)
+        this.controls.update();
+      this.cannonDebugRenderer.update();
 
       this.updateObjects();
 

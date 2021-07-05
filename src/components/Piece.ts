@@ -36,6 +36,7 @@ export default class Piece extends GameObject {
     this.args = args;
     this.position = new CANNON.Vec3(...position);
     this.initPosition = new CANNON.Vec3(...position);
+    this.targetPoint = this.initPosition;
     this.isTouchBoard = true;
     this.prevStep = 0;
     this.nextStep = -1;
@@ -44,7 +45,7 @@ export default class Piece extends GameObject {
     this.atBase = true;
     this.color = color;
     this.order = order;
-    this.mass = 5000;
+    this.mass = 50500;
 
     this.userId = userId;
 
@@ -74,9 +75,9 @@ export default class Piece extends GameObject {
 
     this.addMesh(...listMesh);
 
-    this.initRigidBody();
+    this.initRigidBody({}, cannonTypeMaterials['ground']);
     this.rigidBody.collisionFilterGroup = collisionGroups.piece;
-    this.rigidBody.collisionFilterMask = collisionGroups.board;
+    // this.rigidBody.collisionFilterMask = collisionGroups.board;
 
     this.rigidBody['tag'] = collisionTags.piece;
     this.rigidBody['userId'] = this.userId;
@@ -109,7 +110,6 @@ export default class Piece extends GameObject {
         if (this.nextStep + this.prevStep >= this.goal) {
           this.nextStep = -1;
           this.prevStep = this.goal;
-          this.targetPoint = null;
         } else {
           if (this.nextStep + this.prevStep >= commonPath.length) {
             this.targetPoint = new CANNON.Vec3(
@@ -157,6 +157,15 @@ export default class Piece extends GameObject {
   //     this.goal = this.prevStep + step;
   //   }
   // }
+
+  returnBase = () => {
+    this.targetPoint = this.initPosition;
+    this.prevStep = 0;
+    this.nextStep = -1;
+    this.goal = -1;
+
+    this.launch(new CANNON.Vec3(0, 30, 0));
+  }
 
   goByStep = (step: number) => {
     const commonPath = state.getUserCommonPath(this.userId);
