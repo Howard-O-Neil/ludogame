@@ -13,8 +13,7 @@ import Piece from "./components/Piece";
 import Dice from "./components/Dice";
 import $ from "jquery";
 import { CannonDebugRenderer, createCannonDebugger } from "./components/CannonDebug";
-import DiceManager from './components/DiceManager';
-import WallDice from './components/WallDice';
+import DiceUtils from './components/DiceUtils';
 
 export const cannonTypeMaterials: Map<string, CANNON.Material> = new Map();
 cannonTypeMaterials['slippery'] = new CANNON.Material('slippery');
@@ -32,7 +31,7 @@ export interface CyclinderBasicParam {
   heightSegments: number,
 }
 
-export const FPS = 1 / 80;
+export const FPS = 1 / 60;
 export const GRAVITY = -100;
 
 export default class MainGame {
@@ -132,7 +131,7 @@ export default class MainGame {
 
   resetKeycode = () => {
     for (let i = 0; i < this.keyCodes.length; i++)
-      this.keyCodes[i] = false;    
+      this.keyCodes[i] = false;
   }
 
   guiChanged = () => {
@@ -142,6 +141,12 @@ export default class MainGame {
     uniforms["mieCoefficient"].value = this.effectController.mieCoefficient;
     uniforms["mieDirectionalG"].value = this.effectController.mieDirectionalG;
 
+    console.log("sky effect")
+    console.log(this.effectController.turbidity)
+    console.log(this.effectController.elevation)
+    console.log(this.effectController.azimuth)
+    console.log(this.effectController.exposure)
+
     const phi = THREE.MathUtils.degToRad(90 - this.effectController.elevation);
     const theta = THREE.MathUtils.degToRad(this.effectController.azimuth);
 
@@ -149,7 +154,7 @@ export default class MainGame {
 
     uniforms["sunPosition"].value.copy(this.sunPosition);
 
-    this.sky.material.uniforms = {...uniforms};
+    this.sky.material.uniforms = { ...uniforms };
     this.renderer.toneMappingExposure = this.effectController.exposure;
     this.renderer.render(this.scene, this.camera);
   }
@@ -225,7 +230,7 @@ export default class MainGame {
     this.renderer = new THREE.WebGLRenderer({
       canvas: <HTMLCanvasElement>($('.gameplay')[0]),
       antialias: true,
-      powerPreference: "low-power",
+      powerPreference: "high-performance",
       precision: "mediump",
     });
     // this.renderer.setSize(window.innerWidth, window.innerHeight);
@@ -253,10 +258,6 @@ export default class MainGame {
     this.gameObjectList.push(new Board(this.getWorld()));
 
     const listWorldDice: GameObject[] = [];
-    listWorldDice.push(new WallDice(this.getWorld()));
-
-    this.gameObjectList.push(...listWorldDice);
-
     this.initWorld()
 
     // for (let i = 0; i < data.length; i += 4) {
@@ -273,7 +274,7 @@ export default class MainGame {
     //       data[j], this.world));
     //   }
     // }
-    
+
     //cannonDebugRenderer = new THREE.CannonDebugRenderer(scene, world);
     this.cannonDebugger = createCannonDebugger(this.scene, this.world);
 
@@ -302,7 +303,7 @@ export default class MainGame {
     this.orbitControl = new OrbitControls(this.camera, this.renderer.domElement);
     this.orbitControl.autoRotate = true;
     this.orbitControl.autoRotateSpeed = 1;
-    
+
     this.orbitControl.update();
 
     this.render();
@@ -310,7 +311,7 @@ export default class MainGame {
 
   keyboardHandle = () => {
     let keycode = require('keycode');
-    
+
     for (const gameObj of this.gameObjectList) {
       if (gameObj.keyboardHandle)
         gameObj.keyboardHandle(this.keyCodes);
@@ -318,7 +319,7 @@ export default class MainGame {
     this.resetKeycode();
   }
 
-  updatePhysics = () => {
+  updateObjects = () => {
     for (const gameObj of this.gameObjectList) {
       if (gameObj.update)
         gameObj.update();
@@ -329,16 +330,16 @@ export default class MainGame {
   dt = FPS * 1000;
   timeTarget = 0;
   render = () => {
-    if (Date.now()>= this.timeTarget) {
+    if (Date.now() >= this.timeTarget) {
       this.orbitControl.update();
-    
+
       this.keyboardHandle();
-      this.updatePhysics();
+      this.updateObjects();
 
       this.renderer.render(this.scene, this.camera);
 
       this.timeTarget += this.dt;
-      if (Date.now() >= this.timeTarget){
+      if (Date.now() >= this.timeTarget) {
         this.timeTarget = Date.now();
       }
     }

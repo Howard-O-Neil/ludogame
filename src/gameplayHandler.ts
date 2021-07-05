@@ -5,19 +5,16 @@ import { GetUserReady, MeJoin, RollDicePoint, StartGame, StartTurn, SyncPieceSta
 import Piece from './components/Piece';
 import Board from './components/Board';
 import GameObject from './components/GameObject';
-import DiceManager from './components/DiceManager';
+import DiceUtils from './components/DiceUtils';
 
 export const state = new GameplayState();
+export const diceManager = new DiceUtils($('.gameToolBox .diceArea .diceAreaPlayground')[0]);
+diceManager.initWorker()
 
 const loadGame = () => {
-  const diceManager = new DiceManager(state.getGameplay().getCamera(),
-    state.getGameplay().getWorld());
-
-  state.getGameplay().addObject([diceManager]);
-
-  state.getGameRoom().onMessage(ThrowDice, mess => {
-    diceManager.throwDiceOnSchema(mess.dice, mess.camera);
-  });
+  // state.getGameRoom().onMessage(ThrowDice, mess => {
+  //   diceManager.throwDiceOnSchema(mess.dice, mess.camera);
+  // });
 
   $('.gameToolBox .toolBox #throwDice').on('click', ev => {
     state.getGameRoom().send(ThrowDice, {userId: state.getUserId()});
@@ -162,7 +159,7 @@ const handleUserReady = (mess: any) => {
           radialSegments: 2,
           heightSegments: 50
         },
-        Object.values(x.initPosition), 
+        Object.values(x.initPosition),
         state.getGameplay().getWorld(),
         mess.user.id,
       );
@@ -240,11 +237,6 @@ const handleUserLeaveUI = (mess: IUser) => {
 }
 
 const initGameEvent = () => {
-  $('.userInRoom tbody').empty();
-  $('.selectRoom').hide();
-  $('.userInRoom').show();
-  $('.gameplay').show();
-
   const gameRoom = state.getGameRoom();
 
   gameRoom.onLeave((_) => {
@@ -319,6 +311,15 @@ const initGameEvent = () => {
   })
 }
 
+const initGamePlay = () => {
+  $('.userInRoom tbody').empty();
+  $('.selectRoom').hide();
+  $('.userInRoom').show();
+  $('.gameplay').show();
+
+  initGameEvent()
+}
+
 $('#startGame').on('click', ev => {
   state.getGameRoom().send(UserReady, {userId: state.getUserId()})
 })
@@ -350,7 +351,7 @@ $('#createRoom').on('click', ev => {
       state.setCurrentRoomId(room.id);
       state.setGameRoom(room);
 
-      initGameEvent();
+      initGamePlay();
       getRoom();
     })
 })
@@ -365,7 +366,7 @@ const joinRoom = (room: IRoomClient) => {
     .then(room => {
       state.setGameRoom(room);
 
-      initGameEvent();
+      initGamePlay();
     })
     .catch(_ => {
       // console.log(message);
@@ -373,7 +374,7 @@ const joinRoom = (room: IRoomClient) => {
 }
 
 // handle load room id
-const loadRoomId = (arr: IRoomClient[]) => {
+const displayRoomId = (arr: IRoomClient[]) => {
   $('.selectRoom form .formBody').empty();
 
   for (const room of arr.reverse()) {
@@ -400,7 +401,7 @@ const getRoom = (callBack?: any) => {
             roomAlias: x1.metadata.roomAlias
           }
         }));
-        loadRoomId(state.getListRoom());
+        displayRoomId(state.getListRoom());
       } else {
         $('.selectRoom form .formBody').append(
           $(`<div style="margin-top: 10px;">There is currently no room available</div>`),

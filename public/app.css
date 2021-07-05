@@ -298,6 +298,7 @@ table .manage-users-top {
 
 .gameToolBox .diceArea {
   display: flex;
+  margin-bottom: 5px;
 }
 
 .gameToolBox .toolBox {

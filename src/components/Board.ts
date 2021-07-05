@@ -1,6 +1,5 @@
 import { collisionGroups, collisionTags } from './../collisionTag';
 import { createRigidBodyForGroup, convertToCannonQuaternion } from './../utils';
-import * as Colyseus from "colyseus.js";
 import * as THREE from "three";
 import * as CANNON from "cannon-es";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
@@ -56,15 +55,16 @@ export default class Board extends GameObject {
     listMesh[1].receiveShadow = false;
 
     this.addMesh(...listMesh);
-    this.initScale(...Object.values(this.scale));
+    this.initScale(...<number[]>Object.values(this.scale));
     this.initRigidBody();
-
+    
     this.rigidBody.collisionFilterGroup = collisionGroups.board;
     this.rigidBody['tag'] = collisionTags.board;
     
     this.setRotation(new CANNON.Vec3(0, 0, 0));
 
     this.rigidBody.id = 5;
+    this.mainModel.visible
     // this.setQuaternion(new CANNON.Quaternion(0, 0, Math.PI / 2, 1));
     // this.setSpaceFriction(0.01);
   }

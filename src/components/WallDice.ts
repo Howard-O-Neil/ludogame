@@ -1,6 +1,5 @@
 import { collisionTags, collisionGroups } from '../collisionTag';
 import { createRigidBodyForGroup, convertToCannonQuaternion } from '../utils';
-import * as Colyseus from "colyseus.js";
 import * as THREE from "three";
 import * as CANNON from "cannon-es";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";

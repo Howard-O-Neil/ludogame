@@ -1,7 +1,6 @@
 import { state } from './../gameplayHandler';
 import { collisionTags, collisionGroups } from './../collisionTag';
 import { convertToThreeVec3, createRigidBodyForGroup } from './../utils';
-import * as Colyseus from "colyseus.js";
 import * as THREE from "three";
 import * as CANNON from "cannon-es";
 import { cannonTypeMaterials, CyclinderBasicParam } from "../main";
