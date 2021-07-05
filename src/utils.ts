@@ -57,7 +57,7 @@ export const convertToCannonVec3 = (coor: THREE.Vector3): CANNON.Vec3 => {
 };
 
 export const convertToThreeVec3 = (coor: CANNON.Vec3): THREE.Vector3 => {
-  return new THREE.Vector3(...Object.values(coor));
+  return new THREE.Vector3(...<number[]>Object.values(coor));
 };
 
 export const convertToCannonQuaternion = (
@@ -69,7 +69,7 @@ export const convertToCannonQuaternion = (
 export const convertToThreeQuaternion = (
   coor: CANNON.Quaternion
 ): THREE.Quaternion => {
-  return new THREE.Quaternion(...Object.values(coor));
+  return new THREE.Quaternion(...<number[]>Object.values(coor));
 };
 
 export const getBoxSize = (model: THREE.Mesh): CANNON.Vec3 => {
@@ -111,6 +111,12 @@ export const createRigidBodyForGroup = (
 
     const offset = new CANNON.Vec3(...Object.values(
       item.position));
+
+    if (shapeOption.moveOffset) {
+      offset.x += shapeOption.moveOffset.x;
+      offset.y += shapeOption.moveOffset.y;
+      offset.z += shapeOption.moveOffset.z;
+    }
 
     const orientation = new CANNON.Quaternion(
       ...Object.values(item.quaternion)

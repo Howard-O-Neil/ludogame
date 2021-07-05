@@ -101,7 +101,8 @@ body {
   box-shadow: 0 .125rem .25rem rgba(0,0,0,.075);
 }    
 
-/* user-dashboard-info-box */
+/* ========= user-dashboard ========= */
+
 .user-dashboard-info-box .users-list .thumb {
   margin-right: 20px;
 }
@@ -279,4 +280,84 @@ table .manage-users-top {
 
 .user-dashboard-info-box .users-list .thumb {
   margin-right: 20px;
+}
+
+/* ========= dice ========= */
+
+.gameToolBox {
+  padding: 5px;
+  pointer-events: visible;
+  background-color: whitesmoke;
+  width: fit-content;
+  height: fit-content;
+  overflow: auto;
+  margin-top: 35vh;
+  margin-left: 5px;
+  margin-bottom: 5px;
+}
+
+.gameToolBox .diceArea {
+  display: flex;
+  margin-bottom: 5px;
+}
+
+.gameToolBox .toolBox {
+  margin-left: 10px;
+}
+
+.dice {
+  position: relative;
+  margin: 8px;
+  border: solid 3px #aaa;
+  border-radius: 3px;
+  width: 200px;
+  height: 200px;
+}
+
+.dice .dot {
+  position: absolute;
+  background: #000;
+  border-radius: 50%;
+  width: 16px;
+  height: 16px;
+  transform: translate(-8px, -8px);
+}
+
+.odd-1 {
+  top: 50%;
+  left: 50%;
+}
+
+.even-1,
+.odd-2 {
+  top: 25%;
+  left: 25%;
+}
+
+.even-2,
+.odd-3 {
+  top: 75%;
+  left: 75%;
+}
+
+.even-3,
+.odd-4 {
+  top: 75%;
+  left: 25%;
+}
+
+.even-4,
+.odd-5 {
+  top: 25%;
+  left: 75%;
+}
+
+.even-5 {
+  top: 50%;
+  left: 75%;
+}
+
+.even-6 {
+  top: 50%;
+  left: 25%;
 }

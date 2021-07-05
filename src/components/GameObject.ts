@@ -40,7 +40,7 @@ export default class GameObject {
     // this.mesh = [];
   }
 
-  getMesh: () => Promise<THREE.Group>; // abstract function
+  getMesh: () => Promise<any>; // abstract function
   update; // abstract function
   initObject; // abstract function
   keyboardHandle; // abstract function
@@ -91,7 +91,6 @@ export default class GameObject {
     quatZ.setFromAxisAngle(new CANNON.Vec3(0,0,1), rotation.z);
 
     let quaternion = quatX.mult(quatY).mult(quatZ);
-
     this.rigidBody.quaternion.set(
       quaternion.x,
       quaternion.y,
@@ -149,12 +148,25 @@ export default class GameObject {
     }
   }
 
+  centerMesh = () => {
+    for (const mesh of <THREE.Mesh[]>this.mainModel.children) {
+      mesh.geometry.center(); // very important
+      mesh.geometry.rotateX(0);
+      mesh.geometry.rotateY(0);
+      mesh.geometry.rotateZ(0);
+      mesh.quaternion.set(0, 0, 0, 1);
+      mesh.rotation.set(0, 0, 0, "XYZ");
+    }
+    this.mainModel.rotation.set(0, 0, 0, "XYZ");
+    this.mainModel.quaternion.set(0, 0, 0, 1);
+  }
+
   velocityToTarget = (targetPos: CANNON.Vec3, shootingHeight: number): CANNON.Vec3 => {
     let distanceY = targetPos.y - this.position.y;
     let h = distanceY + shootingHeight;
     let distanceXZ = new CANNON.Vec3(targetPos.x - this.position.x, 0, targetPos.z - this.position.z);
 
-    if (distanceY < 0) {
+    if (distanceY <= 0) {
       h = this.position.y + shootingHeight;
       const velocity = this.calculateBallisticsVelocity_targetBelow(distanceXZ, distanceY, h, GRAVITY);
 

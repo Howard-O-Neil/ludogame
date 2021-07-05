@@ -1,3 +1,4 @@
+import { collisionGroups, collisionTags } from './../collisionTag';
 import { convertToCannonVec3, createRigidBodyForGroup, convertToThreeVec3, convertToCannonQuaternion } from './../utils';
 import * as Colyseus from "colyseus.js";
 import * as THREE from "three";
@@ -6,6 +7,7 @@ import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
 import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader";
 import GameObject from "./GameObject";
 import { cannonTypeMaterials } from '../main';
+import { DiceD6, DiceManager } from 'threejs-dice';
 
 // props
 
@@ -13,18 +15,23 @@ export default class Dice extends GameObject {
   mass: number;
   readonly camera: THREE.Camera;
   world: CANNON.World;
+  isTouchWall: boolean;
+  isLaunch: boolean;
 
   childNode = ['ludoludo_ludoblinn6_0'];
   txtNode = ['mainTxt'];
 
-  constructor(position, scale, camera, world) {
+  constructor(camera, world) {
     super();
 
     this.mass = 500;
-    this.scale = new CANNON.Vec3(...scale);
-    this.position = new CANNON.Vec3(...position);
     this.camera = camera;
     this.world = world;
+    this.isTouchWall = false;
+    this.isLaunch = false;
+
+    this.position = new CANNON.Vec3();
+
     // this.rotation = new CANNON.Vec3(-Math.PI / 8, 0, 0);
   }
 
@@ -42,7 +49,7 @@ export default class Dice extends GameObject {
     });
   }
 
-  initObject = async () =>  {
+  initObject = async () =>  {  
     await this.loadResource();
 
     const listMesh: THREE.Mesh[] = [];
@@ -51,13 +58,26 @@ export default class Dice extends GameObject {
     listMesh[0].receiveShadow = false;
     
     this.addMesh(...listMesh);
-    this.initScale(...Object.values(this.scale));
-    this.initRigidBody(cannonTypeMaterials['slippery']);
+    this.initScale(...[2, 2, 2]);
+    this.initRigidBody(cannonTypeMaterials['ground']);
+    this.rigidBody.collisionFilterGroup = collisionGroups.dice;
 
     // this.rigidBody.id = 1;
 
     this.rigidBody.addEventListener('collide', (ev) => {
-      console.log(ev.body.id);
+      if (ev.body['tag'] === collisionTags.wall) {
+        const oldSpeed = (Math.abs(this.rigidBody.velocity.x)
+          + Math.abs(this.rigidBody.velocity.z)
+          + Math.abs(this.rigidBody.velocity.y)) / 3;
+
+        this.rigidBody.velocity.set(
+          -Math.sign(this.rigidBody.velocity.x) * 2, 
+          -oldSpeed,
+          -Math.sign(this.rigidBody.velocity.z) * 2);
+
+        this.isTouchWall = true;
+
+      } else this.isTouchWall = false;
       // if (body.id === 1) {
       //   alert('boom');
       // }
@@ -65,22 +85,7 @@ export default class Dice extends GameObject {
   }
 
   keyboardHandle = (table) => {
-    this.rigidBody.wakeUp(); // very important
-
-    let keycode = require('keycode');
-    if (table[keycode('space')]) {
-      const vecFrom = convertToCannonVec3(this.camera.position);
-      vecFrom.y -= 10;
-
-      this.setPosition(vecFrom);
-      this.setRotation(new CANNON.Vec3(-Math.PI / 4, 0, Math.PI / 4));
-      this.setAngularVelocity(new CANNON.Vec3(30, 10, 10));
-      // this.launch(new CANNON.Vec3(this.camera.position.x * -1, 10, this.camera.position.z * -1));
-      this.launch(this.velocityToTarget(new CANNON.Vec3(0, 5, 0), 15));
-      
-    } else if (table[keycode('q')]) {
-      alert(this.rigidBody.quaternion.toAxisAngle(new CANNON.Vec3(1, 0, 0))[1] * (180/Math.PI));
-    }
+    
   }
 
   update = () => {
