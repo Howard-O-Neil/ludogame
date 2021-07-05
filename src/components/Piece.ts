@@ -27,6 +27,9 @@ export default class Piece extends GameObject {
   atBase: boolean;
   order: number;
 
+  currentPosStatus: string;
+  currentPosIndex: number;
+
   // isStartModeAuto;
 
   constructor(color: string, order: number, args: CyclinderBasicParam, position: number[], world: CANNON.World, userId: string) {
