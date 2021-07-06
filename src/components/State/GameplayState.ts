@@ -38,8 +38,8 @@ export default class GameplayState {
   private _listUserInRoom: IUser[];
   private _userCommonPath: Map<string, any[]>; // list position x, y, z
   private _userFinalPath: Map<string, any[]>; // list position x, y, z
-  private _userPiece: Map<string, IPiece[]>;
-  private _gamePiece: Map<string, Piece[]>;
+  private _userPiece: Map<string, IPiece[]>; // piece object map from backend
+  private _gamePiece: Map<string, Piece[]>; // piece instance in gameplay
   private _currentTurn: string;
   private _haveThrowDice: boolean;
   private _pointDice1: number;

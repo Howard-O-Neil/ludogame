@@ -1,7 +1,3 @@
-import { initBaseNodes, initCommonRoutes, initFinalRoutes } from './testDataBoard';
-// import Board from "./components/Board";
-// import Piece from "./components/Piece";
-// import Dice from "./components/Dice";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import { Sky } from "three/examples/jsm/objects/Sky";
 import * as THREE from "three";
@@ -9,12 +5,8 @@ import * as CANNON from "cannon-es";
 import Board from "./components/Board";
 import * as dat from "dat.gui";
 import GameObject from "./components/GameObject";
-import Piece from "./components/Piece";
-import Dice from "./components/Dice";
 import $ from "jquery";
 import { CannonDebugRenderer, createCannonDebugger } from "./components/CannonDebug";
-import DiceCanvas from './components/DiceCanvas';
-
 export const cannonTypeMaterials: Map<string, CANNON.Material> = new Map();
 cannonTypeMaterials['slippery'] = new CANNON.Material('slippery');
 cannonTypeMaterials['ground'] = new CANNON.Material('ground');
@@ -36,6 +28,7 @@ export const GRAVITY = -500;
 
 export default class MainGame {
 
+  gameObjIntersectCallBack: (gameObj: THREE.Object3D) => void; // callback
   // display
 
   sky: Sky;
@@ -57,6 +50,9 @@ export default class MainGame {
   world: CANNON.World;
 
   // gameplay
+
+  gameObjectRaycaster: THREE.Raycaster;
+  mouse: THREE.Vector2;
 
   gameObjectList: GameObject[];
 
@@ -217,6 +213,10 @@ export default class MainGame {
     this.orbitControl.autoRotate = false;
   }
 
+  public setGameObjectIntersectCallback = (intersectCallBack: (gameObj: THREE.Object3D) => void) => {
+    this.gameObjIntersectCallBack = intersectCallBack
+  }
+
   public initGameplay = async (cameraPos: any) => { // iddle
     if (this.renderer !== null) // game already launch
       return;
@@ -251,9 +251,7 @@ export default class MainGame {
     // init game objects
 
     this.gameObjectList.push(new Board(this.getWorld()));
-
-    const listWorldDice: GameObject[] = [];
-    this.initWorld()
+    this.initWorld();
 
     // for (let i = 0; i < data.length; i += 4) {
 
@@ -272,6 +270,9 @@ export default class MainGame {
 
     //cannonDebugRenderer = new THREE.CannonDebugRenderer(scene, world);
     this.cannonDebugger = createCannonDebugger(this.scene, this.world);
+    this.gameObjectRaycaster = new THREE.Raycaster();
+    
+    this.mouse = new THREE.Vector2();
 
     for (const obj of this.gameObjectList) {
       if (obj.getMesh) {
@@ -293,6 +294,12 @@ export default class MainGame {
       let keycode = require('keycode');
       this.keyCodes[keycode(ev.key)] = true;
     });
+
+    
+    $(document).on('mousemove', ev => {
+      this.mouse.x = ( ev.clientX / window.innerWidth ) * 2 - 1;
+      this.mouse.y = -( ev.clientY / window.innerHeight ) * 2 + 1;
+    })
 
     // setup orbit controls
     this.orbitControl = new OrbitControls(this.camera, this.renderer.domElement);
@@ -322,13 +329,28 @@ export default class MainGame {
     this.world.step(FPS);
   }
 
+  raycastGameObject = () => {
+    this.gameObjectRaycaster.setFromCamera(this.mouse, this.camera);
+
+    const gameObjList = this.scene.children.filter(
+      x => x.type == "Group" && x["objInfo"] && x["objInfo"].raycast);
+      
+    const intersectedObjects = this.gameObjectRaycaster.intersectObjects(gameObjList, true);
+    for (let i = 0; i < intersectedObjects.length; i++) {
+      if (this.gameObjIntersectCallBack)
+        this.gameObjIntersectCallBack(intersectedObjects[i].object.parent)
+    }
+  }
+
   dt = FPS * 1000;
   timeTarget = 0;
   render = () => {
     if (Date.now() >= this.timeTarget) {
       this.orbitControl.update();
-
+      
       this.keyboardHandle();
+
+      this.raycastGameObject();
       this.updateObjects();
 
       this.renderer.render(this.scene, this.camera);

@@ -27,8 +27,8 @@ export default class Piece extends GameObject {
   atBase: boolean;
   order: number;
 
-  currentPosStatus: string;
-  currentPosIndex: number;
+  currentPosStatus: string; // common | final | base ( currentPosIndex = -1 )
+  currentPosIndex: number; // commonPath index | finalPath index
 
   // isStartModeAuto;
 
@@ -40,10 +40,12 @@ export default class Piece extends GameObject {
     this.position = new CANNON.Vec3(...position);
     this.initPosition = new CANNON.Vec3(...position);
     this.targetPoint = this.initPosition;
+    this.currentPosStatus = 'base';
+    this.currentPosIndex = -1;
     this.isTouchBoard = true;
     this.prevStep = 0;
     this.nextStep = -1;
-    this.goal -1;
+    this.goal = -1;
     this.isReturn = false;
     this.atBase = true;
     this.color = color;
@@ -57,7 +59,7 @@ export default class Piece extends GameObject {
 
   initObject = async () => {
     const listMesh: THREE.Mesh[] = [];
-    
+
     const baseGeometry = new THREE.SphereBufferGeometry(0.5, 32, 32);
     const baseMaterial = new THREE.MeshPhysicalMaterial({
       reflectivity: 1.0, clearcoat: 1.0,
@@ -92,14 +94,15 @@ export default class Piece extends GameObject {
       } else {
         this.isTouchBoard = false;
       }
+    });
 
-      if (ev.body.tag === collisionTags.piece) {
-        if (ev.body.userId !== this.userId) {
-          state.getGamePiece(ev.body.userId)
-            .find(x => x.order === ev.body.order).isReturn = true;
-        }
-      }
-    })
+    this.mainModel["objInfo"] = {
+      tag: 'piece',
+      userId: this.userId,
+      order: this.order,
+      body: this.rigidBody,
+      raycast: true,
+    }
   }
 
   handleAutoJumpMode = (commonPath: any[], finalPath: any[]) => {
@@ -115,18 +118,26 @@ export default class Piece extends GameObject {
           this.prevStep = this.goal;
         } else {
           if (this.nextStep + this.prevStep >= commonPath.length) {
+            this.currentPosStatus = 'final';
+            this.currentPosIndex = this.prevStep + this.nextStep;
+
             this.targetPoint = new CANNON.Vec3(
-              ...<number[]>Object.values(finalPath[ ((this.nextStep++) + this.prevStep) - commonPath.length]));
+              ...<number[]>Object.values(finalPath[((this.nextStep++) + this.prevStep) - commonPath.length]));
           }
-          else this.targetPoint = new CANNON.Vec3(
-            ...<number[]>Object.values(commonPath[(this.nextStep++) + this.prevStep]));
-          
+          else {
+            this.currentPosStatus = 'common';
+            this.currentPosIndex = this.prevStep + this.nextStep;
+
+            this.targetPoint = new CANNON.Vec3(
+              ...<number[]>Object.values(commonPath[(this.nextStep++) + this.prevStep]));
+          }
+
           if (this.atBase) {
             this.launch(new CANNON.Vec3(0, 40, 0));
             this.atBase = false;
-          } else {this.launch(new CANNON.Vec3(0, 25, 0));}
+          } else { this.launch(new CANNON.Vec3(0, 25, 0)); }
         }
-      } 
+      }
     }
   }
 
@@ -143,17 +154,6 @@ export default class Piece extends GameObject {
     // this.rigidBody.velocity.set(targetVeloc.x, targetVeloc.y, targetVeloc.z)
   }
 
-  handleIsReturn = () => {
-    if (this.isReturn) {
-      this.setPosition(new CANNON.Vec3(
-        this.initPosition.x,
-        5,
-        this.initPosition.z));
-      this.isReturn = false;
-      this.atBase = true;
-    }
-  }
-
   // goByStep = (userId: string, step: number, order: number) => {
   //   if (userId === state.getUserId() && order === this.order) {
   //     this.nextStep++;
@@ -161,9 +161,23 @@ export default class Piece extends GameObject {
   //   }
   // }
 
+  makeAvailableColor = () => {
+    for (const mesh of <THREE.Mesh[]>this.mainModel.children) {
+      mesh.material["color"].set("#E400CF")
+    }
+  }
+
+  defaultColor = () => {
+    for (const mesh of <THREE.Mesh[]>this.mainModel.children) {
+      mesh.material["color"].set(this.color)
+    }
+  }
+
   returnBase = () => {
     this.targetPoint = this.initPosition;
     this.prevStep = 0;
+    this.currentPosStatus = 'base'
+    this.currentPosIndex = -1;
     this.nextStep = -1;
     this.goal = -1;
 
@@ -182,7 +196,7 @@ export default class Piece extends GameObject {
 
   keyboardHandle = (table) => {
     this.rigidBody.wakeUp(); // very important
-    
+
     let keycode = require('keycode');
     // if (table[keycode('q')]) {
     //   this.goByStep(state.getUserId(), 2, 1);

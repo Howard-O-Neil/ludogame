@@ -75,7 +75,6 @@ document.addEventListener("keydown", ev => {
 })
 
 
-
 export const displayToolBoxOnState = () => {
   const dice1 = state.getPointDice1();
   const dice2 = state.getPointDice2();
@@ -251,6 +250,17 @@ const handleUserLeaveUI = (mess: IUser) => {
   $(`#${mess.id}`).remove();
 }
 
+const gameObjectIntersectCallback = (gameObj: THREE.Object3D) => {
+  switch (gameObj["objInfo"].tag) {
+    case 'piece': {
+      const piece = state.getGamePiece(gameObj["objInfo"].userId)
+        .find(x => x.order == gameObj["objInfo"].order);
+      piece.makeAvailableColor();
+      // console.log((gameObj))
+    }
+  }
+}
+
 const initGameEvent = () => {
   const gameRoom = state.getGameRoom();
 
@@ -333,6 +343,8 @@ const initGamePlay = () => {
   $('.gameplay').show();
 
   initGameEvent()
+
+  state.getGameplay().setGameObjectIntersectCallback(gameObjectIntersectCallback);
 }
 
 $('#startGame').on('click', ev => {
