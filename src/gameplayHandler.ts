@@ -75,13 +75,12 @@ document.addEventListener("keydown", ev => {
 })
 
 
-
 export const displayToolBoxOnState = () => {
   const dice1 = state.getPointDice1();
   const dice2 = state.getPointDice2();
 
-  displayDots(dice1, '#dice1');
-  displayDots(dice2, '#dice2');
+  displayDots(2, '#dice1');
+  displayDots(2, '#dice2');
 
   $('.gameToolBox .toolBox #throwDice').prop('disabled', true);
   $('.gameToolBox .toolBox #skipTurn').prop('disabled', true);
@@ -148,7 +147,6 @@ const setUserTurnIcon = (userId: string) =>  {
 }
 
 const handleShowUserInfo = (ev: JQuery.ClickEvent, id: string, isModal: boolean = true) => {
-  if (isModal) alert('fuck');
 }
 
 const handleShowChatBox = (ev: JQuery.ClickEvent, id: string) => {
@@ -192,6 +190,23 @@ const handleUpdatePiece = (mess: any) => {
   piece.goal = mess.data.goal;
   piece.isReturn = mess.data.isReturn;
   piece.atBase = mess.data.atBase;
+}
+
+const goPiece = (piece: Piece) => {
+  if (state.getSpawnNewPieceStatus()) {
+    piece.goByStep(1);
+    state.setCurrentTurn('');
+    state.resetToolbox();
+
+    displayToolBoxOnState();
+  }
+  else if (state.getGoOldPieceStatus()) {
+    piece.goByStep(state.getPointDice1() + state.getPointDice2());
+    state.setCurrentTurn('');
+    state.resetToolbox();
+
+    displayToolBoxOnState();
+  }
 }
 
 const handleAddUserUI = (mess: IUser) => {
@@ -249,6 +264,59 @@ const handleAddUserUI = (mess: IUser) => {
 
 const handleUserLeaveUI = (mess: IUser) => {
   $(`#${mess.id}`).remove();
+}
+
+const gameObjectIntersectCallback = (gameObj: THREE.Object3D) => {
+  switch (gameObj["objInfo"].tag) {
+    case 'piece': {
+      if (state.getCurrentTurn() == state.getUserId()) {
+        const piece = state.getGamePiece(gameObj["objInfo"].userId)
+          .find(x => x.order == gameObj["objInfo"].order);
+
+        if (piece.checkAvailable(state.getPointDice1() + state.getPointDice2())) {
+          piece.makeAvailableColor();
+        } else {
+          piece.makeUnAvailableColor();
+        }
+      }
+    }
+  }
+}
+
+const gameObjectIntersectLeaveCallback = (gameObj: THREE.Object3D) => {
+  switch (gameObj["objInfo"].tag) {
+    case 'piece': {
+      if (state.getCurrentTurn() == state.getUserId()) {
+        const piece = state.getGamePiece(gameObj["objInfo"].userId)
+          .find(x => x.order == gameObj["objInfo"].order);
+
+        if (piece.checkAvailable(state.getPointDice1() + state.getPointDice2())) {
+          
+        }
+      }
+    }
+  }
+}
+
+const gameObjectIntersectMouseDownCallback = (gameObj: THREE.Object3D) => {
+  switch (gameObj["objInfo"].tag) {
+    case 'piece': {
+      const piece = state.getGamePiece(gameObj["objInfo"].userId)
+        .find(x => x.order == gameObj["objInfo"].order);
+      piece.defaultColor();
+    }
+  }
+}
+
+// do something revert mouse down effect
+const gameObjectIntersectMouseUpCallback = (gameObj: THREE.Object3D) => {
+  // switch (gameObj["objInfo"].tag) {
+  //   case 'piece': {
+  //     const piece = state.getGamePiece(gameObj["objInfo"].userId)
+  //       .find(x => x.order == gameObj["objInfo"].order);
+  //     piece.makeAvailableColor();
+  //   }
+  // }
 }
 
 const initGameEvent = () => {
@@ -333,6 +401,11 @@ const initGamePlay = () => {
   $('.gameplay').show();
 
   initGameEvent()
+
+  state.getGameplay().setGameObjectIntersectCallback(gameObjectIntersectCallback);
+  state.getGameplay().setGameObjectIntersectLeaveCallback(gameObjectIntersectLeaveCallback);
+  state.getGameplay().setGameObjectIntersectMouseDownCallback(gameObjectIntersectMouseDownCallback);
+  state.getGameplay().setGameObjectIntersectMouseUpCallback(gameObjectIntersectMouseUpCallback);
 }
 
 $('#startGame').on('click', ev => {
@@ -345,7 +418,6 @@ $('.selectRoom form').on('submit', ev => {
 
   const formValue = getFormSubmitValue('.selectRoom form');
   joinRoom(state.getListRoom().find(x => x.roomId === formValue['choosenRoomId']));
-  // console.log('what the fuck')
   // console.log(ev);
 });
 

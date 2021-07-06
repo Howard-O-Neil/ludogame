@@ -1,6 +1,6 @@
 import { Box, Quaternion as CQuaternion, ConvexPolyhedron, Cylinder, Shape, Sphere, Trimesh, Vec3 } from 'cannon-es';
 import { Box3, BufferGeometry, CylinderGeometry, MathUtils, Mesh, Object3D, SphereGeometry, Vector3 } from 'three';
-import { cyclinderRadicalSegment } from '../../constant';import { ConvexHull } from './ConvexHull.js';
+import { CYLINDER_RADICAL_SEGMENT } from '../../constant';import { ConvexHull } from './ConvexHull.js';
 import { getComponent, getGeometry, getVertices } from './Helper';
 
 const PI_2 = Math.PI / 2;
@@ -187,7 +187,7 @@ function createBoundingCylinderShape (object: Object3D, options: ShapeOptions): 
       object['geometry'].parameters.radiusBottom, 
       object['geometry'].parameters.radiusTop, 
       object['geometry'].parameters.height, 
-      cyclinderRadicalSegment);
+      CYLINDER_RADICAL_SEGMENT);
 
     const temp = object['geometry'].parameters.radiusTop;
     object['geometry'].parameters.radiusTop = object['geometry'].parameters.radiusBottom;
@@ -197,7 +197,7 @@ function createBoundingCylinderShape (object: Object3D, options: ShapeOptions): 
       object['geometry'].parameters.radiusTop, 
       object['geometry'].parameters.radiusBottom, 
       object['geometry'].parameters.height, 
-      cyclinderRadicalSegment);
+      CYLINDER_RADICAL_SEGMENT);
   }
 
 	return {

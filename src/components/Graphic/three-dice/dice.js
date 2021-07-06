@@ -1,4 +1,3 @@
-'use strict';
 import * as CANNON from './cannon';
 import * as THREE from './three';
 

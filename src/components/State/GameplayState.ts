@@ -1,3 +1,4 @@
+import { SOCKET_URL } from './../../constant';
 import * as Colyseus from "colyseus.js";
 import MainGame from "../../main";
 import { uuidv4 } from "../../utils";
@@ -38,15 +39,18 @@ export default class GameplayState {
   private _listUserInRoom: IUser[];
   private _userCommonPath: Map<string, any[]>; // list position x, y, z
   private _userFinalPath: Map<string, any[]>; // list position x, y, z
-  private _userPiece: Map<string, IPiece[]>;
-  private _gamePiece: Map<string, Piece[]>;
+  private _userPiece: Map<string, IPiece[]>; // piece object map from backend
+  private _gamePiece: Map<string, Piece[]>; // piece instance in gameplay
   private _currentTurn: string;
-  private _haveThrowDice: boolean;
   private _pointDice1: number;
   private _pointDice2: number;
+  private _haveThrowDice: boolean;
+  private _goOldPiece: boolean;
+  private _spawnNewPiece: boolean;
+  private _skipTurn: boolean;
 
   constructor() {
-    this._client = new Colyseus.Client("ws://localhost:2567");
+    this._client = new Colyseus.Client(SOCKET_URL);
     this._gameRoom = null;
     this._listRoom = [];
     this._userCommonPath = new Map();
@@ -58,8 +62,13 @@ export default class GameplayState {
     this._currentRoomId = "";
     this._pointDice1 = this._pointDice2 = 0;
     this._listUserInRoom = [];
-    this._haveThrowDice = false;
+
     this._currentTurn = '';
+
+    this._haveThrowDice = false;
+    this._goOldPiece = false;
+    this._spawnNewPiece = false;
+    this._skipTurn = false;
   }
 
   public getClient = () => this._client;
@@ -101,6 +110,22 @@ export default class GameplayState {
   public getCurrentTurn = () => this._currentTurn;
   public setCurrentTurn = (val) => this._currentTurn = val;
 
-  public getHaveThrowDice = () => this._haveThrowDice;
-  public setHaveThrowDice = (val) => this._haveThrowDice = val;
+  public getHaveThrowDiceStatus = () => this._haveThrowDice;
+  public setHaveThrowDiceStatus = (val) => this._haveThrowDice = val;
+
+  public getGoOldPieceStatus = () => this._goOldPiece;
+  public setGoOldPieceStatus = (val) => this._goOldPiece = val;
+
+  public getSpawnNewPieceStatus = () => this._spawnNewPiece;
+  public setSpawnNewPieceStatus = (val) => this._spawnNewPiece = val;
+
+  public getSkipTurnStatus = () => this._skipTurn;
+  public setSkipTurnStatus = (val) => this._skipTurn = val;
+
+  public resetToolbox = () => {
+    this._haveThrowDice = false;
+    this._goOldPiece = false;
+    this._spawnNewPiece = false;
+    this._skipTurn = false;
+  }
 }

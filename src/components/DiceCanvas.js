@@ -83,7 +83,7 @@ export default class DiceCanvas {
         color: "#E1E1E1",
         side: THREE.DoubleSide,
       });
-      let wall_1_Geometry = new THREE.BoxGeometry(50, 50, 1, 10);
+      let wall_1_Geometry = new THREE.BoxGeometry(100, 100, 1, 10);
       this.wall_1_ = new THREE.Mesh(wall_1_Geometry, wall_1_Material);
       this.wall_1_.visible = false;
       this.wall_1_.receiveShadow = true;
@@ -117,7 +117,7 @@ export default class DiceCanvas {
         color: "#E1E1E1",
         side: THREE.DoubleSide,
       });
-      let wall_2_Geometry = new THREE.BoxGeometry(50, 50, 1, 10);
+      let wall_2_Geometry = new THREE.BoxGeometry(100, 100, 1, 10);
       this.wall_2_ = new THREE.Mesh(wall_2_Geometry, wall_2_Material);
       this.wall_2_.visible = false;
       this.wall_2_.rotation.y = Math.PI / 2;
@@ -236,14 +236,14 @@ export default class DiceCanvas {
       this.NEAR,
       this.FAR
     );
-    this.camera.quaternion.set(-0.27860697678997254, 0.6499065296592252, 0.6499058796519858, 0.27860725544040105);
-    this.camera.position.set(40.75678448291831, 528.9619859572825, -9.011634591458515);
-    this.camera.rotation.set(-1.5707970164143883, 7.243865697282381e-7, 2.331611798723279, "XYZ");
+    this.camera.position.set(142.21300046993107, 571.6373507111894, -126.53146549630453);
+    this.camera.quaternion.set(-0.2917269822897262, 0.6441239768936987, 0.6441233327414131, 0.2917272740298214);
+    this.camera.rotation.set(-1.5707969864053455, 7.516667855368018e-7, 2.291057672677735, "XYZ");
 
     this.scene.add(this.camera);
 
     this.camera.updateProjectionMatrix();
-    
+
     this.renderer = new THREE.WebGLRenderer({
       canvas: this.canvasTag,
       antialias: true,
@@ -334,9 +334,9 @@ export default class DiceCanvas {
     this.cameraTracking = true;
 
     for (const dice of this.listDice) {
-      dice.getObject().position.x = 500 + i * 150;
+      dice.getObject().position.x = 1000 + i * 150;
       dice.getObject().position.y = 200;
-      dice.getObject().position.z = -500 + i * 150;
+      dice.getObject().position.z = -1000 + i * 150;
       dice.updateBodyFromMesh();
 
       dice
@@ -354,7 +354,7 @@ export default class DiceCanvas {
           dice.getObject().position.z
         ),
         new CANNON.Vec3(-50, 0, 50),
-        5
+        50
       );
 
       dice.getObject().body.velocity.set(veloc.x, veloc.y, veloc.z);
