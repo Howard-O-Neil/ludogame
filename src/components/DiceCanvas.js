@@ -243,7 +243,7 @@ export default class DiceCanvas {
     this.scene.add(this.camera);
 
     this.camera.updateProjectionMatrix();
-    
+
     this.renderer = new THREE.WebGLRenderer({
       canvas: this.canvasTag,
       antialias: true,

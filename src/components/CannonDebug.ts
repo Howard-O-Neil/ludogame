@@ -2,7 +2,7 @@
 
 import * as THREE from "three";
 import * as CANNON from "cannon-es";
-import { cyclinderRadicalSegment } from "../constant";
+import { CYLINDER_RADICAL_SEGMENT } from "../constant";
 
 export class CannonDebugRenderer {
   options;
@@ -158,7 +158,7 @@ export class CannonDebugRenderer {
           (<CANNON.Cylinder>shape).radiusTop,
           (<CANNON.Cylinder>shape).radiusBottom,
           (<CANNON.Cylinder>shape).height,
-          cyclinderRadicalSegment
+          CYLINDER_RADICAL_SEGMENT
         ), material);
 
         break;

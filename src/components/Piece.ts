@@ -57,6 +57,27 @@ export default class Piece extends GameObject {
     // this.isStartModeAuto = false;
   }
 
+  checkAvailable = (step: number) => {
+    if (this.order < 4) {
+      const pieces = state.getGamePiece(this.userId).filter(x => x.order > this.order);
+      for (const piece of pieces) {
+        if (this.currentPosIndex == -1) {
+          if (piece.currentPosIndex == 0)
+            return false;
+        } else {
+          if (piece.currentPosIndex <= this.currentPosIndex + step) {
+            return false;
+          }
+        }
+      }
+    } else {
+      if (this.currentPosIndex + step >= 57) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   initObject = async () => {
     const listMesh: THREE.Mesh[] = [];
 
@@ -163,7 +184,13 @@ export default class Piece extends GameObject {
 
   makeAvailableColor = () => {
     for (const mesh of <THREE.Mesh[]>this.mainModel.children) {
-      mesh.material["color"].set("#E400CF")
+      mesh.material["color"].set("#E400CF");
+    }
+  }
+
+  makeUnAvailableColor = () => {
+    for (const mesh of <THREE.Mesh[]>this.mainModel.children) {
+      mesh.material["color"].set("#808B96");
     }
   }
 
@@ -175,6 +202,7 @@ export default class Piece extends GameObject {
 
   returnBase = () => {
     this.targetPoint = this.initPosition;
+    this.atBase = true;
     this.prevStep = 0;
     this.currentPosStatus = 'base'
     this.currentPosIndex = -1;

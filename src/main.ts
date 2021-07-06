@@ -29,6 +29,10 @@ export const GRAVITY = -500;
 export default class MainGame {
 
   gameObjIntersectCallBack: (gameObj: THREE.Object3D) => void; // callback
+  gameObjIntersectLeaveCallBack: (gameObj: THREE.Object3D) => void; // callback
+  gameObjIntersectMouseDownCallBack: (gameObj: THREE.Object3D) => void; // callback
+  gameObjIntersectMouseUpCallBack: (gameObj: THREE.Object3D) => void; // callback
+
   // display
 
   sky: Sky;
@@ -52,7 +56,11 @@ export default class MainGame {
   // gameplay
 
   gameObjectRaycaster: THREE.Raycaster;
-  mouse: THREE.Vector2;
+  gameObjectIntersect: Map<string, THREE.Object3D>;
+
+  mouseMove: THREE.Vector2;
+  mouseDown: THREE.Vector2;
+  mouseUp: THREE.Vector2;
 
   gameObjectList: GameObject[];
 
@@ -67,6 +75,7 @@ export default class MainGame {
   };
 
   constructor() {
+    this.gameObjectIntersect = new Map();
     // define CANNON.Material
 
     this.cannonContactMaterials = [];
@@ -217,6 +226,19 @@ export default class MainGame {
     this.gameObjIntersectCallBack = intersectCallBack
   }
 
+  public setGameObjectIntersectLeaveCallback = (intersectCallBack: (gameObj: THREE.Object3D) => void) => {
+    this.gameObjIntersectLeaveCallBack = intersectCallBack
+  }
+
+  public setGameObjectIntersectMouseDownCallback = (intersectCallBack: (gameObj: THREE.Object3D) => void) => {
+    this.gameObjIntersectMouseDownCallBack = intersectCallBack
+  }
+
+  public setGameObjectIntersectMouseUpCallback = (intersectCallBack: (gameObj: THREE.Object3D) => void) => {
+    this.gameObjIntersectMouseUpCallBack = intersectCallBack
+  }
+
+
   public initGameplay = async (cameraPos: any) => { // iddle
     if (this.renderer !== null) // game already launch
       return;
@@ -271,8 +293,10 @@ export default class MainGame {
     //cannonDebugRenderer = new THREE.CannonDebugRenderer(scene, world);
     this.cannonDebugger = createCannonDebugger(this.scene, this.world);
     this.gameObjectRaycaster = new THREE.Raycaster();
-    
-    this.mouse = new THREE.Vector2();
+
+    this.mouseMove = new THREE.Vector2();
+    this.mouseDown = new THREE.Vector2();
+    this.mouseUp = new THREE.Vector2();
 
     for (const obj of this.gameObjectList) {
       if (obj.getMesh) {
@@ -297,9 +321,20 @@ export default class MainGame {
 
     
     $(document).on('mousemove', ev => {
-      this.mouse.x = ( ev.clientX / window.innerWidth ) * 2 - 1;
-      this.mouse.y = -( ev.clientY / window.innerHeight ) * 2 + 1;
-    })
+      this.mouseMove.x = ( ev.clientX / window.innerWidth ) * 2 - 1;
+      this.mouseMove.y = -( ev.clientY / window.innerHeight ) * 2 + 1;
+    });
+
+    $(document).on('mousedown', ev => {
+      this.mouseDown.x = ( ev.clientX / window.innerWidth ) * 2 - 1;
+      this.mouseDown.y = -( ev.clientY / window.innerHeight ) * 2 + 1;
+    });
+
+
+    $(document).on('mouseup', ev => {
+      this.mouseUp.x = ( ev.clientX / window.innerWidth ) * 2 - 1;
+      this.mouseUp.y = -( ev.clientY / window.innerHeight ) * 2 + 1;
+    });
 
     // setup orbit controls
     this.orbitControl = new OrbitControls(this.camera, this.renderer.domElement);
@@ -330,16 +365,59 @@ export default class MainGame {
   }
 
   raycastGameObject = () => {
-    this.gameObjectRaycaster.setFromCamera(this.mouse, this.camera);
+    // mouse move
+    this.gameObjectRaycaster.setFromCamera(this.mouseMove, this.camera);
 
     const gameObjList = this.scene.children.filter(
       x => x.type == "Group" && x["objInfo"] && x["objInfo"].raycast);
       
     const intersectedObjects = this.gameObjectRaycaster.intersectObjects(gameObjList, true);
+
     for (let i = 0; i < intersectedObjects.length; i++) {
+      this.gameObjectIntersect.set(
+        intersectedObjects[i].object.parent.uuid, intersectedObjects[i].object.parent);
+      
+      let gameObjIndex = gameObjList.findIndex(x => x.uuid == intersectedObjects[i].object.parent.uuid);
+      gameObjList.splice(gameObjIndex, 1);
+
       if (this.gameObjIntersectCallBack)
         this.gameObjIntersectCallBack(intersectedObjects[i].object.parent)
     }
+
+    for (let i = 0; i < gameObjList.length; i++) {
+      if (this.gameObjectIntersect.get(gameObjList[i].uuid)) {
+        if (this.gameObjIntersectLeaveCallBack)
+          this.gameObjIntersectLeaveCallBack(gameObjList[i])
+
+        this.gameObjectIntersect.delete(gameObjList[i].uuid);
+      }
+    }
+
+    // mouse down
+    this.gameObjectRaycaster.setFromCamera(this.mouseDown, this.camera);
+
+    const gameObjList_down = this.scene.children.filter(
+      x => x.type == "Group" && x["objInfo"] && x["objInfo"].raycast);
+      
+    const intersectedObjects_down = this.gameObjectRaycaster.intersectObjects(gameObjList_down, true);
+    for (let i = 0; i < intersectedObjects_down.length; i++) {
+      if (this.gameObjIntersectMouseDownCallBack)
+        this.gameObjIntersectMouseDownCallBack(intersectedObjects_down[i].object.parent)
+    }
+    this.mouseDown = new THREE.Vector2();
+
+    // mouse up
+    this.gameObjectRaycaster.setFromCamera(this.mouseUp, this.camera);
+
+    const gameObjList_up = this.scene.children.filter(
+      x => x.type == "Group" && x["objInfo"] && x["objInfo"].raycast);
+      
+    const intersectedObjects_up = this.gameObjectRaycaster.intersectObjects(gameObjList_up, true);
+    for (let i = 0; i < intersectedObjects_up.length; i++) {
+      if (this.gameObjIntersectMouseUpCallBack)
+        this.gameObjIntersectMouseUpCallBack(intersectedObjects_up[i].object.parent)
+    }
+    this.mouseUp = new THREE.Vector2();
   }
 
   dt = FPS * 1000;
