@@ -1,3 +1,4 @@
+import { IUser } from './State/GameplayState';
 import { state } from './../gameplayHandler';
 import { collisionTags, collisionGroups } from './../collisionTag';
 import { convertToThreeVec3, createRigidBodyForGroup } from './../utils';
@@ -58,22 +59,61 @@ export default class Piece extends GameObject {
   }
 
   checkAvailable = (step: number) => {
-    if (this.order < 4) {
-      const pieces = state.getGamePiece(this.userId).filter(x => x.order > this.order);
-      for (const piece of pieces) {
-        if (this.currentPosIndex == -1) {
-          if (piece.currentPosIndex == 0)
-            return false;
-        } else {
-          if (piece.currentPosIndex <= this.currentPosIndex + step) {
-            return false;
-          }
-        }
-      }
+    if (this.atBase) {
+      if (state.getGamePiece(this.userId).filter(x => x.currentPosIndex == 0).length > 0)
+        return false;
     } else {
-      if (this.currentPosIndex + step >= 57) {
+      const allOtherUser: IUser[] = state.getListUserInRoom().filter(x => x.id != this.userId);
+      const allCommonPiece: Piece[] = [];
+
+      const testOtherPiece: {equivalentIndex: number}[] = [];
+      for (const user of allOtherUser) {
+        allCommonPiece.push(...state.getGamePiece(user.id)
+          .filter(x => !x.atBase && x.currentPosStatus == "common"));
+      }
+      for (const piece of allCommonPiece) {
+        const otherUser = state.getListUserInRoom().find(x => x.id == piece.userId);
+        const thisUser = state.getListUserInRoom().find(x => x.id == this.userId);
+        const curIndex = piece.currentPosIndex;
+        const curSection = Math.floor(curIndex / 13) + 1;
+        const equivalentSection = otherUser.order < thisUser.order 
+          ? (curSection - Math.abs(otherUser.order - thisUser.order) + 4)
+          : (curSection + Math.abs(otherUser.order - thisUser.order)) % 4 == 0 
+            ? 4 
+            : (curSection + Math.abs(otherUser.order - thisUser.order)) % 4;
+
+        // console.log(curIndex)
+        // console.log(curSection)
+        // console.log(equivalentSection)
+        // console.log((curIndex % 13) + ((equivalentSection - 1) * 13))
+
+        testOtherPiece.push({
+          equivalentIndex: (curIndex % 13) + ((equivalentSection - 1) * 13),
+        })
+      }
+      if (
+        testOtherPiece
+          .filter(x => x.equivalentIndex > this.currentPosIndex 
+            && x.equivalentIndex < this.currentPosIndex + step).length > 0
+      ) {
         return false;
       }
+
+      const frontPiece = state
+        .getGamePiece(this.userId)
+        .filter(x => x.order != this.order && !x.atBase && x.currentPosIndex > this.currentPosIndex);
+
+      if (frontPiece.length > 0) {
+        if (frontPiece.filter(x => x.currentPosIndex <= this.currentPosIndex + step).length > 0) {
+          return false
+        }
+      } else {
+        if (this.currentPosIndex + step >= 57) {
+          return false;
+        }
+      }
+
+
     }
     return true;
   }
@@ -102,7 +142,7 @@ export default class Piece extends GameObject {
     this.addMesh(...listMesh);
 
     this.initRigidBody({}, cannonTypeMaterials['ground']);
-    this.rigidBody.collisionFilterGroup = collisionGroups.piece;
+    // this.rigidBody.collisionFilterGroup = collisionGroups.piece;
     // this.rigidBody.collisionFilterMask = collisionGroups.board;
 
     this.rigidBody['tag'] = collisionTags.piece;
@@ -115,6 +155,15 @@ export default class Piece extends GameObject {
       } else {
         this.isTouchBoard = false;
       }
+
+      if (this.nextStep >= 0) {
+        if (ev.body.tag == collisionTags.piece) {
+          const piece = state.getGamePiece(ev.body.userId).find(x => x.order == ev.body.order);
+          if (piece.userId != this.userId) {
+            piece.returnBase();
+          }
+        }
+      }
     });
 
     this.mainModel["objInfo"] = {
@@ -126,6 +175,10 @@ export default class Piece extends GameObject {
     }
   }
 
+  isOnGround = () => {
+    return Math.abs(this.rigidBody.velocity.y) <= 0.05;
+  }
+
   handleAutoJumpMode = (commonPath: any[], finalPath: any[]) => {
     if (!commonPath || commonPath.length < 52)
       return;
@@ -133,11 +186,12 @@ export default class Piece extends GameObject {
     // console.log(commonPath[0]);
 
     if (this.nextStep >= 0) {
-      if (Math.abs(this.rigidBody.velocity.y) <= 0.01) {
+      if (this.isOnGround()) {
         if (this.nextStep + this.prevStep >= this.goal) {
           this.nextStep = -1;
           this.prevStep = this.goal;
         } else {
+          // console.log(this.prevStep + this.nextStep)
           if (this.nextStep + this.prevStep >= commonPath.length) {
             this.currentPosStatus = 'final';
             this.currentPosIndex = this.prevStep + this.nextStep;
@@ -182,19 +236,19 @@ export default class Piece extends GameObject {
   //   }
   // }
 
-  makeAvailableColor = () => {
+  colorAvailable = () => {
     for (const mesh of <THREE.Mesh[]>this.mainModel.children) {
       mesh.material["color"].set("#E400CF");
     }
   }
 
-  makeUnAvailableColor = () => {
+  colorUnAvailable = () => {
     for (const mesh of <THREE.Mesh[]>this.mainModel.children) {
       mesh.material["color"].set("#808B96");
     }
   }
 
-  defaultColor = () => {
+  colorDefault = () => {
     for (const mesh of <THREE.Mesh[]>this.mainModel.children) {
       mesh.material["color"].set(this.color)
     }

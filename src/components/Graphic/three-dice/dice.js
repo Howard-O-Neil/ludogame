@@ -14,7 +14,7 @@ class DiceManagerClass {
         this.barrierBodyMaterial = new CANNON.Material();
 
         world.addContactMaterial(
-            new CANNON.ContactMaterial(this.floorBodyMaterial, this.diceBodyMaterial, { friction: 1.0, restitution: 0.0 })
+            new CANNON.ContactMaterial(this.floorBodyMaterial, this.diceBodyMaterial, { friction: 0.0, restitution: 0.0 })
         );
         world.addContactMaterial(
             new CANNON.ContactMaterial(this.barrierBodyMaterial, this.diceBodyMaterial, { friction: 0.0, restitution: 0.0 })
@@ -448,12 +448,12 @@ export class DiceD6 extends DiceObject {
         [-1, -1, 1], [1, -1, 1], [1, 1, 1], [-1, 1, 1]];
         this.faces = [[0, 3, 2, 1, 1], [1, 2, 6, 5, 2], [0, 1, 5, 4, 3],
         [3, 7, 6, 2, 4], [0, 4, 7, 3, 5], [4, 5, 6, 7, 6]];
-        this.scaleFactor = 0.8;
+        this.scaleFactor = 1.2;
         this.values = 6;
         this.faceTexts = [' ', '0', '1', '2', '3', '4', '5', '6', '7', '8',
             '9', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20'];
         this.textMargin = 1.0;
-        this.mass = 500;
+        this.mass = 1000;
         this.inertia = 13;
 
         this.create();

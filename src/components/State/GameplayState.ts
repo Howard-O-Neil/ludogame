@@ -45,8 +45,7 @@ export default class GameplayState {
   private _pointDice1: number;
   private _pointDice2: number;
   private _haveThrowDice: boolean;
-  private _goOldPiece: boolean;
-  private _spawnNewPiece: boolean;
+  private _canMovePice: boolean;
   private _skipTurn: boolean;
 
   constructor() {
@@ -65,9 +64,8 @@ export default class GameplayState {
 
     this._currentTurn = '';
 
-    this._haveThrowDice = false;
-    this._goOldPiece = false;
-    this._spawnNewPiece = false;
+    this._haveThrowDice = true;
+    this._canMovePice = false;
     this._skipTurn = false;
   }
 
@@ -113,19 +111,15 @@ export default class GameplayState {
   public getHaveThrowDiceStatus = () => this._haveThrowDice;
   public setHaveThrowDiceStatus = (val) => this._haveThrowDice = val;
 
-  public getGoOldPieceStatus = () => this._goOldPiece;
-  public setGoOldPieceStatus = (val) => this._goOldPiece = val;
-
-  public getSpawnNewPieceStatus = () => this._spawnNewPiece;
-  public setSpawnNewPieceStatus = (val) => this._spawnNewPiece = val;
+  public getCanMovePieceStatus = () => this._canMovePice;
+  public setCanMovePieceStatus = (val) => this._canMovePice = val;
 
   public getSkipTurnStatus = () => this._skipTurn;
   public setSkipTurnStatus = (val) => this._skipTurn = val;
 
   public resetToolbox = () => {
-    this._haveThrowDice = false;
-    this._goOldPiece = false;
-    this._spawnNewPiece = false;
+    this._haveThrowDice = true;
+    this._canMovePice = false;
     this._skipTurn = false;
   }
 }

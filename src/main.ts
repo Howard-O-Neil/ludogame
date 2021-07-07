@@ -32,6 +32,7 @@ export default class MainGame {
   gameObjIntersectLeaveCallBack: (gameObj: THREE.Object3D) => void; // callback
   gameObjIntersectMouseDownCallBack: (gameObj: THREE.Object3D) => void; // callback
   gameObjIntersectMouseUpCallBack: (gameObj: THREE.Object3D) => void; // callback
+  gameObjIntersectMouseClickCallBack: (gameObj: THREE.Object3D) => void; // callback
 
   // display
 
@@ -59,6 +60,7 @@ export default class MainGame {
   gameObjectIntersect: Map<string, THREE.Object3D>;
 
   mouseMove: THREE.Vector2;
+  mouseClick: THREE.Vector2;
   mouseDown: THREE.Vector2;
   mouseUp: THREE.Vector2;
 
@@ -140,12 +142,6 @@ export default class MainGame {
     uniforms["rayleigh"].value = this.effectController.rayleigh;
     uniforms["mieCoefficient"].value = this.effectController.mieCoefficient;
     uniforms["mieDirectionalG"].value = this.effectController.mieDirectionalG;
-
-    console.log("sky effect")
-    console.log(this.effectController.turbidity)
-    console.log(this.effectController.elevation)
-    console.log(this.effectController.azimuth)
-    console.log(this.effectController.exposure)
 
     const phi = THREE.MathUtils.degToRad(90 - this.effectController.elevation);
     const theta = THREE.MathUtils.degToRad(this.effectController.azimuth);
@@ -237,7 +233,10 @@ export default class MainGame {
   public setGameObjectIntersectMouseUpCallback = (intersectCallBack: (gameObj: THREE.Object3D) => void) => {
     this.gameObjIntersectMouseUpCallBack = intersectCallBack
   }
-
+  
+  public setGameObjectIntersectMouseClickCallback = (intersectCallBack: (gameObj: THREE.Object3D) => void) => {
+    this.gameObjIntersectMouseClickCallBack = intersectCallBack
+  }
 
   public initGameplay = async (cameraPos: any) => { // iddle
     if (this.renderer !== null) // game already launch
@@ -296,6 +295,7 @@ export default class MainGame {
 
     this.mouseMove = new THREE.Vector2();
     this.mouseDown = new THREE.Vector2();
+    this.mouseClick = new THREE.Vector2();
     this.mouseUp = new THREE.Vector2();
 
     for (const obj of this.gameObjectList) {
@@ -319,22 +319,30 @@ export default class MainGame {
       this.keyCodes[keycode(ev.key)] = true;
     });
 
-    
-    $(document).on('mousemove', ev => {
+    $(".gameplay").on('click', ev => {
+      this.mouseClick.x = ( ev.clientX / window.innerWidth ) * 2 - 1;
+      this.mouseClick.y = -( ev.clientY / window.innerHeight ) * 2 + 1;
+    });
+
+    $(".gameplay").on('mousemove', ev => {
       this.mouseMove.x = ( ev.clientX / window.innerWidth ) * 2 - 1;
       this.mouseMove.y = -( ev.clientY / window.innerHeight ) * 2 + 1;
     });
 
-    $(document).on('mousedown', ev => {
-      this.mouseDown.x = ( ev.clientX / window.innerWidth ) * 2 - 1;
-      this.mouseDown.y = -( ev.clientY / window.innerHeight ) * 2 + 1;
+    $(".gameplay").on('mouseleave', ev => {
+      this.mouseMove = new THREE.Vector2();
     });
 
+    // $(document).on('mouseup', ev => {
+    //   this.mouseUp.x = ( ev.clientX / window.innerWidth ) * 2 - 1;
+    //   this.mouseUp.y = -( ev.clientY / window.innerHeight ) * 2 + 1;
+    // });
 
-    $(document).on('mouseup', ev => {
-      this.mouseUp.x = ( ev.clientX / window.innerWidth ) * 2 - 1;
-      this.mouseUp.y = -( ev.clientY / window.innerHeight ) * 2 + 1;
-    });
+    // $(document).on('mousedown', ev => {
+    //   this.mouseDown.x = ( ev.clientX / window.innerWidth ) * 2 - 1;
+    //   this.mouseDown.y = -( ev.clientY / window.innerHeight ) * 2 + 1;
+    // });
+    
 
     // setup orbit controls
     this.orbitControl = new OrbitControls(this.camera, this.renderer.domElement);
@@ -393,31 +401,46 @@ export default class MainGame {
       }
     }
 
-    // mouse down
-    this.gameObjectRaycaster.setFromCamera(this.mouseDown, this.camera);
+    // mouse click
+    this.gameObjectRaycaster.setFromCamera(this.mouseClick, this.camera);
 
-    const gameObjList_down = this.scene.children.filter(
+    const gameObjList_click = this.scene.children.filter(
       x => x.type == "Group" && x["objInfo"] && x["objInfo"].raycast);
       
-    const intersectedObjects_down = this.gameObjectRaycaster.intersectObjects(gameObjList_down, true);
-    for (let i = 0; i < intersectedObjects_down.length; i++) {
-      if (this.gameObjIntersectMouseDownCallBack)
-        this.gameObjIntersectMouseDownCallBack(intersectedObjects_down[i].object.parent)
+    const intersectedObjects_click = this.gameObjectRaycaster.intersectObjects(gameObjList_click, true);
+    for (let i = 0; i < intersectedObjects_click.length; i++) {
+      if (this.gameObjIntersectMouseClickCallBack)
+        this.gameObjIntersectMouseClickCallBack(intersectedObjects_click[i].object.parent)
     }
-    this.mouseDown = new THREE.Vector2();
+    this.mouseClick = new THREE.Vector2();
 
-    // mouse up
-    this.gameObjectRaycaster.setFromCamera(this.mouseUp, this.camera);
 
-    const gameObjList_up = this.scene.children.filter(
-      x => x.type == "Group" && x["objInfo"] && x["objInfo"].raycast);
+    // // mouse down
+    // this.gameObjectRaycaster.setFromCamera(this.mouseDown, this.camera);
+
+    // const gameObjList_down = this.scene.children.filter(
+    //   x => x.type == "Group" && x["objInfo"] && x["objInfo"].raycast);
       
-    const intersectedObjects_up = this.gameObjectRaycaster.intersectObjects(gameObjList_up, true);
-    for (let i = 0; i < intersectedObjects_up.length; i++) {
-      if (this.gameObjIntersectMouseUpCallBack)
-        this.gameObjIntersectMouseUpCallBack(intersectedObjects_up[i].object.parent)
-    }
-    this.mouseUp = new THREE.Vector2();
+    // const intersectedObjects_down = this.gameObjectRaycaster.intersectObjects(gameObjList_down, true);
+    // for (let i = 0; i < intersectedObjects_down.length; i++) {
+    //   console.log(' what the hell man ?')
+    //   // if (this.gameObjIntersectMouseDownCallBack)
+    //   //   this.gameObjIntersectMouseDownCallBack(intersectedObjects_down[i].object.parent)
+    // }
+    // this.mouseDown = new THREE.Vector2();
+
+    // // mouse up
+    // this.gameObjectRaycaster.setFromCamera(this.mouseUp, this.camera);
+
+    // const gameObjList_up = this.scene.children.filter(
+    //   x => x.type == "Group" && x["objInfo"] && x["objInfo"].raycast);
+      
+    // const intersectedObjects_up = this.gameObjectRaycaster.intersectObjects(gameObjList_up, true);
+    // for (let i = 0; i < intersectedObjects_up.length; i++) {
+    //   if (this.gameObjIntersectMouseUpCallBack)
+    //     this.gameObjIntersectMouseUpCallBack(intersectedObjects_up[i].object.parent)
+    // }
+    // this.mouseUp = new THREE.Vector2();
   }
 
   dt = FPS * 1000;
