@@ -17,33 +17,32 @@ const loadGame = () => {
   // });
 
   $('.gameToolBox .toolBox #throwDice').on('click', ev => {
-    state.getGameRoom().send(ThrowDice, {userId: state.getUserId()});
-    state.setHaveThrowDice(true);
-  });
-  $('.gameToolBox .toolBox #skipTurn').on('click', ev => {
-    state.getGameRoom().send(UserSkipTurn, {userId: state.getUserId()});
-    state.setHaveThrowDice(false);
-  });
-  $('.gameToolBox .toolBox #spawnNewPiece').on('click', ev => {
-    const listPieceAvailable = state.getGamePiece(state.getUserId()).filter(x => x.atBase === true);
-    if (listPieceAvailable.length > 0) {
-      state.getGameRoom().send(SyncPieceState, {
-        step: 1,
-        userId: listPieceAvailable[0].userId,
-        order: listPieceAvailable[0].order,
-      });
-    }
-  });
-  $('.gameToolBox .toolBox #goOldPiece').on('click', ev => {
-    const listPieceAvailable = state.getGamePiece(state.getUserId()).filter(x => x.atBase === false);
-    if (listPieceAvailable.length > 0) {
+    if (state.getHaveThrowDiceStatus() || !diceManager.nextThrowReady)
+      return;
 
-      state.getGameRoom().send(SyncPieceState, {
-        step: state.getPointDice1() + state.getPointDice2(),
-        userId: listPieceAvailable[0].userId,
-        order: listPieceAvailable[0].order,
-      });
-    }
+    state.getGameRoom().send(ThrowDice, {
+      userId: state.getUserId(),
+    });
+    state.setHaveThrowDiceStatus(true);
+    configToolBoxOnState();
+  });
+
+  $('.gameToolBox .toolBox #skipTurn').on('click', ev => {
+    if (!state.getSkipTurnStatus())
+      return;
+
+    state.resetToolbox();
+    state.setCurrentTurn('');
+    state.setPointDice1(0);
+    state.setPointDice2(0);
+    state.getGameRoom().send(UserSkipTurn, {userId: state.getUserId()});
+    configToolBoxOnState();
+  });
+  $('.gameToolBox .toolBox #movePiece').on('click', ev => {
+    if (!state.getCanMovePieceStatus())
+      return
+
+    alert('Please click directly on your dice');
   });
 };
 
@@ -59,62 +58,61 @@ const displayDots = (num: number, jqueryComponent) => {
   }
 }
 
-document.addEventListener("keydown", ev => {
-  if (ev.key == 'w') {
-    const piece = state.getGamePiece(state.getUserId())[0];
-    piece.goByStep(5);
-  }
-  if (ev.key == 'r') {
-    const piece = state.getGamePiece(state.getUserId())[0];
-    piece.returnBase();
-  }
-  if (ev.key == 's') {
-    const piece = state.getGamePiece(state.getUserId())[0];
-    piece.goByStep(1);
-  }
-})
+// document.addEventListener("keydown", ev => {
+//   if (ev.key == 'w') {
+//     const piece = state.getGamePiece(state.getUserId())[0];
+//     piece.goByStep(5);
+//   }
+//   if (ev.key == 'r') {
+//     const piece = state.getGamePiece(state.getUserId())[0];
+//     piece.returnBase();
+//   }
+//   if (ev.key == 's') {
+//     const piece = state.getGamePiece(state.getUserId())[0];
+//     piece.goByStep(1);
+//   }
+// })
 
-
-export const displayToolBoxOnState = () => {
-  const dice1 = state.getPointDice1();
-  const dice2 = state.getPointDice2();
-
-  displayDots(2, '#dice1');
-  displayDots(2, '#dice2');
-
-  $('.gameToolBox .toolBox #throwDice').prop('disabled', true);
-  $('.gameToolBox .toolBox #skipTurn').prop('disabled', true);
-  $('.gameToolBox .toolBox #goOldPiece').prop('disabled', true);
-  $('.gameToolBox .toolBox #spawnNewPiece').prop('disabled', true);
-
-  if (state.getCurrentTurn() === state.getUserId()) {
-    
-    if (!state.getHaveThrowDice()) {
-      $('.gameToolBox .toolBox').prop('disabled', true);
-      $('.gameToolBox .toolBox #throwDice').prop('disabled', false);
-      $('.gameToolBox .toolBox #skipTurn').prop('disabled', false);
-    } else {
-      $('.gameToolBox .toolBox').prop('disabled', true);
-      $('.gameToolBox .toolBox #goOldPiece').prop('disabled', false);
-      $('.gameToolBox .toolBox #skipTurn').prop('disabled', false);
-
-      const listPieceAvailable = state.getGamePiece(state.getUserId()).filter(x => x.atBase === false);
-      if (listPieceAvailable.length <= 0) {
-        $('.gameToolBox .toolBox #goOldPiece').prop('disabled', true);
+const configUserAction = () => {
+  if (state.getCurrentTurn() == state.getUserId()) {
+    if (state.getHaveThrowDiceStatus() && state.getPointDice1() != 0) {
+      const pieces = state.getGamePiece(state.getUserId());
+  
+      if (pieces.filter(x => x.checkAvailable(state.getPointDice1())).length > 0) {
+        state.setCanMovePieceStatus(true);
       }
-
-      const listPieceAvailable1 = state.getGamePiece(state.getUserId()).filter(x => x.atBase === true);
-        if (listPieceAvailable1.length <= 0) {
-          $('.gameToolBox .toolBox #spawnNewPiece').prop('disabled', true);
-        } else $('.gameToolBox .toolBox #spawnNewPiece').prop('disabled', false);
-
-      // if (dice1 === dice2 && (dice1 === 1 || dice1 === 6)) {
-        
-      // }
     }
+  } else {
+    state.resetToolbox();
   }
 }
-displayToolBoxOnState();
+
+export const configToolBoxOnState = () => {
+  const dice1 = state.getPointDice1();
+  // const dice2 = state.getPointDice2();
+
+  displayDots(dice1, '#dice1');
+  // displayDots(dice2, '#dice2');
+
+  $('.gameToolBox .toolBox #throwDice').prop('disabled', true);
+  $('.gameToolBox .toolBox #movePiece').prop('disabled', true);
+  $('.gameToolBox .toolBox #skipTurn').prop('disabled', true);
+
+  configUserAction();
+
+  if (!state.getHaveThrowDiceStatus()) {
+    $('.gameToolBox .toolBox #throwDice').prop('disabled', false);
+  } else $('.gameToolBox .toolBox #throwDice').prop('disabled', true);
+
+  if (state.getCanMovePieceStatus())
+    $('.gameToolBox .toolBox #movePiece').prop('disabled', false);
+  else $('.gameToolBox .toolBox #movePiece').prop('disabled', true);
+
+  if (state.getSkipTurnStatus())
+    $('.gameToolBox .toolBox #skipTurn').prop('disabled', false);
+  else $('.gameToolBox .toolBox #skipTurn').prop('disabled', true);
+}
+configToolBoxOnState();
 
 
 const setUserStatus = (val: IUser) => {
@@ -127,7 +125,7 @@ const setUserStatus = (val: IUser) => {
   if (user.isReady) {
     $(elementSelectString).append(
       $(`
-        <a class="user-list-favourite order-2 text-success" href="#"><i class="fas fa-check-circle"></i></a>
+        <a class="user-list-favourite order-2 text-success" href="#"><i class="fas fa-  check-circle"></i></a>
         <span class="user-list-time order-1">Ready</span>
       `));
   } else {
@@ -192,21 +190,27 @@ const handleUpdatePiece = (mess: any) => {
   piece.atBase = mess.data.atBase;
 }
 
-const goPiece = (piece: Piece) => {
-  if (state.getSpawnNewPieceStatus()) {
-    piece.goByStep(1);
-    state.setCurrentTurn('');
-    state.resetToolbox();
+const syncPiece = (piece: Piece) => {
+  // sync data
 
-    displayToolBoxOnState();
-  }
-  else if (state.getGoOldPieceStatus()) {
-    piece.goByStep(state.getPointDice1() + state.getPointDice2());
-    state.setCurrentTurn('');
-    state.resetToolbox();
+  // step: 1,
+  // userId: listPieceAvailable[0].userId,
+  // order: listPieceAvailable[0].order,
 
-    displayToolBoxOnState();
-  }
+  let step = state.getPointDice1();
+  if (piece.atBase) step = 1;
+
+  state.setCurrentTurn('');
+  state.setCanMovePieceStatus(false);
+  state.setPointDice1(0);
+  state.setPointDice2(0);
+
+  state.getGameRoom().send(SyncPieceState, {
+    step, userId: piece.userId, order: piece.order,
+  });
+  state.getGameRoom().send(UserSkipTurn, {userId: state.getUserId()});
+
+  configToolBoxOnState();
 }
 
 const handleAddUserUI = (mess: IUser) => {
@@ -269,14 +273,17 @@ const handleUserLeaveUI = (mess: IUser) => {
 const gameObjectIntersectCallback = (gameObj: THREE.Object3D) => {
   switch (gameObj["objInfo"].tag) {
     case 'piece': {
-      if (state.getCurrentTurn() == state.getUserId()) {
+      if (state.getCurrentTurn() == state.getUserId() && gameObj["objInfo"].userId == state.getUserId() 
+        && state.getCanMovePieceStatus()) {
         const piece = state.getGamePiece(gameObj["objInfo"].userId)
           .find(x => x.order == gameObj["objInfo"].order);
 
-        if (piece.checkAvailable(state.getPointDice1() + state.getPointDice2())) {
-          piece.makeAvailableColor();
+        console.log(piece)
+
+        if (piece.checkAvailable(state.getPointDice1())) {
+          piece.colorAvailable();
         } else {
-          piece.makeUnAvailableColor();
+          piece.colorUnAvailable();
         }
       }
     }
@@ -290,8 +297,25 @@ const gameObjectIntersectLeaveCallback = (gameObj: THREE.Object3D) => {
         const piece = state.getGamePiece(gameObj["objInfo"].userId)
           .find(x => x.order == gameObj["objInfo"].order);
 
-        if (piece.checkAvailable(state.getPointDice1() + state.getPointDice2())) {
-          
+        piece.colorDefault();
+      }
+    }
+  }
+}
+
+const gameObjectIntersectMouseClickCallback = (gameObj: THREE.Object3D) => {
+  switch (gameObj["objInfo"].tag) {
+    case 'piece': {
+      if (state.getCurrentTurn() == state.getUserId() && gameObj["objInfo"].userId == state.getUserId() 
+        && state.getCanMovePieceStatus()) {
+        const piece = state.getGamePiece(state.getUserId())
+          .find(x => x.order == gameObj["objInfo"].order);
+
+        console.log("check piece");
+
+        if (piece.checkAvailable(state.getPointDice1())) {
+          syncPiece(piece);
+          state.getGamePiece(state.getUserId()).forEach(x => x.colorDefault());
         }
       }
     }
@@ -299,13 +323,21 @@ const gameObjectIntersectLeaveCallback = (gameObj: THREE.Object3D) => {
 }
 
 const gameObjectIntersectMouseDownCallback = (gameObj: THREE.Object3D) => {
-  switch (gameObj["objInfo"].tag) {
-    case 'piece': {
-      const piece = state.getGamePiece(gameObj["objInfo"].userId)
-        .find(x => x.order == gameObj["objInfo"].order);
-      piece.defaultColor();
-    }
-  }
+  // switch (gameObj["objInfo"].tag) {
+  //   case 'piece': {
+  //     if (state.getCurrentTurn() == state.getUserId() && state.getCanMovePieceStatus()) {
+  //       const piece = state.getGamePiece(gameObj["objInfo"].userId)
+  //         .find(x => x.order == gameObj["objInfo"].order);
+
+  //       console.log("check piece");
+  //       console.log(piece.checkAvailable(state.getPointDice1() + state.getPointDice2()))
+
+  //       if (piece.checkAvailable(state.getPointDice1() + state.getPointDice2())) {
+  //         syncPiece(piece);
+  //       }
+  //     }
+  //   }
+  // }
 }
 
 // do something revert mouse down effect
@@ -343,10 +375,12 @@ const initGameEvent = () => {
   gameRoom.onMessage(StartGame, (mess) => {
     loadGame();
 
-    if (mess.userId === state.getUserId())
-      state.setCurrentTurn(mess.userId);
+    state.setCurrentTurn(mess.userId);
+    state.setHaveThrowDiceStatus(false);
+    state.setSkipTurnStatus(true);
+
     setUserTurnIcon(mess.userId);
-    displayToolBoxOnState();
+    configToolBoxOnState();
   });
   gameRoom.onMessage(UserLeave, (mess) => {
     handleUserLeaveUI(mess);
@@ -371,25 +405,34 @@ const initGameEvent = () => {
     setUserStatus(mess.user);
     handleUserReady(mess);
   });
-  gameRoom.onMessage(UpdatePieceState, (mess) => {
-    handleUpdatePiece(mess);
-  });
+  // gameRoom.onMessage(UpdatePieceState, (mess) => {
+  //   handleUpdatePiece(mess);
+  // });
   gameRoom.onMessage(StartTurn, (mess) => {
     state.setCurrentTurn(mess.userId);
+    state.setHaveThrowDiceStatus(false);
+    state.setSkipTurnStatus(true);
+    
     setUserTurnIcon(mess.userId);
-
-    displayToolBoxOnState();
+    configToolBoxOnState();
   });
-  gameRoom.onMessage(RollDicePoint, (mess) => {
-    state.setPointDice1(mess.dice1);
-    state.setPointDice2(mess.dice2);
+  gameRoom.onMessage(ThrowDice, (mess) => {
+    diceManager.throwDice(mess.diceVals, mess.dice.angularVeloc, mess.dice.rotation, () => {
+      state.setPointDice1(mess.diceVals[0]);
+      state.setPointDice2(mess.diceVals[1]);
 
-    displayToolBoxOnState();
+      configToolBoxOnState();
+    });
   });
+  // gameRoom.onMessage(RollDicePoint, (mess) => {
+  //   state.setPointDice1(mess.dice1);
+  //   state.setPointDice2(mess.dice2);
+
+  //   displayToolBoxOnState();
+  // });
   gameRoom.onMessage(SyncPieceState, (mess) => {
     const piece = state.getGamePiece(mess.userId).find(x => x.order === mess.order);
 
-    console.log(piece);
     piece.goByStep(mess.step);
   })
 }
@@ -406,6 +449,7 @@ const initGamePlay = () => {
   state.getGameplay().setGameObjectIntersectLeaveCallback(gameObjectIntersectLeaveCallback);
   state.getGameplay().setGameObjectIntersectMouseDownCallback(gameObjectIntersectMouseDownCallback);
   state.getGameplay().setGameObjectIntersectMouseUpCallback(gameObjectIntersectMouseUpCallback);
+  state.getGameplay().setGameObjectIntersectMouseClickCallback(gameObjectIntersectMouseClickCallback);
 }
 
 $('#startGame').on('click', ev => {

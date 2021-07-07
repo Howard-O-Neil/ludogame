@@ -288,12 +288,13 @@ table .manage-users-top {
   padding: 5px;
   pointer-events: visible;
   background-color: whitesmoke;
+  position: absolute;
+  z-index: 50;
   width: fit-content;
   height: fit-content;
   overflow: auto;
-  margin-top: 35vh;
   margin-left: 5px;
-  margin-bottom: 5px;
+  top: 60vh;
 }
 
 .gameToolBox .diceArea {
@@ -304,7 +305,19 @@ table .manage-users-top {
 .gameToolBox .toolBox {
   width: 400px;
   display: flex;
-  justify-content: space-between;
+  align-items: flex-start;
+  /* justify-items: stretch; */
+}
+
+.toolBox button {
+  width: 100px;
+  font-size: larger;
+}
+
+.toolBox button:disabled {
+  background-color: #cccccc;
+  color: #666666;
+  border: #666666;
 }
 
 .diceDisplay {

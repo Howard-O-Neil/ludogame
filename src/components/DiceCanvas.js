@@ -5,7 +5,7 @@ import { DiceD6, DiceManager } from "./Graphic/three-dice/dice";
 import { OrbitControls } from "./Graphic/three-dice/OrbitControls";
 import { Sky } from "./Graphic/three-dice/Sky";
 
-const GRAVITY = -1500;
+const GRAVITY = -2500;
 const FPS = 1 / 60;
 const ORBIT_CONTROLS = false;
 
@@ -172,9 +172,6 @@ export default class DiceCanvas {
     floorSize = floorSize.multiplyScalar(0.5);
     let shape = new CANNON.Box(new CANNON.Vec3(...Object.values(floorSize)));
 
-    console.log("=== shape ===");
-    console.log(shape);
-
     this.floorBody = new CANNON.Body({
       mass: 0,
       shape: shape,
@@ -196,28 +193,27 @@ export default class DiceCanvas {
 
     this.listDice = [];
     this.listDice.push(new DiceD6({ backColor: "#ff0000" }));
-    this.listDice.push(new DiceD6({ backColor: "#ff0000" }));
+    // this.listDice.push(new DiceD6({ backColor: "#ff0000" }));
 
     for (let i = 0; i < this.listDice.length; i++) {
       this.scene.add(this.listDice[i].getObject());
-      console.log(this.listDice[i].getObject().position);
     }
 
     this.listDice[0].getObject().body.tag = "dice";
-    this.listDice[1].getObject().body.tag = "dice";
+    // this.listDice[1].getObject().body.tag = "dice";
 
     this.listDice[0].getObject().body.velocity.set(0, 0, 0);
-    this.listDice[1].getObject().body.velocity.set(0, 0, 0);
+    // this.listDice[1].getObject().body.velocity.set(0, 0, 0);
 
     this.listDice[0].getObject().position.x = 0;
     this.listDice[0].getObject().position.y = 30;
     this.listDice[0].getObject().rotation.x = (20 * Math.PI) / 180;
     this.listDice[0].updateBodyFromMesh();
 
-    this.listDice[1].getObject().position.x = 100;
-    this.listDice[1].getObject().position.y = 30;
-    this.listDice[1].getObject().rotation.x = (50 * Math.PI) / 180;
-    this.listDice[1].updateBodyFromMesh();
+    // this.listDice[1].getObject().position.x = 100;
+    // this.listDice[1].getObject().position.y = 30;
+    // this.listDice[1].getObject().rotation.x = (50 * Math.PI) / 180;
+    // this.listDice[1].updateBodyFromMesh();
   };
 
   initDiceUtils = async () => {
@@ -324,9 +320,12 @@ export default class DiceCanvas {
     return fxz.vadd(fy).scale(-1 * Math.sign(gravity));
   };
 
-  throwDice = (diceVals) => {
+  throwDice = (diceVals, angularVeloc = null, rotation = null, diceCallBack = null) => {
     if (this.nextThrowReady == false) return false;
     if (DiceManager.throwRunning) return false;
+
+    this.diceCallBack = diceCallBack;
+
     let i = 0;
     let diceValues = [];
 
@@ -337,15 +336,17 @@ export default class DiceCanvas {
       dice.getObject().position.x = 1000 + i * 150;
       dice.getObject().position.y = 200;
       dice.getObject().position.z = -1000 + i * 150;
+
+      if (rotation) {
+        dice.getObject().rotation.set(rotation.x, rotation.y, rotation.z);
+      }
       dice.updateBodyFromMesh();
 
-      dice
+      if (angularVeloc) {
+        dice
         .getObject()
-        .body.angularVelocity.set(
-          50 * Math.random() + 20,
-          50 * Math.random() + 20,
-          50 * Math.random() + 20
-        );
+        .body.angularVelocity.set(angularVeloc.x, angularVeloc.y, angularVeloc.z);
+      }
 
       let veloc = this.velocityToTarget(
         new CANNON.Vec3(
@@ -353,7 +354,7 @@ export default class DiceCanvas {
           dice.getObject().position.y,
           dice.getObject().position.z
         ),
-        new CANNON.Vec3(-50, 0, 50),
+        new CANNON.Vec3(-500, 200, 300),
         50
       );
 
@@ -368,19 +369,14 @@ export default class DiceCanvas {
     return true;
   };
 
-  initWorker = async (diceCallBack) => {
-    this.diceCallBack = diceCallBack;
-
+  initWorker = async () => {
     await this.initDiceUtils();
     requestAnimationFrame(this.render);
 
     document.onkeydown = (ev) => {
       if (ev.key == "f") {
-        console.log(this.camera)
         const dice1 = Math.floor(Math.random() * 6) + 1;
         const dice2 = Math.floor(Math.random() * 6) + 1;
-        console.log("====== dice value ======");
-        console.log(`${dice1} ${dice2}`)
         this.throwDice([dice1, dice2]);
       }
     };
