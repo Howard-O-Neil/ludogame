@@ -329,6 +329,10 @@ export default class MainGame {
       this.mouseMove.y = -( ev.clientY / window.innerHeight ) * 2 + 1;
     });
 
+    $(".gameplay").on('mouseleave', ev => {
+      this.mouseMove = new THREE.Vector2();
+    });
+
     // $(document).on('mouseup', ev => {
     //   this.mouseUp.x = ( ev.clientX / window.innerWidth ) * 2 - 1;
     //   this.mouseUp.y = -( ev.clientY / window.innerHeight ) * 2 + 1;

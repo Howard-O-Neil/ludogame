@@ -82,10 +82,10 @@ export default class Piece extends GameObject {
             ? 4 
             : (curSection + Math.abs(otherUser.order - thisUser.order)) % 4;
 
-        console.log(curIndex)
-        console.log(curSection)
-        console.log(equivalentSection)
-        console.log((curIndex % 13) + ((equivalentSection - 1) * 13))
+        // console.log(curIndex)
+        // console.log(curSection)
+        // console.log(equivalentSection)
+        // console.log((curIndex % 13) + ((equivalentSection - 1) * 13))
 
         testOtherPiece.push({
           equivalentIndex: (curIndex % 13) + ((equivalentSection - 1) * 13),
@@ -142,7 +142,7 @@ export default class Piece extends GameObject {
     this.addMesh(...listMesh);
 
     this.initRigidBody({}, cannonTypeMaterials['ground']);
-    this.rigidBody.collisionFilterGroup = collisionGroups.piece;
+    // this.rigidBody.collisionFilterGroup = collisionGroups.piece;
     // this.rigidBody.collisionFilterMask = collisionGroups.board;
 
     this.rigidBody['tag'] = collisionTags.piece;
@@ -154,6 +154,15 @@ export default class Piece extends GameObject {
         this.isTouchBoard = true;
       } else {
         this.isTouchBoard = false;
+      }
+
+      if (this.nextStep >= 0) {
+        if (ev.body.tag == collisionTags.piece) {
+          const piece = state.getGamePiece(ev.body.userId).find(x => x.order == ev.body.order);
+          if (piece.userId != this.userId) {
+            piece.returnBase();
+          }
+        }
       }
     });
 
@@ -167,12 +176,6 @@ export default class Piece extends GameObject {
   }
 
   isOnGround = () => {
-    // const deviation = 0.005;
-    // const deviationY = 4.204;
-    // console.log( Math.abs(this.rigidBody.position.y - this.targetPoint.y))
-    // return Math.abs(this.rigidBody.position.x - this.targetPoint.x) <= deviation
-    //   && Math.abs(this.rigidBody.position.z - this.targetPoint.z) <= deviation
-
     return Math.abs(this.rigidBody.velocity.y) <= 0.05;
   }
 
@@ -207,7 +210,7 @@ export default class Piece extends GameObject {
           if (this.atBase) {
             this.launch(new CANNON.Vec3(0, 40, 0));
             this.atBase = false;
-          } else { this.launch(new CANNON.Vec3(0, 25, 0)); }  
+          } else { this.launch(new CANNON.Vec3(0, 25, 0)); }
         }
       }
     }

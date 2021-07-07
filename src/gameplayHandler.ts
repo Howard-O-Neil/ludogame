@@ -278,8 +278,6 @@ const gameObjectIntersectCallback = (gameObj: THREE.Object3D) => {
         const piece = state.getGamePiece(gameObj["objInfo"].userId)
           .find(x => x.order == gameObj["objInfo"].order);
 
-        console.log(piece)
-
         if (piece.checkAvailable(state.getPointDice1())) {
           piece.colorAvailable();
         } else {
@@ -310,8 +308,6 @@ const gameObjectIntersectMouseClickCallback = (gameObj: THREE.Object3D) => {
         && state.getCanMovePieceStatus()) {
         const piece = state.getGamePiece(state.getUserId())
           .find(x => x.order == gameObj["objInfo"].order);
-
-        console.log("check piece");
 
         if (piece.checkAvailable(state.getPointDice1())) {
           syncPiece(piece);
