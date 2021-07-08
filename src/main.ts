@@ -466,5 +466,8 @@ export default class MainGame {
     // this.cannonDebugger.update();    
   }
 }
-// require('./testDataBoard');
+
+//========== other component ==========
+
 require('./gameplayHandler'); // load gameplay handler
+require('./components/ChatBox'); // load gameplay chat

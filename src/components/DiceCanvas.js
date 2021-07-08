@@ -373,13 +373,13 @@ export default class DiceCanvas {
     await this.initDiceUtils();
     requestAnimationFrame(this.render);
 
-    document.onkeydown = (ev) => {
-      if (ev.key == "f") {
-        const dice1 = Math.floor(Math.random() * 6) + 1;
-        const dice2 = Math.floor(Math.random() * 6) + 1;
-        this.throwDice([dice1, dice2]);
-      }
-    };
+    // document.onkeydown = (ev) => {
+    //   if (ev.key == "f") {
+    //     const dice1 = Math.floor(Math.random() * 6) + 1;
+    //     const dice2 = Math.floor(Math.random() * 6) + 1;
+    //     this.throwDice([dice1, dice2]);
+    //   }
+    // };
   };
 
   updateObjects = () => {
