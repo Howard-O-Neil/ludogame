@@ -421,7 +421,7 @@ export default class DiceCanvas {
     if (Date.now() >= this.timeTarget) {
       if (this.controls)
         this.controls.update();
-      this.cannonDebugRenderer.update();
+      // this.cannonDebugRenderer.update();
 
       this.updateObjects();
 

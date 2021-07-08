@@ -470,4 +470,3 @@ export default class MainGame {
 //========== other component ==========
 
 require('./gameplayHandler'); // load gameplay handler
-require('./components/ChatBox'); // load gameplay chat
