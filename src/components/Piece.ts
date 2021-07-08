@@ -62,6 +62,8 @@ export default class Piece extends GameObject {
     if (this.atBase) {
       if (state.getGamePiece(this.userId).filter(x => x.currentPosIndex == 0).length > 0)
         return false;
+      if (step % 2 != 0)
+        return false;
     } else {
       const allOtherUser: IUser[] = state.getListUserInRoom().filter(x => x.id != this.userId);
       const allCommonPiece: Piece[] = [];
@@ -77,15 +79,18 @@ export default class Piece extends GameObject {
         const curIndex = piece.currentPosIndex;
         const curSection = Math.floor(curIndex / 13) + 1;
         const equivalentSection = otherUser.order < thisUser.order 
-          ? (curSection - Math.abs(otherUser.order - thisUser.order) + 4)
+          ? (curSection - Math.abs(otherUser.order - thisUser.order) <= 0)
+            ? curSection - Math.abs(otherUser.order - thisUser.order) + 4
+            : curSection - Math.abs(otherUser.order - thisUser.order)
           : (curSection + Math.abs(otherUser.order - thisUser.order)) % 4 == 0 
             ? 4 
             : (curSection + Math.abs(otherUser.order - thisUser.order)) % 4;
 
-        // console.log(curIndex)
-        // console.log(curSection)
-        // console.log(equivalentSection)
-        // console.log((curIndex % 13) + ((equivalentSection - 1) * 13))
+        console.log("check piece ============")
+        console.log(curIndex)
+        console.log(curSection)
+        console.log(equivalentSection)
+        console.log((curIndex % 13) + ((equivalentSection - 1) * 13))
 
         testOtherPiece.push({
           equivalentIndex: (curIndex % 13) + ((equivalentSection - 1) * 13),

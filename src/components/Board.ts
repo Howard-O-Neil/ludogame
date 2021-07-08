@@ -74,9 +74,9 @@ export default class Board extends GameObject {
     this.rigidBody.wakeUp(); // very important
 
     let keycode = require('keycode');
-    if (table[keycode('a')]) {
-      alert(this.rigidBody.quaternion);
-    }
+    // if (table[keycode('a')]) {
+    //   alert(this.rigidBody.quaternion);
+    // }
   }
 
   update = () => {

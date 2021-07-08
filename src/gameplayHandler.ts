@@ -6,8 +6,13 @@ import Piece from './components/Piece';
 import Board from './components/Board';
 import GameObject from './components/GameObject';
 import DiceCanvas from './components/DiceCanvas';
+import { chatState, createChatRoom, showChatBox, joinChatRoom } from './chatHandler';
+
+// require('./chatHandler'); // load gameplay chat
 
 export const state = new GameplayState();
+chatState.configChatState(state.getClient(), state.getUserId());
+
 export const diceManager = new DiceCanvas($('.gameToolBox .diceArea .diceAreaPlayground')[0]);
 diceManager.initWorker()
 
@@ -360,7 +365,9 @@ const initGameEvent = () => {
 
   gameRoom.onMessage(UserJoin, (mess) => {
     state.setListUserInRoom(mess.userList);
+    chatState.setListUserInRoom(mess.userList);
 
+    showChatBox();
     $('.userInRoom tbody').empty();
 
     for (const user of mess.userList) {
@@ -478,6 +485,8 @@ $('#createRoom').on('click', ev => {
       state.setCurrentRoomId(room.id);
       state.setGameRoom(room);
 
+      createChatRoom(roomAlias, room.id);
+
       initGamePlay();
       getRoom();
     })
@@ -492,6 +501,7 @@ const joinRoom = (room: IRoomClient) => {
   state.getClient().joinById(room.roomId, { userId: state.getUserId() })
     .then(room => {
       state.setGameRoom(room);
+      joinChatRoom(room.id);
 
       initGamePlay();
     })

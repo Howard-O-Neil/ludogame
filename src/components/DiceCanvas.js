@@ -373,13 +373,13 @@ export default class DiceCanvas {
     await this.initDiceUtils();
     requestAnimationFrame(this.render);
 
-    document.onkeydown = (ev) => {
-      if (ev.key == "f") {
-        const dice1 = Math.floor(Math.random() * 6) + 1;
-        const dice2 = Math.floor(Math.random() * 6) + 1;
-        this.throwDice([dice1, dice2]);
-      }
-    };
+    // document.onkeydown = (ev) => {
+    //   if (ev.key == "f") {
+    //     const dice1 = Math.floor(Math.random() * 6) + 1;
+    //     const dice2 = Math.floor(Math.random() * 6) + 1;
+    //     this.throwDice([dice1, dice2]);
+    //   }
+    // };
   };
 
   updateObjects = () => {
@@ -421,7 +421,7 @@ export default class DiceCanvas {
     if (Date.now() >= this.timeTarget) {
       if (this.controls)
         this.controls.update();
-      this.cannonDebugRenderer.update();
+      // this.cannonDebugRenderer.update();
 
       this.updateObjects();
 
