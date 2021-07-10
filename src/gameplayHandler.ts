@@ -10,7 +10,12 @@ import { chatState, createChatRoom, showChatBox, joinChatRoom } from './chatHand
 
 // require('./chatHandler'); // load gameplay chat
 
-export const state = new GameplayState();
+if (window.location.pathname == '/') {
+  if (!window.sessionStorage.getItem('userId'))
+    window.location.href = '/account'
+}
+
+export const state = new GameplayState(window.sessionStorage.getItem('userId'));
 chatState.configChatState(state.getClient(), state.getUserId());
 
 export const diceManager = new DiceCanvas($('.gameToolBox .diceArea .diceAreaPlayground')[0]);
@@ -85,7 +90,7 @@ const configUserAction = () => {
   
       if (pieces.filter(x => x.checkAvailable(state.getPointDice1())).length > 0) {
         state.setCanMovePieceStatus(true);
-      }
+      } else state.setCanMovePieceStatus(false);
     }
   } else {
     state.resetToolbox();

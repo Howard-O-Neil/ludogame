@@ -48,7 +48,7 @@ export default class GameplayState {
   private _canMovePice: boolean;
   private _skipTurn: boolean;
 
-  constructor() {
+  constructor(userId: string) {
     this._client = new Colyseus.Client(SOCKET_URL);
     this._gameRoom = null;
     this._listRoom = [];
@@ -57,7 +57,7 @@ export default class GameplayState {
     this._gamePiece = new Map();
     this._userPiece = new Map();
     this._gameplay = new MainGame();
-    this._userId = uuidv4();
+    this._userId = userId;
     this._currentRoomId = "";
     this._pointDice1 = this._pointDice2 = 0;
     this._listUserInRoom = [];
