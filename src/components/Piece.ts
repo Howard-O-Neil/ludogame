@@ -62,8 +62,8 @@ export default class Piece extends GameObject {
     if (this.atBase) {
       if (state.getGamePiece(this.userId).filter(x => x.currentPosIndex == 0).length > 0)
         return false;
-      if (step % 2 != 0)
-        return false;
+      // if (step % 2 != 0)
+      //   return false;
     } else {
       const allOtherUser: IUser[] = state.getListUserInRoom().filter(x => x.id != this.userId);
       const allCommonPiece: Piece[] = [];
