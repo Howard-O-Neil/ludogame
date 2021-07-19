@@ -78,13 +78,20 @@ export default class Piece extends GameObject {
         const thisUser = state.getListUserInRoom().find(x => x.id == this.userId);
         const curIndex = piece.currentPosIndex;
         const curSection = Math.floor(curIndex / 13) + 1;
-        const equivalentSection = otherUser.order < thisUser.order 
-          ? (curSection - Math.abs(otherUser.order - thisUser.order) <= 0)
-            ? curSection - Math.abs(otherUser.order - thisUser.order) + 4
-            : curSection - Math.abs(otherUser.order - thisUser.order)
-          : (curSection + Math.abs(otherUser.order - thisUser.order)) % 4 == 0 
-            ? 4 
-            : (curSection + Math.abs(otherUser.order - thisUser.order)) % 4;
+        const orderDistance = Math.abs(otherUser.order - thisUser.order);
+
+        const equivalentSection = 
+          otherUser.order < thisUser.order 
+            ? (curSection - orderDistance <= 0)
+              ? curSection - orderDistance + 4
+              : curSection - orderDistance
+            : (curSection + orderDistance) % 4 == 0 
+              ? 4 
+              : (curSection + orderDistance) % 4;
+
+        // const equivalentSection = (curSection - orderDistance <= 0)
+        //   ? curSection - orderDistance + 4
+        //   : curSection - orderDistance;
 
         console.log("check piece ============")
         console.log(curIndex)
@@ -275,7 +282,7 @@ export default class Piece extends GameObject {
     const commonPath = state.getUserCommonPath(this.userId);
     const finalPath = state.getUserFinalPath(this.userId);
 
-    if (this.prevStep + step > commonPath.length + finalPath.length)
+    if (this.prevStep + step >= commonPath.length + finalPath.length)
       return;
     this.nextStep++;
     this.goal = this.prevStep + step;
