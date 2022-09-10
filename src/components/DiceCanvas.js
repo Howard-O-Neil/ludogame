@@ -6,8 +6,8 @@ import { OrbitControls } from "./Graphic/three-dice/OrbitControls";
 import { Sky } from "./Graphic/three-dice/Sky";
 
 const GRAVITY = -2500;
-const FPS = 1 / 60;
-const ORBIT_CONTROLS = false;
+const FPS = 1 / 30;
+const ORBIT_CONTROLS = true;
 
 export default class DiceCanvas {
   floorScale = [50, 50, 50];
@@ -78,6 +78,7 @@ export default class DiceCanvas {
 
   addWall = () => {
     const wallScale = 15;
+
     __wall_1: {
       let wall_1_Material = new THREE.MeshPhongMaterial({
         color: "#E1E1E1",
@@ -193,27 +194,27 @@ export default class DiceCanvas {
 
     this.listDice = [];
     this.listDice.push(new DiceD6({ backColor: "#ff0000" }));
-    // this.listDice.push(new DiceD6({ backColor: "#ff0000" }));
+    this.listDice.push(new DiceD6({ backColor: "#ff0000" }));
 
     for (let i = 0; i < this.listDice.length; i++) {
       this.scene.add(this.listDice[i].getObject());
     }
 
     this.listDice[0].getObject().body.tag = "dice";
-    // this.listDice[1].getObject().body.tag = "dice";
+    this.listDice[1].getObject().body.tag = "dice";
 
     this.listDice[0].getObject().body.velocity.set(0, 0, 0);
-    // this.listDice[1].getObject().body.velocity.set(0, 0, 0);
+    this.listDice[1].getObject().body.velocity.set(0, 0, 0);
 
     this.listDice[0].getObject().position.x = 0;
     this.listDice[0].getObject().position.y = 30;
     this.listDice[0].getObject().rotation.x = (20 * Math.PI) / 180;
     this.listDice[0].updateBodyFromMesh();
 
-    // this.listDice[1].getObject().position.x = 100;
-    // this.listDice[1].getObject().position.y = 30;
-    // this.listDice[1].getObject().rotation.x = (50 * Math.PI) / 180;
-    // this.listDice[1].updateBodyFromMesh();
+    this.listDice[1].getObject().position.x = 100;
+    this.listDice[1].getObject().position.y = 30;
+    this.listDice[1].getObject().rotation.x = (50 * Math.PI) / 180;
+    this.listDice[1].updateBodyFromMesh();
   };
 
   initDiceUtils = async () => {
@@ -344,8 +345,8 @@ export default class DiceCanvas {
 
       if (angularVeloc) {
         dice
-        .getObject()
-        .body.angularVelocity.set(angularVeloc.x, angularVeloc.y, angularVeloc.z);
+          .getObject()
+          .body.angularVelocity.set(angularVeloc.x, angularVeloc.y, angularVeloc.z);
       }
 
       let veloc = this.velocityToTarget(
@@ -357,6 +358,7 @@ export default class DiceCanvas {
         new CANNON.Vec3(-500, 200, 300),
         50
       );
+      veloc = veloc.scale(0.8)
 
       dice.getObject().body.velocity.set(veloc.x, veloc.y, veloc.z);
 
@@ -418,20 +420,14 @@ export default class DiceCanvas {
   };
 
   render = () => {
-    if (Date.now() >= this.timeTarget) {
-      if (this.controls)
-        this.controls.update();
-      // this.cannonDebugRenderer.update();
+    if (this.controls)
+      this.controls.update();
+    this.cannonDebugRenderer.update();
 
-      this.updateObjects();
+    this.updateObjects();
 
-      this.renderer.render(this.scene, this.camera);
+    this.renderer.render(this.scene, this.camera);
 
-      this.timeTarget += this.dt;
-      if (Date.now() >= this.timeTarget) {
-        this.timeTarget = Date.now();
-      }
-    }
     requestAnimationFrame(this.render);
   };
 }

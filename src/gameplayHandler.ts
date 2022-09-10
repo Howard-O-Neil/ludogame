@@ -21,6 +21,10 @@ chatState.configChatState(state.getClient(), state.getUserId());
 export const diceManager = new DiceCanvas($('.gameToolBox .diceArea .diceAreaPlayground')[0]);
 diceManager.initWorker()
 
+const CHEAT_DICE = true
+var cheat_dice1 = -1
+var cheat_dice2 = -1
+
 const loadGame = () => {
   // state.getGameRoom().onMessage(ThrowDice, mess => {
   //   diceManager.throwDiceOnSchema(mess.dice, mess.camera);
@@ -29,6 +33,11 @@ const loadGame = () => {
   $('.gameToolBox .toolBox #throwDice').on('click', ev => {
     if (state.getHaveThrowDiceStatus() || !diceManager.nextThrowReady)
       return;
+
+    if (CHEAT_DICE) {
+      cheat_dice1 = parseInt(prompt("cheat dice 1 value", "1"));
+      cheat_dice2 = parseInt(prompt("cheat dice 2 value", "1"));
+    }
 
     state.getGameRoom().send(ThrowDice, {
       userId: state.getUserId(),
@@ -85,10 +94,10 @@ const displayDots = (num: number, jqueryComponent) => {
 
 const configUserAction = () => {
   if (state.getCurrentTurn() == state.getUserId()) {
-    if (state.getHaveThrowDiceStatus() && state.getPointDice1() != 0) {
+    if (state.getHaveThrowDiceStatus() && state.getPointDice1() != 0 && state.getPointDice2() != 0) {
       const pieces = state.getGamePiece(state.getUserId());
   
-      if (pieces.filter(x => x.checkAvailable(state.getPointDice1())).length > 0) {
+      if (pieces.filter(x => x.checkAvailable(state.getPointDice1() + state.getPointDice2())).length > 0) {
         state.setCanMovePieceStatus(true);
       } else state.setCanMovePieceStatus(false);
     }
@@ -99,10 +108,10 @@ const configUserAction = () => {
 
 export const configToolBoxOnState = () => {
   const dice1 = state.getPointDice1();
-  // const dice2 = state.getPointDice2();
+  const dice2 = state.getPointDice2();
 
   displayDots(dice1, '#dice1');
-  // displayDots(dice2, '#dice2');
+  displayDots(dice2, '#dice2');
 
   $('.gameToolBox .toolBox #throwDice').prop('disabled', true);
   $('.gameToolBox .toolBox #movePiece').prop('disabled', true);
@@ -135,8 +144,8 @@ const setUserStatus = (val: IUser) => {
   if (user.isReady) {
     $(elementSelectString).append(
       $(`
-        <a class="user-list-favourite order-2 text-success" href="#"><i class="fas fa-  check-circle"></i></a>
-        <span class="user-list-time order-1">Ready</span>
+        <a class="user-list-favourite order-2 text-success" href="#"><i class="fas fa-check-circle"></i></a>
+        <span class="user-list-time order-1">Ready&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
       `));
   } else {
     $(elementSelectString).append(
@@ -167,7 +176,41 @@ const handleUserReady = (mess: any) => {
 
   state.setUserCommonPath(mess.user.id, mess.commonPath.data);
   state.setUserFinalPath(mess.user.id, mess.finalPath.data);
-  state.setUserPiece(mess.user.id, <IPiece[]>mess.pieces.data);
+  state.setUserPiece(mess.user.id, <IPiece[]>mess.pieces.data);  
+
+  const sample_x = state.getUserPiece(mess.user.id)[0]
+
+  for (const pos of mess.fullFinal) {
+    const piece = new Piece(
+      sample_x.color, 5,
+      {
+        radiusTop: 0.08,
+        radiusBottom: 0.6,
+        radialSegments: 2,
+        heightSegments: 50
+      },
+      Object.values(pos),
+      state.getGameplay().getWorld(),
+      mess.user.id,
+    );
+    state.getGameplay().addObject([piece]);
+  }
+
+  // for (const pos of mess.commonPath.data) {
+  //   const piece = new Piece(
+  //     sample_x.color, sample_x.order,
+  //     {
+  //       radiusTop: 0.08,
+  //       radiusBottom: 0.6,
+  //       radialSegments: 2,
+  //       heightSegments: 50
+  //     },
+  //     Object.values(pos),
+  //     state.getGameplay().getWorld(),
+  //     mess.user.id,
+  //   );
+  //   state.getGameplay().addObject([piece]);
+  // }
 
   // load piece to map
   state.getGameplay().addObject(
@@ -176,7 +219,7 @@ const handleUserReady = (mess: any) => {
         x.color, x.order,
         {
           radiusTop: 0.08,
-          radiusBottom: 0.7,
+          radiusBottom: 0.6,
           radialSegments: 2,
           heightSegments: 50
         },
@@ -207,7 +250,7 @@ const syncPiece = (piece: Piece) => {
   // userId: listPieceAvailable[0].userId,
   // order: listPieceAvailable[0].order,
 
-  let step = state.getPointDice1();
+  let step = state.getPointDice1() + state.getPointDice2();
   if (piece.atBase) step = 1;
 
   state.setCurrentTurn('');
@@ -218,9 +261,6 @@ const syncPiece = (piece: Piece) => {
   state.getGameRoom().send(SyncPieceState, {
     step, userId: piece.userId, order: piece.order,
   });
-  state.getGameRoom().send(UserSkipTurn, {userId: state.getUserId()});
-
-  configToolBoxOnState();
 }
 
 const handleAddUserUI = (mess: IUser) => {
@@ -250,7 +290,7 @@ const handleAddUserUI = (mess: IUser) => {
       <td class="user-list-favourite-time text-center">
         
       </td>
-      <td>
+      <td class="user-list-favourite-function">
         <ul class="list-unstyled mb-0 d-flex justify-content-end">
           <li><a class="showUserInfo" class="text-primary" data-toggle="tooltip" title="" data-original-title="chat"><i class="far fa-eye"></i></a></li>
           <li><a class="showChatBox class="text-info" data-toggle="tooltip" title="" data-original-title="view"><i class="far fa-comment-dots"></i></a></li>
@@ -287,11 +327,13 @@ const gameObjectIntersectCallback = (gameObj: THREE.Object3D) => {
         && state.getCanMovePieceStatus()) {
         const piece = state.getGamePiece(gameObj["objInfo"].userId)
           .find(x => x.order == gameObj["objInfo"].order);
-
-        if (piece.checkAvailable(state.getPointDice1())) {
-          piece.colorAvailable();
-        } else {
-          piece.colorUnAvailable();
+        
+        if (piece) {
+          if (piece.checkAvailable(state.getPointDice1() + state.getPointDice2())) {
+            piece.colorAvailable();
+          } else {
+            piece.colorUnAvailable();
+          }
         }
       }
     }
@@ -305,7 +347,8 @@ const gameObjectIntersectLeaveCallback = (gameObj: THREE.Object3D) => {
         const piece = state.getGamePiece(gameObj["objInfo"].userId)
           .find(x => x.order == gameObj["objInfo"].order);
 
-        piece.colorDefault();
+        if (piece)
+          piece.colorDefault();
       }
     }
   }
@@ -316,12 +359,14 @@ const gameObjectIntersectMouseClickCallback = (gameObj: THREE.Object3D) => {
     case 'piece': {
       if (state.getCurrentTurn() == state.getUserId() && gameObj["objInfo"].userId == state.getUserId() 
         && state.getCanMovePieceStatus()) {
-        const piece = state.getGamePiece(state.getUserId())
+        const piece = state.getGamePiece(gameObj["objInfo"].userId)
           .find(x => x.order == gameObj["objInfo"].order);
 
-        if (piece.checkAvailable(state.getPointDice1())) {
-          syncPiece(piece);
-          state.getGamePiece(state.getUserId()).forEach(x => x.colorDefault());
+        if (piece) {
+          if (piece.checkAvailable(state.getPointDice1() + state.getPointDice2())) {
+            syncPiece(piece);
+            state.getGamePiece(state.getUserId()).forEach(x => x.colorDefault());
+          }
         }
       }
     }
@@ -425,12 +470,21 @@ const initGameEvent = () => {
     configToolBoxOnState();
   });
   gameRoom.onMessage(ThrowDice, (mess) => {
-    diceManager.throwDice(mess.diceVals, mess.dice.angularVeloc, mess.dice.rotation, () => {
-      state.setPointDice1(mess.diceVals[0]);
-      state.setPointDice2(mess.diceVals[1]);
-
-      configToolBoxOnState();
-    });
+    if (CHEAT_DICE) {
+      diceManager.throwDice([cheat_dice1, cheat_dice2], mess.dice.angularVeloc, mess.dice.rotation, () => {
+        state.setPointDice1(cheat_dice1);
+        state.setPointDice2(cheat_dice2);
+  
+        configToolBoxOnState();
+      });  
+    } else {
+      diceManager.throwDice(mess.diceVals, mess.dice.angularVeloc, mess.dice.rotation, () => {
+        state.setPointDice1(mess.diceVals[0]);
+        state.setPointDice2(mess.diceVals[1]);
+  
+        configToolBoxOnState();
+      });
+    }
   });
   // gameRoom.onMessage(RollDicePoint, (mess) => {
   //   state.setPointDice1(mess.dice1);

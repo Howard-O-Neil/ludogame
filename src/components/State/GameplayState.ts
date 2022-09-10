@@ -1,4 +1,3 @@
-import { SOCKET_URL } from './../../constant';
 import * as Colyseus from "colyseus.js";
 import MainGame from "../../main";
 import { uuidv4 } from "../../utils";
@@ -49,7 +48,7 @@ export default class GameplayState {
   private _skipTurn: boolean;
 
   constructor(userId: string) {
-    this._client = new Colyseus.Client(SOCKET_URL);
+    this._client = new Colyseus.Client(process.env.SOCKET_URL);
     this._gameRoom = null;
     this._listRoom = [];
     this._userCommonPath = new Map();

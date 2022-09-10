@@ -7,10 +7,12 @@ import * as dat from "dat.gui";
 import GameObject from "./components/GameObject";
 import $ from "jquery";
 import { CannonDebugRenderer, createCannonDebugger } from "./components/CannonDebug";
+
+console.log(process.env)
+
 export const cannonTypeMaterials: Map<string, CANNON.Material> = new Map();
 cannonTypeMaterials['slippery'] = new CANNON.Material('slippery');
 cannonTypeMaterials['ground'] = new CANNON.Material('ground');
-
 
 export let globalState = {
   sayHi: "",
@@ -233,7 +235,7 @@ export default class MainGame {
   public setGameObjectIntersectMouseUpCallback = (intersectCallBack: (gameObj: THREE.Object3D) => void) => {
     this.gameObjIntersectMouseUpCallBack = intersectCallBack
   }
-  
+
   public setGameObjectIntersectMouseClickCallback = (intersectCallBack: (gameObj: THREE.Object3D) => void) => {
     this.gameObjIntersectMouseClickCallBack = intersectCallBack
   }
@@ -320,13 +322,13 @@ export default class MainGame {
     });
 
     $(".gameplay").on('click', ev => {
-      this.mouseClick.x = ( ev.clientX / window.innerWidth ) * 2 - 1;
-      this.mouseClick.y = -( ev.clientY / window.innerHeight ) * 2 + 1;
+      this.mouseClick.x = (ev.clientX / window.innerWidth) * 2 - 1;
+      this.mouseClick.y = -(ev.clientY / window.innerHeight) * 2 + 1;
     });
 
     $(".gameplay").on('mousemove', ev => {
-      this.mouseMove.x = ( ev.clientX / window.innerWidth ) * 2 - 1;
-      this.mouseMove.y = -( ev.clientY / window.innerHeight ) * 2 + 1;
+      this.mouseMove.x = (ev.clientX / window.innerWidth) * 2 - 1;
+      this.mouseMove.y = -(ev.clientY / window.innerHeight) * 2 + 1;
     });
 
     $(".gameplay").on('mouseleave', ev => {
@@ -342,7 +344,7 @@ export default class MainGame {
     //   this.mouseDown.x = ( ev.clientX / window.innerWidth ) * 2 - 1;
     //   this.mouseDown.y = -( ev.clientY / window.innerHeight ) * 2 + 1;
     // });
-    
+
 
     // setup orbit controls
     this.orbitControl = new OrbitControls(this.camera, this.renderer.domElement);
@@ -378,13 +380,13 @@ export default class MainGame {
 
     const gameObjList = this.scene.children.filter(
       x => x.type == "Group" && x["objInfo"] && x["objInfo"].raycast);
-      
+
     const intersectedObjects = this.gameObjectRaycaster.intersectObjects(gameObjList, true);
 
     for (let i = 0; i < intersectedObjects.length; i++) {
       this.gameObjectIntersect.set(
         intersectedObjects[i].object.parent.uuid, intersectedObjects[i].object.parent);
-      
+
       let gameObjIndex = gameObjList.findIndex(x => x.uuid == intersectedObjects[i].object.parent.uuid);
       gameObjList.splice(gameObjIndex, 1);
 
@@ -406,21 +408,25 @@ export default class MainGame {
 
     const gameObjList_click = this.scene.children.filter(
       x => x.type == "Group" && x["objInfo"] && x["objInfo"].raycast);
-      
+
     const intersectedObjects_click = this.gameObjectRaycaster.intersectObjects(gameObjList_click, true);
     for (let i = 0; i < intersectedObjects_click.length; i++) {
       if (this.gameObjIntersectMouseClickCallBack)
         this.gameObjIntersectMouseClickCallBack(intersectedObjects_click[i].object.parent)
     }
-    this.mouseClick = new THREE.Vector2();
 
+    // X, Y default for new vector = 0
+    // which would cause possible auto click because piece may coordinate at 0,0 on screen
+    this.mouseClick = new THREE.Vector2();
+    this.mouseClick.x = -999999999.0;
+    this.mouseClick.y = -999999999.0;
 
     // // mouse down
     // this.gameObjectRaycaster.setFromCamera(this.mouseDown, this.camera);
 
     // const gameObjList_down = this.scene.children.filter(
     //   x => x.type == "Group" && x["objInfo"] && x["objInfo"].raycast);
-      
+
     // const intersectedObjects_down = this.gameObjectRaycaster.intersectObjects(gameObjList_down, true);
     // for (let i = 0; i < intersectedObjects_down.length; i++) {
     //   console.log(' what the hell man ?')
@@ -434,7 +440,7 @@ export default class MainGame {
 
     // const gameObjList_up = this.scene.children.filter(
     //   x => x.type == "Group" && x["objInfo"] && x["objInfo"].raycast);
-      
+
     // const intersectedObjects_up = this.gameObjectRaycaster.intersectObjects(gameObjList_up, true);
     // for (let i = 0; i < intersectedObjects_up.length; i++) {
     //   if (this.gameObjIntersectMouseUpCallBack)
@@ -443,24 +449,16 @@ export default class MainGame {
     // this.mouseUp = new THREE.Vector2();
   }
 
-  dt = FPS * 1000;
-  timeTarget = 0;
   render = () => {
-    if (Date.now() >= this.timeTarget) {
-      this.orbitControl.update();
-      
-      this.keyboardHandle();
+    this.orbitControl.update();
 
-      this.raycastGameObject();
-      this.updateObjects();
+    this.keyboardHandle();
 
-      this.renderer.render(this.scene, this.camera);
+    this.raycastGameObject();
+    this.updateObjects();
 
-      this.timeTarget += this.dt;
-      if (Date.now() >= this.timeTarget) {
-        this.timeTarget = Date.now();
-      }
-    }
+    this.renderer.render(this.scene, this.camera);
+
     requestAnimationFrame(this.render);
 
     // this.cannonDebugger.update();    

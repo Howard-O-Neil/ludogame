@@ -1,4 +1,3 @@
-import { API_URL } from './constant';
 import $ from "jquery"
 
 $('#btn-login').on('click', ev => {
@@ -9,7 +8,7 @@ $('#btn-login').on('click', ev => {
     password: formVal.find(x => x.name == 'password').value,
   }
 
-  fetch(`${API_URL}/user/sign-in`, {
+  fetch(`${process.env.API_URL}/user/sign-in`, {
     method: 'POST',
     body: JSON.stringify(body),
     headers: {
@@ -39,7 +38,7 @@ $('#btn-signup').on('click', ev => {
     password: formVal.find(x => x.name == 'passwd').value,
   }
 
-  fetch(`${API_URL}/user/sign-up`, {
+  fetch(`${process.env.API_URL}/user/sign-up`, {
     method: 'POST',
     body: JSON.stringify(body),
     headers: {

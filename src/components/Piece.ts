@@ -1,5 +1,5 @@
 import { IUser } from './State/GameplayState';
-import { state } from './../gameplayHandler';
+import { configToolBoxOnState, state } from './../gameplayHandler';
 import { collisionTags, collisionGroups } from './../collisionTag';
 import { convertToThreeVec3, createRigidBodyForGroup } from './../utils';
 import * as THREE from "three";
@@ -7,9 +7,13 @@ import * as CANNON from "cannon-es";
 import { cannonTypeMaterials, CyclinderBasicParam } from "../main";
 import GameObject from "./GameObject";
 import { timers } from 'jquery';
+import { UserSkipTurn } from '../gameEvent';
 
 // 0.08, 0.7, 2, 50
-// assume 4 con số trên là của cyclinder 
+// assume these 4 numbers belong to cylinder
+
+const COMMON_PATH_LENGTH = 52
+const FINAL_PATH_LENGTH = 5
 
 export default class Piece extends GameObject {
   args: CyclinderBasicParam;
@@ -62,13 +66,11 @@ export default class Piece extends GameObject {
     if (this.atBase) {
       if (state.getGamePiece(this.userId).filter(x => x.currentPosIndex == 0).length > 0)
         return false;
-      // if (step % 2 != 0)
-      //   return false;
     } else {
       const allOtherUser: IUser[] = state.getListUserInRoom().filter(x => x.id != this.userId);
       const allCommonPiece: Piece[] = [];
 
-      const testOtherPiece: {equivalentIndex: number}[] = [];
+      const testOtherPiece: { equivalentIndex: number }[] = [];
       for (const user of allOtherUser) {
         allCommonPiece.push(...state.getGamePiece(user.id)
           .filter(x => !x.atBase && x.currentPosStatus == "common"));
@@ -80,24 +82,24 @@ export default class Piece extends GameObject {
         const curSection = Math.floor(curIndex / 13) + 1;
         const orderDistance = Math.abs(otherUser.order - thisUser.order);
 
-        const equivalentSection = 
-          otherUser.order < thisUser.order 
+        const equivalentSection =
+          otherUser.order < thisUser.order
             ? (curSection - orderDistance <= 0)
               ? curSection - orderDistance + 4
               : curSection - orderDistance
-            : (curSection + orderDistance) % 4 == 0 
-              ? 4 
+            : (curSection + orderDistance) % 4 == 0
+              ? 4
               : (curSection + orderDistance) % 4;
 
         // const equivalentSection = (curSection - orderDistance <= 0)
         //   ? curSection - orderDistance + 4
         //   : curSection - orderDistance;
 
-        console.log("check piece ============")
-        console.log(curIndex)
-        console.log(curSection)
-        console.log(equivalentSection)
-        console.log((curIndex % 13) + ((equivalentSection - 1) * 13))
+        // console.log("check piece ============")
+        // console.log(curIndex)
+        // console.log(curSection)
+        // console.log(equivalentSection)
+        // console.log((curIndex % 13) + ((equivalentSection - 1) * 13))
 
         testOtherPiece.push({
           equivalentIndex: (curIndex % 13) + ((equivalentSection - 1) * 13),
@@ -105,7 +107,7 @@ export default class Piece extends GameObject {
       }
       if (
         testOtherPiece
-          .filter(x => x.equivalentIndex > this.currentPosIndex 
+          .filter(x => x.equivalentIndex > this.currentPosIndex
             && x.equivalentIndex < this.currentPosIndex + step).length > 0
       ) {
         return false;
@@ -120,12 +122,11 @@ export default class Piece extends GameObject {
           return false
         }
       } else {
-        if (this.currentPosIndex + step >= 57) {
+        // currentPosIndex = prevStep + 1
+        if (this.currentPosIndex + step >= COMMON_PATH_LENGTH + FINAL_PATH_LENGTH) {
           return false;
         }
       }
-
-
     }
     return true;
   }
@@ -133,7 +134,7 @@ export default class Piece extends GameObject {
   initObject = async () => {
     const listMesh: THREE.Mesh[] = [];
 
-    const baseGeometry = new THREE.SphereBufferGeometry(0.5, 32, 32);
+    const baseGeometry = new THREE.SphereBufferGeometry(0.45, 32, 32);
     const baseMaterial = new THREE.MeshPhysicalMaterial({
       reflectivity: 1.0, clearcoat: 1.0,
       color: this.active ? "purple" : this.color,
@@ -202,6 +203,11 @@ export default class Piece extends GameObject {
         if (this.nextStep + this.prevStep >= this.goal) {
           this.nextStep = -1;
           this.prevStep = this.goal;
+
+          if (this.userId == state.getUserId()) {
+            state.getGameRoom().send(UserSkipTurn, { userId: state.getUserId() });
+            configToolBoxOnState();
+          }
         } else {
           // console.log(this.prevStep + this.nextStep)
           if (this.nextStep + this.prevStep >= commonPath.length) {
@@ -220,9 +226,9 @@ export default class Piece extends GameObject {
           }
 
           if (this.atBase) {
-            this.launch(new CANNON.Vec3(0, 40, 0));
+            this.launch(new CANNON.Vec3(0, 100, 0));
             this.atBase = false;
-          } else { this.launch(new CANNON.Vec3(0, 25, 0)); }
+          } else { this.launch(new CANNON.Vec3(0, 35, 0)); }
         }
       }
     }
@@ -231,6 +237,7 @@ export default class Piece extends GameObject {
   handleMapPoint = () => {
     if (!this.targetPoint)
       return;
+    
     let targetVeloc = this.targetPoint.vsub(this.rigidBody.position);
     targetVeloc = targetVeloc.scale(25);
 
@@ -275,15 +282,20 @@ export default class Piece extends GameObject {
     this.nextStep = -1;
     this.goal = -1;
 
-    this.launch(new CANNON.Vec3(0, 30, 0));
+    this.launch(new CANNON.Vec3(0, 100, 0));
   }
 
   goByStep = (step: number) => {
     const commonPath = state.getUserCommonPath(this.userId);
     const finalPath = state.getUserFinalPath(this.userId);
 
-    if (this.prevStep + step >= commonPath.length + finalPath.length)
+    if (this.prevStep + step > commonPath.length + finalPath.length) {
+      // console.log(`prevStep      = ${this.prevStep}`);
+      // console.log(`step          = ${step}`);
+      // console.log(`common length = ${commonPath.length}`);
+      // console.log(`final length  = ${finalPath.length}`);
       return;
+    }
     this.nextStep++;
     this.goal = this.prevStep + step;
   }

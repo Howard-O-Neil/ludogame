@@ -14,13 +14,12 @@
     -->
   <link rel="manifest" href="manifest.json" />
   <link rel="stylesheet" href="./resource/css/bootstrap.css" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.13.1/css/all.min.css"
-    integrity="sha256-2XFplPlrFClt0bIdPgpz8H7ojnk10H69xRqd9+uTShA=" crossorigin="anonymous" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Yanone+Kaffeesatz:wght@500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="app.css" />
 
+  <script src="https://kit.fontawesome.com/a27500b252.js" crossorigin="anonymous"></script>
   <script src="./resource/js/bootstrap.js"></script>
 
   <!--
@@ -38,13 +37,13 @@
     <div class="userInRoomList">
       <div class="user-dashboard-info-box table-responsive mb-0 bg-white p-4 shadow-sm">
         <table class="manage-users-top mb-0">
-          <thead>
+          <!-- <thead>
             <tr>
               <th>User Name</th>
-              <th class="text-center">Status</th>
+              <th class="text-left">Status</th>
               <th class="action text-right">Action</th>
             </tr>
-          </thead>
+          </thead> -->
           <tbody>
           </tbody>
         </table>
@@ -57,7 +56,8 @@
     </div>
 
     <div class="gameToolBox">
-
+      
+      <div style="height: 10px;"></div>
       <div class="diceArea">
         <canvas width="400px" height="300px" class="diceAreaPlayground">
 
@@ -68,9 +68,9 @@
 
           </div>
 
-          <!-- <div id="dice2" class="dice">
+          <div id="dice2" class="dice">
 
-            </div> -->
+          </div>
 
           <div class="diceEmpty">
 
@@ -193,7 +193,6 @@
               </div>
             </div> -->
 
-
           </div>
 
         </div>
@@ -229,7 +228,7 @@
   <canvas width="1366px" height="768px" class="gameplay">
 
   </canvas>
-  <script src="dist/bundleName.js"></script>
+  <script src="dist/out.js"></script>
 </body>
 
 </html>

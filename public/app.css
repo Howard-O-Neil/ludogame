@@ -122,6 +122,7 @@ body {
   -webkit-box-align: center;
   -ms-flex-align: center;
   align-items: center;
+  padding: 0px;
   /* padding: 30px 0; */
 }
 
@@ -149,6 +150,16 @@ table td {
 table .manage-users-top th {
   border: 0;
   margin: 0;
+}
+
+.user-dashboard-info-box .user-list-favourite-time {
+  padding: 0px;
+  padding-left: 5px;
+}
+
+.user-dashboard-info-box .user-list-favourite-function {
+  padding: 0px;
+  padding-left: 15px;
 }
 
 .user-dashboard-info-box .user-list-favourite-time .user-list-favourite {
@@ -223,12 +234,21 @@ table .manage-users-top {
 }
 
 .user-list .user-list-favourite-time {
-  margin-left: 0px;
+  margin-left: 2px;
   text-align: center;
   font-size: 13px;
   -webkit-box-flex: 0;
   -ms-flex: 0 0 90px;
   flex: 0 0 90px;
+}
+.user-list .user-list-favourite-function {
+  margin-left: 2px;
+  text-align: center;
+  font-size: 13px;
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 90px;
+  flex: 0 0 90px;
+  padding: 0px;
 }
 .user-list .user-list-favourite-time span {
   display: block;
