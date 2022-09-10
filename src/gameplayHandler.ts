@@ -180,21 +180,21 @@ const handleUserReady = (mess: any) => {
 
   const sample_x = state.getUserPiece(mess.user.id)[0]
 
-  for (const pos of mess.fullFinal) {
-    const piece = new Piece(
-      sample_x.color, 5,
-      {
-        radiusTop: 0.08,
-        radiusBottom: 0.6,
-        radialSegments: 2,
-        heightSegments: 50
-      },
-      Object.values(pos),
-      state.getGameplay().getWorld(),
-      mess.user.id,
-    );
-    state.getGameplay().addObject([piece]);
-  }
+  // for (const pos of mess.fullFinal) {
+  //   const piece = new Piece(
+  //     sample_x.color, 5,
+  //     {
+  //       radiusTop: 0.08,
+  //       radiusBottom: 0.6,
+  //       radialSegments: 2,
+  //       heightSegments: 50
+  //     },
+  //     Object.values(pos),
+  //     state.getGameplay().getWorld(),
+  //     mess.user.id,
+  //   );
+  //   state.getGameplay().addObject([piece]);
+  // }
 
   // for (const pos of mess.commonPath.data) {
   //   const piece = new Piece(
