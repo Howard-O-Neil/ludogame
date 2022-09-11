@@ -21,7 +21,7 @@ chatState.configChatState(state.getClient(), state.getUserId());
 export const diceManager = new DiceCanvas($('.gameToolBox .diceArea .diceAreaPlayground')[0]);
 diceManager.initWorker()
 
-const CHEAT_DICE = true
+const CHEAT_DICE = false
 var cheat_dice1 = -1
 var cheat_dice2 = -1
 
@@ -37,13 +37,19 @@ const loadGame = () => {
     if (CHEAT_DICE) {
       cheat_dice1 = parseInt(prompt("cheat dice 1 value", "1"));
       cheat_dice2 = parseInt(prompt("cheat dice 2 value", "1"));
-    }
 
-    state.getGameRoom().send(ThrowDice, {
-      userId: state.getUserId(),
-      dice1: cheat_dice1,
-      dice2: cheat_dice2,
-    });
+      state.getGameRoom().send(ThrowDice, {
+        userId: state.getUserId(),
+        dice1: cheat_dice1,
+        dice2: cheat_dice2,
+      });  
+    } else {
+      state.getGameRoom().send(ThrowDice, {
+        userId: state.getUserId(),
+        dice1: -1,
+        dice2: -1,
+      });
+    }
   });
 
   $('.gameToolBox .toolBox #skipTurn').on('click', ev => {
