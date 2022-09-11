@@ -2,7 +2,7 @@
 
 ## Description
 
-- An online game, built upon Three.js (Rendering) and Cannon-es (Physics)
+- A 3D online game, built upon Three.js (Rendering) and Cannon-es (Physics)
 - Using Colyseus for syncing game states through sockets
 
 ## How to run
