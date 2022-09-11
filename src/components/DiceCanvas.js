@@ -7,7 +7,7 @@ import { Sky } from "./Graphic/three-dice/Sky";
 
 const GRAVITY = -2500;
 const FPS = 1 / 30;
-const ORBIT_CONTROLS = true;
+const ORBIT_CONTROLS = false;
 
 export default class DiceCanvas {
   floorScale = [50, 50, 50];
@@ -193,8 +193,8 @@ export default class DiceCanvas {
     DiceManager.setWorld(this.world);
 
     this.listDice = [];
-    this.listDice.push(new DiceD6({ backColor: "#ff0000" }));
-    this.listDice.push(new DiceD6({ backColor: "#ff0000" }));
+    this.listDice.push(new DiceD6({ backColor: "#FAFAFA", fontColor: "#000000" }));
+    this.listDice.push(new DiceD6({ backColor: "#FAFAFA", fontColor: "#000000" }));
 
     for (let i = 0; i < this.listDice.length; i++) {
       this.scene.add(this.listDice[i].getObject());

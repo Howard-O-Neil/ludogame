@@ -18,10 +18,10 @@ $('#btn-login').on('click', ev => {
     .then(data => {
       if (data.status && data.status == 'failed') {
         alert(data.message);
-        return
+        return;
       }
       window.sessionStorage.setItem('userId', data.id);
-      window.location.href = '../'
+      window.location.href = '../';
     });
 })
 

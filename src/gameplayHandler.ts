@@ -1,18 +1,25 @@
 import GameplayState, { IPiece, IRoomClient, IUser } from './components/State/GameplayState';
 import $ from 'jquery';
-import { downloadOutput, getFormSubmitValue, uuidv4 } from "./utils";
+import { downloadOutput, getFormSubmitValue} from "./utils";
 import { GetUserReady, MeJoin, RollDicePoint, StartGame, StartTurn, SyncPieceState, ThrowDice, UpdatePieceState, UserJoin, UserLeave, UserReady, UserSkipTurn } from "./gameEvent";
 import Piece from './components/Piece';
 import Board from './components/Board';
 import GameObject from './components/GameObject';
 import DiceCanvas from './components/DiceCanvas';
 import { chatState, createChatRoom, showChatBox, joinChatRoom } from './chatHandler';
+import {v4 as uuidv4} from "uuid";
 
 // require('./chatHandler'); // load gameplay chat
 
-if (window.location.pathname == '/') {
-  if (!window.sessionStorage.getItem('userId'))
-    window.location.href = '/account'
+const ACCOUNT_STRATEGY = false;
+
+if (ACCOUNT_STRATEGY) {
+  if (window.location.pathname == '/') {
+    if (!window.sessionStorage.getItem('userId'))
+      window.location.href = '/account';
+  }
+} else {
+  window.sessionStorage.setItem('userId', uuidv4());
 }
 
 export const state = new GameplayState(window.sessionStorage.getItem('userId'));
@@ -157,11 +164,14 @@ const setUserStatus = (val: IUser) => {
   }
 }
 
-const setUserTurnIcon = (userId: string) =>  {
+const setUserTurnIcon = (userId: string, order: number) =>  {
   const elementSelectString = `#${userId}`;
 
-  $('.userInRoom .userInRoomList .users-list').removeClass('users-main');
-  $(elementSelectString).addClass('users-main');
+  $('.userInRoom .userInRoomList .users-list').removeClass(`users-main1`);
+  $('.userInRoom .userInRoomList .users-list').removeClass(`users-main2`);
+  $('.userInRoom .userInRoomList .users-list').removeClass(`users-main3`);
+  $('.userInRoom .userInRoomList .users-list').removeClass(`users-main4`);
+  $(elementSelectString).addClass(`users-main${order + 1}`);
 }
 
 const handleShowUserInfo = (ev: JQuery.ClickEvent, id: string, isModal: boolean = true) => {
@@ -433,7 +443,7 @@ const initGameEvent = () => {
     state.setHaveThrowDiceStatus(false);
     state.setSkipTurnStatus(true);
 
-    setUserTurnIcon(mess.userId);
+    setUserTurnIcon(mess.userId, mess.order);
     configToolBoxOnState();
   });
   gameRoom.onMessage(UserLeave, (mess) => {
@@ -472,7 +482,7 @@ const initGameEvent = () => {
     state.setHaveThrowDiceStatus(false);
     state.setSkipTurnStatus(true);
     
-    setUserTurnIcon(mess.userId);
+    setUserTurnIcon(mess.userId, mess.order);
     configToolBoxOnState();
   });
   gameRoom.onMessage(ThrowDice, (mess) => {

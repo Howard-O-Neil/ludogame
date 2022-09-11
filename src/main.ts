@@ -219,6 +219,8 @@ export default class MainGame {
 
   public setCameraStopOrbitAuto = (cameraPos: any) => {
     this.camera.position.fromArray(Object.values(cameraPos.position));
+    this.orbitControl.reset();
+    this.orbitControl.target.setY(this.orbitControl.target.y - 2.5);
     this.orbitControl.autoRotate = false;
   }
 
@@ -321,6 +323,10 @@ export default class MainGame {
     $(document).on('keypress', ev => {
       let keycode = require('keycode');
       this.keyCodes[keycode(ev.key)] = true;
+
+      if (ev.key == "c") {
+        console.log(this.camera.position)
+      }
     });
 
     $(".gameplay").on('click', ev => {

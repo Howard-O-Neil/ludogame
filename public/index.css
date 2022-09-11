@@ -115,10 +115,26 @@ body {
   overflow: hidden;
   border-radius: 50%;
 }
-.user-dashboard-info-box .users-list.users-main .thumb img {
+.user-dashboard-info-box .users-list .users-main .thumb img {
   box-shadow: 2px 2px rgba(0, 98, 90, 0.4), 6px 6px rgba(0, 98, 90, 0.3),
     10px 10px rgba(0, 98, 90, 0.2), 14px 14px rgba(0, 98, 90, 0.1),
     18px 18px rgba(0, 98, 90, 0.05);
+}
+
+.user-dashboard-info-box .users-main1 .thumb img {
+  box-shadow: 0 0 10px 10px rgba(180, 203, 95, 0.9);
+}
+
+.user-dashboard-info-box .users-main2 .thumb img {
+  box-shadow: 0 0 10px 10px rgba(215, 201, 68, 0.9);
+}
+
+.user-dashboard-info-box .users-main3 .thumb img {
+  box-shadow: 0 0 10px 10px rgba(138, 172, 174, 0.9);
+}
+
+.user-dashboard-info-box .users-main4 .thumb img {
+  box-shadow: 0 0 10px 10px rgba(202, 84, 82, 0.9);
 }
 
 .user-dashboard-info-box .title {
