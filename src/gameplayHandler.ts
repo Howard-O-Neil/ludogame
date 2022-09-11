@@ -63,7 +63,11 @@ const loadGame = () => {
     if (!state.getSkipTurnStatus())
       return;
 
-    state.getGameRoom().send(UserSkipTurn, {userId: state.getUserId()});
+    if (state.getCurrentTurn() == state.getUserId()) {
+      state.setSkipTurnStatus(false);
+      state.getGameRoom().send(UserSkipTurn, {userId: state.getUserId()});
+      configToolBoxOnState();
+    }
   });
   $('.gameToolBox .toolBox #movePiece').on('click', ev => {
     if (!state.getCanMovePieceStatus())
@@ -264,7 +268,6 @@ const syncPiece = (piece: Piece) => {
   let step = state.getPointDice1() + state.getPointDice2();
   if (piece.atBase) step = 1;
 
-  state.setCurrentTurn('');
   state.setCanMovePieceStatus(false);
   state.setPointDice1(0);
   state.setPointDice2(0);
@@ -474,7 +477,6 @@ const initGameEvent = () => {
   // });
   gameRoom.onMessage(StartTurn, (mess) => {
     state.resetToolbox();
-    state.setCurrentTurn('');
     state.setPointDice1(0);
     state.setPointDice2(0);
 

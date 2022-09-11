@@ -396,7 +396,11 @@ export default class DiceCanvas {
     for (let i = 0; i < this.listDice.length; i++) {
       this.listDice[i].updateMeshFromBody();
       objGroupCenter.add(this.listDice[i].getObject().position);
-      if (Math.abs(this.listDice[i].getObject().body.velocity.y) > 1) {
+
+      let avg_speed_xz = (Math.abs(this.listDice[i].getObject().body.velocity.x)
+        + Math.abs(this.listDice[i].getObject().body.velocity.z)) / 2;
+
+      if (avg_speed_xz > 2.0) {
         checkReadyThrow = checkReadyThrow && false;
       }
       checkReadyThrow = checkReadyThrow && true;

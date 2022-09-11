@@ -17,13 +17,22 @@
 
 ### 2. Backend
 - [Socket repo](https://github.com/Howard-O-Neil/ludo-colyseus)
-- [Backend repo](https://github.com/Howard-O-Neil/ludo-py)
+- [Rest services repo](https://github.com/Howard-O-Neil/ludo-py)
 
 ```bash
-  # For both 2 backend repos
+  # For both 2 backend repo
   docker-compose up -d
 
-  # Socket default port   = 2567
-  # Backend default port  = 8083
-  # If you changed, reconfigure in the frontend .env file
+  # For Rest services repo
+  # Migrate db schema
+  flask db upgrade
 ```
+
+> **Note**  
+> Socket default port   = 2567  
+> Backend default port  = 8083  
+> If you changed, reconfigure in the frontend `.env` file
+
+## Short demo
+
+![Demo](./imgs/demo.gif)

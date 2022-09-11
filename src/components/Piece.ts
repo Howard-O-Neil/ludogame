@@ -223,8 +223,11 @@ export default class Piece extends GameObject {
           this.prevStep = this.goal;
 
           if (this.userId == state.getUserId()) {
-            state.getGameRoom().send(UserSkipTurn, { userId: state.getUserId() });
-            configToolBoxOnState();
+            if (state.getCurrentTurn() == state.getUserId()) {
+              state.setSkipTurnStatus(false);
+              state.getGameRoom().send(UserSkipTurn, {userId: state.getUserId()});
+              configToolBoxOnState();
+            }
           }
         } else {
           // console.log(this.prevStep + this.nextStep)
