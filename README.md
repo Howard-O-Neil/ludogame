@@ -1,28 +1,29 @@
 # Getting Started
 
-### `Description`
+## Description
 
-- Simple 3d gameEngine
-- Currently support render Box, Cylinder, Sphere
-- Physics: Velocity, Angular, Quaternion, Scaling
-- Collision detection (Include debugging tool)
-- Simple lightning effect
+- An online game, built upon Three.js (Rendering) and Cannon-es (Physics)
+- Using Colyseus for syncing game states through sockets
 
-### `How to run`
+## How to run
 
-#### Frontend
-  ```bash
-    live-server public --port=8082
-    npm run start
-  ```
+### 1. Frontend
 
-#### Backend
+- This repo
+
 ```bash
-  cd backend/colyseus
-  npm run start;
+  npm run live
 ```
 
-### `How to play`
+### 2. Backend
+- [Socket repo](https://github.com/Howard-O-Neil/ludo-colyseus)
+- [Backend repo](https://github.com/Howard-O-Neil/ludo-py)
 
-- `Space` to shoot
-- `q` piece
+```bash
+  # For both 2 backend repos
+  docker-compose up -d
+
+  # Socket default port   = 2567
+  # Backend default port  = 8083
+  # If you changed, reconfigure in the frontend .env file
+```
