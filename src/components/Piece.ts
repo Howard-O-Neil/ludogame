@@ -173,7 +173,25 @@ export default class Piece extends GameObject {
         if (ev.body.tag == collisionTags.piece) {
           const piece = state.getGamePiece(ev.body.userId).find(x => x.order == ev.body.order);
           if (piece.userId != this.userId) {
-            piece.returnBase();
+            const otherUser = state.getListUserInRoom().find(x => x.id == piece.userId);
+            const thisUser = state.getListUserInRoom().find(x => x.id == this.userId);
+            const curIndex = piece.currentPosIndex;
+            const curSection = Math.floor(curIndex / 13) + 1;
+            const orderDistance = Math.abs(otherUser.order - thisUser.order);
+    
+            const equivalentSection =
+              otherUser.order < thisUser.order
+                ? (curSection - orderDistance <= 0)
+                  ? curSection - orderDistance + 4
+                  : curSection - orderDistance
+                : (curSection + orderDistance) % 4 == 0
+                  ? 4
+                  : (curSection + orderDistance) % 4;
+            
+            const equivalentIndex = (curIndex % 13) + ((equivalentSection - 1) * 13);
+            
+            if (equivalentIndex == this.currentPosIndex)
+              piece.returnBase();
           }
         }
       }
@@ -226,7 +244,7 @@ export default class Piece extends GameObject {
           }
 
           if (this.atBase) {
-            this.launch(new CANNON.Vec3(0, 100, 0));
+            this.launch(new CANNON.Vec3(0, 50, 0));
             this.atBase = false;
           } else { this.launch(new CANNON.Vec3(0, 35, 0)); }
         }
@@ -282,7 +300,7 @@ export default class Piece extends GameObject {
     this.nextStep = -1;
     this.goal = -1;
 
-    this.launch(new CANNON.Vec3(0, 100, 0));
+    this.launch(new CANNON.Vec3(0, 50, 0));
   }
 
   goByStep = (step: number) => {

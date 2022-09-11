@@ -68,13 +68,13 @@ const loadSentMsg = (msg: ChatMessage) => {
   let body = 
       `
         <div class="row msg_container base_sent">
-          <div class="col-md-10 col-xs-10">
+          <div class="col-md-10 col-sm-10">
             <div class="messages msg_sent">
               <p>${msg.textContent}</p>
               <time datetime="${time.toLocaleString()}">${userInfo.name} • ${time.toLocaleString()}</time>
             </div>
           </div>
-          <div class="col-md-2 col-xs-2 avatar">
+          <div class="col-md-2 col-sm-2 avatar">
             <img src="${userInfo.avatar}"
               class="chatimg img-responsive ">
           </div>
@@ -91,12 +91,12 @@ const loadReceivedMsg = (msg: ChatMessage) => {
   let body = 
       `
         <div class="row msg_container base_receive">
-          <div class="col-md-2 col-xs-2 avatar">
+          <div class="col-md-2 col-sm-2 avatar">
             <img
               src="${userInfo.avatar}"
               class="chatimg img-responsive ">
           </div>
-          <div class="col-md-10 col-xs-10">
+          <div class="col-md-10 col-sm-10">
             <div class="messages msg_receive">
               <p>${msg.textContent}</p>
               <time datetime="${time.toLocaleString()}">${userInfo.name} • ${time.toLocaleString()}</time>
@@ -111,16 +111,18 @@ const loadReceivedMsg = (msg: ChatMessage) => {
 const sendText = () => {
   let txt = <string>($("#btn-input").val());
 
-  const msg: ChatMessage = {
-    id: uuidv4(),
-    senderId: chatState.getUserId(),
-    textContent: txt,
-    attachment: '',
-    chatRoomId: chatState.getChatRoom().id,
-    created_at: Date.now()
+  if (txt.length > 0) {
+    const msg: ChatMessage = {
+      id: uuidv4(),
+      senderId: chatState.getUserId(),
+      textContent: txt,
+      attachment: '',
+      chatRoomId: chatState.getChatRoom().id,
+      created_at: Date.now()
+    }
+    chatState.getChatRoom().send(SendMessage, msg)
+    $("#btn-input").val("")
   }
-  chatState.getChatRoom().send(SendMessage, msg)
-  $("#btn-input").val("")
 }
 
 // send function end

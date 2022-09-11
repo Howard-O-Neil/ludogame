@@ -1,3 +1,7 @@
+if (window.location.pathname != '/') {
+  window.location.href = '/'
+}
+
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import { Sky } from "three/examples/jsm/objects/Sky";
 import * as THREE from "three";
@@ -7,8 +11,6 @@ import * as dat from "dat.gui";
 import GameObject from "./components/GameObject";
 import $ from "jquery";
 import { CannonDebugRenderer, createCannonDebugger } from "./components/CannonDebug";
-
-console.log(process.env)
 
 export const cannonTypeMaterials: Map<string, CANNON.Material> = new Map();
 cannonTypeMaterials['slippery'] = new CANNON.Material('slippery');
@@ -353,7 +355,7 @@ export default class MainGame {
 
     this.orbitControl.update();
 
-    this.render();
+    requestAnimationFrame(this.render);
   };
 
   keyboardHandle = () => {
@@ -468,4 +470,3 @@ export default class MainGame {
 //========== other component ==========
 
 require('./gameplayHandler'); // load gameplay handler
-require('./account');

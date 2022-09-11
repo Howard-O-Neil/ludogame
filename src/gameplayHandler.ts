@@ -41,21 +41,16 @@ const loadGame = () => {
 
     state.getGameRoom().send(ThrowDice, {
       userId: state.getUserId(),
+      dice1: cheat_dice1,
+      dice2: cheat_dice2,
     });
-    state.setHaveThrowDiceStatus(true);
-    configToolBoxOnState();
   });
 
   $('.gameToolBox .toolBox #skipTurn').on('click', ev => {
     if (!state.getSkipTurnStatus())
       return;
 
-    state.resetToolbox();
-    state.setCurrentTurn('');
-    state.setPointDice1(0);
-    state.setPointDice2(0);
     state.getGameRoom().send(UserSkipTurn, {userId: state.getUserId()});
-    configToolBoxOnState();
   });
   $('.gameToolBox .toolBox #movePiece').on('click', ev => {
     if (!state.getCanMovePieceStatus())
@@ -462,6 +457,11 @@ const initGameEvent = () => {
   //   handleUpdatePiece(mess);
   // });
   gameRoom.onMessage(StartTurn, (mess) => {
+    state.resetToolbox();
+    state.setCurrentTurn('');
+    state.setPointDice1(0);
+    state.setPointDice2(0);
+
     state.setCurrentTurn(mess.userId);
     state.setHaveThrowDiceStatus(false);
     state.setSkipTurnStatus(true);
@@ -470,21 +470,14 @@ const initGameEvent = () => {
     configToolBoxOnState();
   });
   gameRoom.onMessage(ThrowDice, (mess) => {
-    if (CHEAT_DICE) {
-      diceManager.throwDice([cheat_dice1, cheat_dice2], mess.dice.angularVeloc, mess.dice.rotation, () => {
-        state.setPointDice1(cheat_dice1);
-        state.setPointDice2(cheat_dice2);
-  
-        configToolBoxOnState();
-      });  
-    } else {
-      diceManager.throwDice(mess.diceVals, mess.dice.angularVeloc, mess.dice.rotation, () => {
-        state.setPointDice1(mess.diceVals[0]);
-        state.setPointDice2(mess.diceVals[1]);
-  
-        configToolBoxOnState();
-      });
-    }
+    diceManager.throwDice(mess.diceVals, mess.dice.angularVeloc, mess.dice.rotation, () => {
+      state.setPointDice1(mess.diceVals[0]);
+      state.setPointDice2(mess.diceVals[1]);
+
+      configToolBoxOnState();
+    });
+    state.setHaveThrowDiceStatus(true);
+    configToolBoxOnState();
   });
   // gameRoom.onMessage(RollDicePoint, (mess) => {
   //   state.setPointDice1(mess.dice1);
@@ -496,7 +489,7 @@ const initGameEvent = () => {
     const piece = state.getGamePiece(mess.userId).find(x => x.order === mess.order);
 
     piece.goByStep(mess.step);
-  })
+  });
 }
 
 const initGamePlay = () => {
@@ -524,7 +517,6 @@ $('.selectRoom form').on('submit', ev => {
 
   const formValue = getFormSubmitValue('.selectRoom form');
   joinRoom(state.getListRoom().find(x => x.roomId === formValue['choosenRoomId']));
-  // console.log(ev);
 });
 
 // handle create room

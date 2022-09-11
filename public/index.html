@@ -17,7 +17,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Yanone+Kaffeesatz:wght@500&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="app.css" />
+  <link rel="stylesheet" href="index.css" />
 
   <script src="https://kit.fontawesome.com/a27500b252.js" crossorigin="anonymous"></script>
   <script src="./resource/js/bootstrap.js"></script>
@@ -103,7 +103,7 @@
   </div>
 
   <div class="container pull-right chatbox">
-    <div class="row chat-window" id="chat_window_1">
+    <div class="chat-window" id="chat_window_1">
       <div>
         <div class="panel panel-default">
           <div class="panel-heading top-bar">
@@ -198,12 +198,26 @@
         </div>
         <div class="panel-footer">
           <div class="input-group input-area">
+            <button class="btn btn-light btn-sm" id="btn-gif">
+              GIF
+            </button>
+            <button class="btn btn-light btn-sm" id="btn-picture">
+              <i class="fas fa-images"></i>
+            </button>
+            <button class="btn btn-light btn-sm" id="btn-emo">
+              <i class="fas fa-face-smile"></i>
+            </button>
+            <p>&nbsp;</p>
+            
             <input id="btn-input" type="text" class="form-control input-sm chat_input"
-              placeholder="Write your message here..." required="required" />
-            <div class="input-group-btn">
-              <button class="btn btn-primary btn-sm" id="btn-chat">Send</button>
-            </div>
+              placeholder="Write your message here..." />
+            <!-- <div class="input-group-btn">
+              <button class="btn btn-primary btn-sm" id="btn-chat">
+                <i class="fas fa-paper-plane"></i>
+              </button>
+            </div> -->
           </div>
+
         </div>
       </div>
     </div>

@@ -7,10 +7,13 @@ const Dotenv = require("dotenv-webpack")
 
 module.exports = (env) => {
   return {
-    entry: path.resolve(__dirname, "src/main.ts"), //path to the main .ts file
+    entry: {
+      out: path.resolve(__dirname, "src/main.ts"), // path to the main handler
+      account: path.resolve(__dirname, "src/account.ts"), // path to account handler
+    },
 
     output: {
-      filename: "out.js", // name for the js file that is created/compiled in memory
+      filename: "[name].js", // name for the js file that is created/compiled in memory
       path: path.resolve(__dirname, 'public/dist'),
     },
 
